@@ -22,6 +22,8 @@ export const api = {
   register: (data: { username: string; displayName: string; password: string; role?: string }) =>
     request<any>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   users: () => request<any[]>('/auth/users'),
+  changePassword: (data: { userId?: number; currentPassword?: string; newPassword: string }) =>
+    request<any>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 
   // Parties
   parties: () => request<any[]>('/parties'),

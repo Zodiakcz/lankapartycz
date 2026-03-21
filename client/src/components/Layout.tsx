@@ -40,7 +40,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">{user?.displayName}</span>
+            <Link to="/password" className="text-sm text-gray-400 hover:text-white">
+              {user?.displayName}
+            </Link>
             <button onClick={logout} className="text-sm text-gray-400 hover:text-white">
               Odhlásit
             </button>

@@ -58,6 +58,31 @@ router.post('/register', requireAdmin, async (req, res) => {
   res.json({ id: user.id, username: user.username, displayName: user.displayName, role: user.role })
 })
 
+// Change password (any logged-in user for themselves, admin for anyone)
+router.post('/change-password', requireAuth, async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body
+  if (!newPassword || newPassword.length < 4) {
+    return res.status(400).json({ error: 'Nové heslo musí mít alespoň 4 znaky' })
+  }
+
+  const targetUserId = userId && req.session.role === 'admin' ? userId : req.session.userId!
+
+  // Non-admin users must provide current password
+  if (req.session.role !== 'admin' || targetUserId === req.session.userId) {
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Zadejte současné heslo' })
+    }
+    const user = await prisma.user.findUnique({ where: { id: targetUserId } })
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ error: 'Nesprávné současné heslo' })
+    }
+  }
+
+  const hash = await bcrypt.hash(newPassword, 10)
+  await prisma.user.update({ where: { id: targetUserId }, data: { passwordHash: hash } })
+  res.json({ ok: true })
+})
+
 // List all users
 router.get('/users', requireAuth, async (_req, res) => {
   const users = await prisma.user.findMany({
