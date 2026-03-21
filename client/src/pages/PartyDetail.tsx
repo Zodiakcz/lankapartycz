@@ -229,10 +229,18 @@ export function PartyDetail() {
             <div className="space-y-2">
               {party.partyGames?.map((pg: any) => (
                 <div key={pg.id} className="bg-gray-800 rounded p-3 border border-gray-700 flex items-center justify-between">
-                  <div>
+                  <div className="flex items-center flex-wrap gap-2">
                     <span className="font-medium">{pg.game.name}</span>
-                    <span className="text-xs text-gray-500 ml-2">{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
-                    {pg.game.maxPlayers && <span className="text-xs text-gray-500 ml-2">{pg.game.minPlayers}–{pg.game.maxPlayers} hráčů</span>}
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      pg.game.source === 'steam' ? 'bg-blue-900/50 text-blue-400' :
+                      pg.game.source === 'epic' ? 'bg-orange-900/50 text-orange-400' :
+                      pg.game.source === 'copied' ? 'bg-yellow-900/50 text-yellow-400' :
+                      pg.game.source === 'free' ? 'bg-green-900/50 text-green-400' :
+                      'bg-gray-700 text-gray-400'
+                    }`}>{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                      {pg.game.maxPlayers ? `${pg.game.minPlayers}–${pg.game.maxPlayers} hráčů` : `${pg.game.minPlayers}+ hráčů`}
+                    </span>
                   </div>
                   {isAdmin && (
                     <button onClick={() => handleRemoveGame(pg.gameId)} className="text-red-500 hover:text-red-400 text-sm">Odebrat</button>
