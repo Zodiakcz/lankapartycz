@@ -1,0 +1,22 @@
+services:
+  server:
+    image: ghcr.io/zodiakcz/lankapartycz/server:latest
+    environment:
+      - DATABASE_URL=file:/data/lankaparty.db
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-in-production}
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - db-data:/data
+    restart: unless-stopped
+
+  client:
+    image: ghcr.io/zodiakcz/lankapartycz/client:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  db-data:
