@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, requireAdmin } from '../middleware/auth'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 router.post('/:partyId', requireAuth, async (req, res) => {
   const partyId = Number(req.params.partyId)
   const userId = req.session.userId!
-  const { status, arrival, departure } = req.body
+  const { status, arrival, departure, advance } = req.body
 
   const attendance = await prisma.attendance.upsert({
     where: { userId_partyId: { userId, partyId } },
@@ -17,6 +17,7 @@ router.post('/:partyId', requireAuth, async (req, res) => {
       status,
       arrival: arrival ? new Date(arrival) : null,
       departure: departure ? new Date(departure) : null,
+      ...(advance !== undefined && { advance: Number(advance) }),
     },
     create: {
       userId,
@@ -24,7 +25,22 @@ router.post('/:partyId', requireAuth, async (req, res) => {
       status,
       arrival: arrival ? new Date(arrival) : null,
       departure: departure ? new Date(departure) : null,
+      advance: advance ? Number(advance) : 0,
     },
+    include: { user: { select: { id: true, displayName: true } } },
+  })
+  res.json(attendance)
+})
+
+// Set advance for any user (admin only)
+router.post('/:partyId/advance/:userId', requireAdmin, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const userId = Number(req.params.userId)
+  const { advance } = req.body
+
+  const attendance = await prisma.attendance.update({
+    where: { userId_partyId: { userId, partyId } },
+    data: { advance: Number(advance) },
     include: { user: { select: { id: true, displayName: true } } },
   })
   res.json(attendance)

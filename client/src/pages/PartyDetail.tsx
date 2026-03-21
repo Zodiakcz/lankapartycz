@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import qrCode from '../img/qr_code.jpg'
 
 const TIME_SLOTS = [
   { value: 'morning', label: 'Dopoledne' },
@@ -30,7 +31,7 @@ export function PartyDetail() {
   const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'packing'>('info')
 
   // Attendance form
-  const [attForm, setAttForm] = useState({ status: 'maybe', arrival: '', departure: '' })
+  const [attForm, setAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
 
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
@@ -56,6 +57,7 @@ export function PartyDetail() {
         status: myAtt.status,
         arrival: myAtt.arrival ? myAtt.arrival.slice(0, 16) : '',
         departure: myAtt.departure ? myAtt.departure.slice(0, 16) : '',
+        advance: String(myAtt.advance || 0),
       })
     }
   }
@@ -167,7 +169,16 @@ export function PartyDetail() {
                   <input type="datetime-local" value={attForm.departure} onChange={e => setAttForm({ ...attForm, departure: e.target.value })}
                     className="bg-gray-700 rounded px-3 py-2 text-white" />
                 </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Záloha (Kč)</label>
+                  <input type="number" step="1" min="0" value={attForm.advance} onChange={e => setAttForm({ ...attForm, advance: e.target.value })}
+                    className="bg-gray-700 rounded px-3 py-2 text-white w-28" />
+                </div>
                 <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Uložit</button>
+              </div>
+              <div className="mt-4 flex items-start gap-4">
+                <img src={qrCode} alt="QR platba" className="w-32 h-32 rounded border border-gray-600" />
+                <p className="text-xs text-gray-400 mt-1">Naskenuj QR kód pro zaslání zálohy. Po odeslání zadej částku výše.</p>
               </div>
             </form>
           </section>
@@ -183,6 +194,7 @@ export function PartyDetail() {
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2 hidden sm:table-cell">Příjezd</th>
                     <th className="px-4 py-2 hidden sm:table-cell">Odjezd</th>
+                    <th className="px-4 py-2">Záloha</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,10 +212,11 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
                       <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.departure ? formatDateTime(a.departure) : '–'}</td>
+                      <td className="px-4 py-2">{a.advance ? <span className="text-green-400">{a.advance} Kč</span> : '–'}</td>
                     </tr>
                   ))}
                   {(!party.attendance || party.attendance.length === 0) && (
-                    <tr><td colSpan={4} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
+                    <tr><td colSpan={5} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
                   )}
                 </tbody>
               </table>
@@ -363,21 +376,40 @@ export function PartyDetail() {
             <section>
               <h3 className="font-semibold mb-3">Rozúčtování</h3>
               <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-                <p className="text-sm text-gray-400 mb-3">Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong> / {split.totalNights} nocí</p>
-                <div className="space-y-2">
-                  {split.perPerson?.map((p: any) => (
-                    <div key={p.user.id} className="flex items-center justify-between text-sm">
-                      <span>{p.user.displayName} ({p.nights} nocí)</span>
-                      <div className="flex gap-4">
-                        <span className="text-gray-400">dluží {p.owes} Kč</span>
-                        <span className="text-gray-400">zaplatil {p.paid} Kč</span>
-                        <span className={p.balance >= 0 ? 'text-green-400' : 'text-red-400'}>
-                          {p.balance >= 0 ? `+${p.balance}` : p.balance} Kč
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex gap-6 text-sm text-gray-400 mb-4">
+                  <span>Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong></span>
+                  <span>Zálohy celkem: <strong className="text-white">{split.totalAdvances} Kč</strong></span>
+                  <span>Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
                 </div>
+                <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-gray-400 text-left border-b border-gray-700">
+                        <th className="px-4 py-2">Jméno</th>
+                        <th className="px-4 py-2">Nocí</th>
+                        <th className="px-4 py-2">Podíl</th>
+                        <th className="px-4 py-2">Záloha</th>
+                        <th className="px-4 py-2">Nakoupil</th>
+                        <th className="px-4 py-2">Bilance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {split.perPerson?.map((p: any) => (
+                        <tr key={p.user.id} className="border-t border-gray-700">
+                          <td className="px-4 py-2 font-medium">{p.user.displayName}</td>
+                          <td className="px-4 py-2 text-gray-400">{p.nights}</td>
+                          <td className="px-4 py-2 text-gray-400">{p.owes} Kč</td>
+                          <td className="px-4 py-2 text-gray-400">{p.advance} Kč</td>
+                          <td className="px-4 py-2 text-gray-400">{p.paid} Kč</td>
+                          <td className={`px-4 py-2 font-semibold ${p.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {p.balance >= 0 ? `+${p.balance}` : p.balance} Kč
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-gray-500 mt-3">Bilance = záloha + nákupy − podíl. Kladná = přeplatek, záporná = doplatit.</p>
               </div>
             </section>
           )}

@@ -63,45 +63,52 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
 
   if (!party) return res.status(404).json({ error: 'Párty nenalezena' })
 
-  // Calculate nights per person
-  const nightsPerPerson: Record<number, { user: { id: number; displayName: string }; nights: number }> = {}
+  // Calculate nights and advance per person
+  const personData: Record<number, { user: { id: number; displayName: string }; nights: number; advance: number }> = {}
 
   for (const att of attendance) {
     if (!att.arrival || !att.departure) continue
     const arrival = new Date(att.arrival)
     const departure = new Date(att.departure)
     const nights = Math.max(0, Math.ceil((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24)))
-    nightsPerPerson[att.userId] = { user: att.user, nights }
+    personData[att.userId] = { user: att.user, nights, advance: att.advance }
   }
 
-  const totalNights = Object.values(nightsPerPerson).reduce((sum, p) => sum + p.nights, 0)
+  const totalNights = Object.values(personData).reduce((sum, p) => sum + p.nights, 0)
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const totalAdvances = Object.values(personData).reduce((sum, p) => sum + p.advance, 0)
 
-  // Per person: what they owe vs what they paid
+  // Per person: share - (advance + expenses paid) = what they still owe
   const perPerson: Record<number, {
     user: { id: number; displayName: string }
     nights: number
+    advance: number
     owes: number
     paid: number
     balance: number
   }> = {}
 
-  for (const [userIdStr, data] of Object.entries(nightsPerPerson)) {
+  for (const [userIdStr, data] of Object.entries(personData)) {
     const userId = Number(userIdStr)
     const share = totalNights > 0 ? (data.nights / totalNights) * total : 0
-    const paid = expenses.filter(e => e.paidByUserId === userId).reduce((sum, e) => sum + e.amount, 0)
+    const expensesPaid = expenses.filter(e => e.paidByUserId === userId).reduce((sum, e) => sum + e.amount, 0)
+    const totalCredit = data.advance + expensesPaid
+    // positive balance = overpaid (gets money back), negative = still owes
+    const balance = totalCredit - share
 
     perPerson[userId] = {
       user: data.user,
       nights: data.nights,
+      advance: Math.round(data.advance * 100) / 100,
       owes: Math.round(share * 100) / 100,
-      paid: Math.round(paid * 100) / 100,
-      balance: Math.round((paid - share) * 100) / 100,
+      paid: Math.round(expensesPaid * 100) / 100,
+      balance: Math.round(balance * 100) / 100,
     }
   }
 
   res.json({
     sharedTotal: Math.round(total * 100) / 100,
+    totalAdvances: Math.round(totalAdvances * 100) / 100,
     totalNights,
     perPerson: Object.values(perPerson),
   })
