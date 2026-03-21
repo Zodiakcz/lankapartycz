@@ -1,0 +1,126 @@
+import { Router } from 'express'
+import { PrismaClient } from '@prisma/client'
+import { requireAuth, requireAdmin } from '../middleware/auth'
+
+const router = Router()
+const prisma = new PrismaClient()
+
+const FOOD_CATEGORIES = [
+  { key: 'hotova_jidla', label: 'Hotová jídla', defaultUnit: 'ks' },
+  { key: 'piti', label: 'Pití (za noc)', defaultUnit: 'l' },
+  { key: 'sunky', label: 'Šunky (za noc)', defaultUnit: 'baleni' },
+  { key: 'syry', label: 'Sýry', defaultUnit: 'baleni' },
+  { key: 'zelenina', label: 'Zelenina', defaultUnit: 'ks' },
+  { key: 'parky', label: 'Párky', defaultUnit: 'ks' },
+  { key: 'toustovy_chleb', label: 'Toastový chléb', defaultUnit: 'baleni' },
+]
+
+// Get food categories definition
+router.get('/categories', requireAuth, (_req, res) => {
+  res.json(FOOD_CATEGORIES)
+})
+
+// Get food estimates for a party
+router.get('/:partyId/food', requireAuth, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const estimates = await prisma.foodEstimate.findMany({ where: { partyId } })
+  res.json(estimates)
+})
+
+// Set/update food estimate for a category (admin)
+router.post('/:partyId/food', requireAdmin, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const { category, perNight, unit } = req.body
+
+  const estimate = await prisma.foodEstimate.upsert({
+    where: { partyId_category: { partyId, category } },
+    update: { perNight, ...(unit && { unit }) },
+    create: { partyId, category, perNight, unit: unit || 'ks' },
+  })
+  res.json(estimate)
+})
+
+// Calculate food amounts for a party
+router.get('/:partyId/food/calculate', requireAuth, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+
+  const [estimates, attendance] = await Promise.all([
+    prisma.foodEstimate.findMany({ where: { partyId } }),
+    prisma.attendance.findMany({
+      where: { partyId, status: 'confirmed' },
+      include: { user: { select: { id: true, displayName: true } } },
+    }),
+  ])
+
+  // Calculate total person-nights
+  let totalNights = 0
+  const perPerson: { user: { id: number; displayName: string }; nights: number }[] = []
+
+  for (const att of attendance) {
+    if (!att.arrival || !att.departure) continue
+    const nights = Math.max(0, Math.ceil(
+      (new Date(att.departure).getTime() - new Date(att.arrival).getTime()) / (1000 * 60 * 60 * 24)
+    ))
+    totalNights += nights
+    perPerson.push({ user: att.user, nights })
+  }
+
+  // Calculate amounts per category
+  const amounts = estimates.map(est => {
+    const cat = FOOD_CATEGORIES.find(c => c.key === est.category)
+    return {
+      category: est.category,
+      label: cat?.label || est.category,
+      perNight: est.perNight,
+      unit: est.unit,
+      totalNeeded: Math.ceil(est.perNight * totalNights * 10) / 10,
+    }
+  })
+
+  res.json({
+    totalNights,
+    confirmedPeople: perPerson.length,
+    perPerson,
+    amounts,
+  })
+})
+
+// Get shopping items for a party
+router.get('/:partyId/items', requireAuth, async (req, res) => {
+  const items = await prisma.shoppingItem.findMany({
+    where: { partyId: Number(req.params.partyId) },
+    orderBy: [{ checked: 'asc' }, { createdAt: 'desc' }],
+  })
+  res.json(items)
+})
+
+// Add shopping item (any user)
+router.post('/:partyId/items', requireAuth, async (req, res) => {
+  const { name } = req.body
+  if (!name) return res.status(400).json({ error: 'Zadejte název' })
+
+  const item = await prisma.shoppingItem.create({
+    data: { partyId: Number(req.params.partyId), name },
+  })
+  res.json(item)
+})
+
+// Toggle shopping item checked (any user)
+router.patch('/:partyId/items/:id', requireAuth, async (req, res) => {
+  const item = await prisma.shoppingItem.findUnique({ where: { id: Number(req.params.id) } })
+  if (!item) return res.status(404).json({ error: 'Položka nenalezena' })
+
+  const updated = await prisma.shoppingItem.update({
+    where: { id: item.id },
+    data: { checked: !item.checked },
+  })
+  res.json(updated)
+})
+
+// Delete shopping item
+router.delete('/:partyId/items/:id', requireAuth, async (req, res) => {
+  await prisma.shoppingItem.delete({ where: { id: Number(req.params.id) } })
+  res.json({ ok: true })
+})
+
+export default router

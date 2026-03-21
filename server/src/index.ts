@@ -10,6 +10,7 @@ import gameRoutes from './routes/games'
 import scheduleRoutes from './routes/schedule'
 import expenseRoutes from './routes/expenses'
 import packingRoutes from './routes/packing'
+import shoppingRoutes from './routes/shopping'
 
 const prisma = new PrismaClient()
 const app = express()
@@ -40,6 +41,7 @@ app.use('/api/games', gameRoutes)
 app.use('/api/schedule', scheduleRoutes)
 app.use('/api/expenses', expenseRoutes)
 app.use('/api/packing', packingRoutes)
+app.use('/api/shopping', shoppingRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

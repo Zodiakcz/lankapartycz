@@ -62,6 +62,20 @@ export const api = {
   deleteExpense: (id: number) => request<any>(`/expenses/${id}`, { method: 'DELETE' }),
   getExpenseSplit: (partyId: number) => request<any>(`/expenses/${partyId}/split`),
 
+  // Shopping
+  foodCategories: () => request<any[]>('/shopping/categories'),
+  getFoodEstimates: (partyId: number) => request<any[]>(`/shopping/${partyId}/food`),
+  setFoodEstimate: (partyId: number, data: { category: string; perNight: number; unit: string }) =>
+    request<any>(`/shopping/${partyId}/food`, { method: 'POST', body: JSON.stringify(data) }),
+  calculateFood: (partyId: number) => request<any>(`/shopping/${partyId}/food/calculate`),
+  getShoppingItems: (partyId: number) => request<any[]>(`/shopping/${partyId}/items`),
+  addShoppingItem: (partyId: number, name: string) =>
+    request<any>(`/shopping/${partyId}/items`, { method: 'POST', body: JSON.stringify({ name }) }),
+  toggleShoppingItem: (partyId: number, id: number) =>
+    request<any>(`/shopping/${partyId}/items/${id}`, { method: 'PATCH' }),
+  deleteShoppingItem: (partyId: number, id: number) =>
+    request<any>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
+
   // Packing
   getPacking: (partyId?: number) => request<any[]>(`/packing${partyId ? `/${partyId}` : ''}`),
   createPackingItem: (data: any) => request<any>('/packing', { method: 'POST', body: JSON.stringify(data) }),

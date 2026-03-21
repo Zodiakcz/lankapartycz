@@ -27,7 +27,7 @@ export function PartyDetail() {
   const [party, setParty] = useState<any>(null)
   const [allGames, setAllGames] = useState<any[]>([])
   const [split, setSplit] = useState<any>(null)
-  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'packing'>('info')
+  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'packing'>('info')
 
   // Attendance form
   const [attForm, setAttForm] = useState({ status: 'maybe', arrival: '', departure: '' })
@@ -132,10 +132,10 @@ export function PartyDetail() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-700">
-        {(['info', 'schedule', 'expenses', 'packing'] as const).map(t => (
+        {(['info', 'schedule', 'expenses', 'shopping', 'packing'] as const).map(t => (
           <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
             className={`px-4 py-2 text-sm ${tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-200'}`}>
-            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', packing: 'Balení & Spotify' }[t]}
+            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', packing: 'Balení & Spotify' }[t]}
           </button>
         ))}
       </div>
@@ -380,6 +380,9 @@ export function PartyDetail() {
         </div>
       )}
 
+      {/* Shopping Tab */}
+      {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
+
       {/* Packing & Spotify Tab */}
       {tab === 'packing' && (
         <div className="space-y-6">
@@ -412,6 +415,174 @@ export function PartyDetail() {
           </section>
         </div>
       )}
+    </div>
+  )
+}
+
+function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
+  const [categories, setCategories] = useState<any[]>([])
+  const [estimates, setEstimates] = useState<any[]>([])
+  const [calculation, setCalculation] = useState<any>(null)
+  const [items, setItems] = useState<any[]>([])
+  const [newItem, setNewItem] = useState('')
+
+  useEffect(() => { load() }, [partyId])
+
+  const load = async () => {
+    const [cats, est, calc, itms] = await Promise.all([
+      api.foodCategories(),
+      api.getFoodEstimates(partyId),
+      api.calculateFood(partyId),
+      api.getShoppingItems(partyId),
+    ])
+    setCategories(cats)
+    setEstimates(est)
+    setCalculation(calc)
+    setItems(itms)
+  }
+
+  const handleEstimateChange = async (category: string, perNight: number, unit: string) => {
+    await api.setFoodEstimate(partyId, { category, perNight, unit })
+    load()
+  }
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newItem.trim()) return
+    await api.addShoppingItem(partyId, newItem.trim())
+    setNewItem('')
+    load()
+  }
+
+  const handleToggle = async (id: number) => {
+    await api.toggleShoppingItem(partyId, id)
+    load()
+  }
+
+  const handleDeleteItem = async (id: number) => {
+    await api.deleteShoppingItem(partyId, id)
+    load()
+  }
+
+  const getEstimate = (catKey: string) => estimates.find((e: any) => e.category === catKey)
+
+  return (
+    <div className="space-y-8">
+      {/* Food calculation */}
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Kalkulace jídla</h2>
+
+        {calculation && (
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 mb-4">
+            <div className="flex gap-6 text-sm text-gray-400">
+              <span>Potvrzených: <strong className="text-white">{calculation.confirmedPeople}</strong></span>
+              <span>Celkem nocí: <strong className="text-white">{calculation.totalNights}</strong></span>
+            </div>
+            {calculation.perPerson?.length > 0 && (
+              <div className="mt-2 text-xs text-gray-500">
+                {calculation.perPerson.map((p: any) => (
+                  <span key={p.user.id} className="mr-3">{p.user.displayName}: {p.nights} nocí</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-400 text-left border-b border-gray-700">
+                <th className="px-4 py-2">Kategorie</th>
+                <th className="px-4 py-2 w-28">Na osobu/noc</th>
+                <th className="px-4 py-2 w-28">Jednotka</th>
+                <th className="px-4 py-2 w-28">Celkem koupit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((cat: any) => {
+                const est = getEstimate(cat.key)
+                const perNight = est?.perNight || 0
+                const unit = est?.unit || cat.defaultUnit
+                const calcRow = calculation?.amounts?.find((a: any) => a.category === cat.key)
+
+                return (
+                  <tr key={cat.key} className="border-t border-gray-700">
+                    <td className="px-4 py-2 font-medium">{cat.label}</td>
+                    <td className="px-4 py-2">
+                      {isAdmin ? (
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={perNight}
+                          onChange={e => handleEstimateChange(cat.key, Number(e.target.value), unit)}
+                          className="bg-gray-700 rounded px-2 py-1 text-white w-20"
+                        />
+                      ) : (
+                        <span>{perNight}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      {isAdmin ? (
+                        <select
+                          value={unit}
+                          onChange={e => handleEstimateChange(cat.key, perNight, e.target.value)}
+                          className="bg-gray-700 rounded px-2 py-1 text-white"
+                        >
+                          <option value="ks">ks</option>
+                          <option value="l">l</option>
+                          <option value="baleni">balení</option>
+                          <option value="kg">kg</option>
+                        </select>
+                      ) : (
+                        <span>{unit}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="font-semibold text-blue-400">
+                        {calcRow ? `${calcRow.totalNeeded} ${unit}` : '–'}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Shopping list */}
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Nákupní seznam</h2>
+
+        <form onSubmit={handleAddItem} className="flex gap-2 mb-4">
+          <input
+            value={newItem}
+            onChange={e => setNewItem(e.target.value)}
+            placeholder="Přidat položku..."
+            className="bg-gray-700 rounded px-3 py-2 text-white flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+        </form>
+
+        <div className="space-y-1">
+          {items.map((item: any) => (
+            <div key={item.id} className="flex items-center gap-3 bg-gray-800 rounded p-3 border border-gray-700">
+              <button
+                onClick={() => handleToggle(item.id)}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                  item.checked ? 'bg-blue-600 border-blue-600' : 'border-gray-500'
+                }`}
+              >
+                {item.checked && <span className="text-white text-xs">✓</span>}
+              </button>
+              <span className={`flex-1 ${item.checked ? 'line-through text-gray-500' : ''}`}>{item.name}</span>
+              <button onClick={() => handleDeleteItem(item.id)} className="text-red-500 hover:text-red-400 text-xs">Smazat</button>
+            </div>
+          ))}
+          {items.length === 0 && <p className="text-gray-500 text-sm">Seznam je prázdný</p>}
+        </div>
+      </section>
     </div>
   )
 }

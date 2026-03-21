@@ -29,11 +29,13 @@ model Party {
   spotifyInfo String       @default("")
   createdAt   DateTime     @default(now())
 
-  attendance  Attendance[]
-  partyGames  PartyGame[]
-  schedule    Schedule[]
-  expenses    Expense[]
-  packingItems PackingItem[]
+  attendance      Attendance[]
+  partyGames      PartyGame[]
+  schedule        Schedule[]
+  expenses        Expense[]
+  packingItems    PackingItem[]
+  foodEstimates   FoodEstimate[]
+  shoppingItems   ShoppingItem[]
 }
 
 model Attendance {
@@ -96,6 +98,28 @@ model Expense {
 
   party       Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
   paidBy      User   @relation(fields: [paidByUserId], references: [id])
+}
+
+model FoodEstimate {
+  id              Int    @id @default(autoincrement())
+  partyId         Int
+  category        String // "hotova_jidla" | "piti" | "sunky" | "syry" | "zelenina" | "parky" | "toustovy_chleb"
+  unit            String @default("ks") // "ks" | "l" | "baleni" | "kg"
+  perNight        Float  @default(0) // expected consumption per person per night
+
+  party           Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@unique([partyId, category])
+}
+
+model ShoppingItem {
+  id        Int     @id @default(autoincrement())
+  partyId   Int
+  name      String
+  checked   Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  party     Party   @relation(fields: [partyId], references: [id], onDelete: Cascade)
 }
 
 model PackingItem {
