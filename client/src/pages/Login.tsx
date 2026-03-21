@@ -20,7 +20,7 @@ export function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
-        <p className="text-xs text-gray-600 text-center mb-2">v1.2</p>
+        <p className="text-xs text-gray-400 text-center mb-2">v1.3</p>
         <h1 className="text-2xl font-bold text-center mb-6 text-blue-400">LAN Party</h1>
         {error && <div className="bg-red-900/50 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>}
         <div className="mb-4">
