@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique
+  displayName  String
+  passwordHash String
+  role         String       @default("member") // "admin" | "member"
+  createdAt    DateTime     @default(now())
+
+  attendance   Attendance[]
+  expenses     Expense[]
+}
+
+model Party {
+  id          Int          @id @default(autoincrement())
+  name        String
+  location    String
+  startDate   DateTime
+  endDate     DateTime
+  description String       @default("")
+  spotifyInfo String       @default("")
+  createdAt   DateTime     @default(now())
+
+  attendance  Attendance[]
+  partyGames  PartyGame[]
+  schedule    Schedule[]
+  expenses    Expense[]
+  packingItems PackingItem[]
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  partyId   Int
+  status    String   @default("maybe") // "confirmed" | "maybe" | "declined"
+  arrival   DateTime?
+  departure DateTime?
+
+  user      User     @relation(fields: [userId], references: [id])
+  party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, partyId])
+}
+
+model Game {
+  id         Int         @id @default(autoincrement())
+  name       String
+  source     String      @default("steam") // "steam" | "copied" | "free" | "other"
+  sourceNote String      @default("")
+  minPlayers Int         @default(1)
+  maxPlayers Int?
+  imageUrl   String      @default("")
+
+  partyGames PartyGame[]
+}
+
+model PartyGame {
+  id      Int   @id @default(autoincrement())
+  partyId Int
+  gameId  Int
+
+  party   Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  game    Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([partyId, gameId])
+}
+
+model Schedule {
+  id          Int    @id @default(autoincrement())
+  partyId     Int
+  day         Int    // day number (1, 2, 3...)
+  timeSlot    String // "morning" | "afternoon" | "evening" | "night"
+  title       String
+  description String @default("")
+  gameId      Int?
+
+  party       Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id          Int    @id @default(autoincrement())
+  partyId     Int
+  paidByUserId Int
+  amount      Float
+  description String
+  isShared    Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  party       Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  paidBy      User   @relation(fields: [paidByUserId], references: [id])
+}
+
+model PackingItem {
+  id       Int     @id @default(autoincrement())
+  name     String
+  partyId  Int?    // null = global item, set = party-specific
+  category String  @default("general") // "general" | "hardware" | "food" | "other"
+
+  party    Party?  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+}
