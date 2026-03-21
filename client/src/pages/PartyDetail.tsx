@@ -12,6 +12,7 @@ const TIME_SLOTS = [
 
 const SOURCE_LABELS: Record<string, string> = {
   steam: 'Steam',
+  epic: 'Epic Games',
   copied: 'Kopie',
   free: 'Free',
   other: 'Jiné',

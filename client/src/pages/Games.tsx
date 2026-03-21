@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 
 const SOURCE_OPTIONS = [
   { value: 'steam', label: 'Steam' },
+  { value: 'epic', label: 'Epic Games' },
   { value: 'copied', label: 'Kopie' },
   { value: 'free', label: 'Free' },
   { value: 'other', label: 'Jiné' },
@@ -79,6 +80,7 @@ export function Games() {
               <span className="font-medium">{game.name}</span>
               <span className={`text-xs ml-2 px-2 py-0.5 rounded ${
                 game.source === 'steam' ? 'bg-blue-900/50 text-blue-400' :
+                game.source === 'epic' ? 'bg-orange-900/50 text-orange-400' :
                 game.source === 'copied' ? 'bg-yellow-900/50 text-yellow-400' :
                 game.source === 'free' ? 'bg-green-900/50 text-green-400' :
                 'bg-gray-700 text-gray-400'
