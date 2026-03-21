@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
+import { countNights } from '../utils'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -68,9 +69,7 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
 
   for (const att of attendance) {
     if (!att.arrival || !att.departure) continue
-    const arrival = new Date(att.arrival)
-    const departure = new Date(att.departure)
-    const nights = Math.max(0, Math.ceil((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24)))
+    const nights = countNights(new Date(att.arrival), new Date(att.departure))
     personData[att.userId] = { user: att.user, nights, advance: att.advance }
   }
 
