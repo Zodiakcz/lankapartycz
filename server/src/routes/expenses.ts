@@ -17,14 +17,18 @@ router.get('/:partyId', requireAuth, async (req, res) => {
 
 // Add expense
 router.post('/:partyId', requireAuth, async (req, res) => {
-  const { amount, description, isShared, paidByUserId } = req.body
+  const { amount, description, paidByUserId } = req.body
+  if (!amount || !description) {
+    return res.status(400).json({ error: 'Vyplňte částku a popis' })
+  }
+
   const expense = await prisma.expense.create({
     data: {
       partyId: Number(req.params.partyId),
       paidByUserId: paidByUserId || req.session.userId!,
       amount,
       description,
-      isShared: isShared !== undefined ? isShared : true,
+      isShared: true,
     },
     include: { paidBy: { select: { id: true, displayName: true } } },
   })
@@ -71,10 +75,7 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
   }
 
   const totalNights = Object.values(nightsPerPerson).reduce((sum, p) => sum + p.nights, 0)
-
-  // Split shared expenses by nights
-  const sharedTotal = expenses.filter(e => e.isShared).reduce((sum, e) => sum + e.amount, 0)
-  const personalExpenses = expenses.filter(e => !e.isShared)
+  const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
   // Per person: what they owe vs what they paid
   const perPerson: Record<number, {
@@ -87,26 +88,22 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
 
   for (const [userIdStr, data] of Object.entries(nightsPerPerson)) {
     const userId = Number(userIdStr)
-    const share = totalNights > 0 ? (data.nights / totalNights) * sharedTotal : 0
-    const paid = expenses.filter(e => e.paidByUserId === userId && e.isShared).reduce((sum, e) => sum + e.amount, 0)
+    const share = totalNights > 0 ? (data.nights / totalNights) * total : 0
+    const paid = expenses.filter(e => e.paidByUserId === userId).reduce((sum, e) => sum + e.amount, 0)
 
     perPerson[userId] = {
       user: data.user,
       nights: data.nights,
       owes: Math.round(share * 100) / 100,
       paid: Math.round(paid * 100) / 100,
-      balance: Math.round((paid - share) * 100) / 100, // positive = others owe them
+      balance: Math.round((paid - share) * 100) / 100,
     }
   }
 
   res.json({
-    sharedTotal: Math.round(sharedTotal * 100) / 100,
+    sharedTotal: Math.round(total * 100) / 100,
     totalNights,
     perPerson: Object.values(perPerson),
-    personalExpenses: personalExpenses.map(e => ({
-      ...e,
-      paidBy: attendance.find(a => a.userId === e.paidByUserId)?.user,
-    })),
   })
 })
 

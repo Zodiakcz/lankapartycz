@@ -33,7 +33,7 @@ export function PartyDetail() {
   const [attForm, setAttForm] = useState({ status: 'maybe', arrival: '', departure: '' })
 
   // Expense form
-  const [expForm, setExpForm] = useState({ amount: '', description: '', isShared: true })
+  const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
   // Schedule form
   const [schedForm, setSchedForm] = useState({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
@@ -70,8 +70,8 @@ export function PartyDetail() {
 
   const handleExpense = async (e: React.FormEvent) => {
     e.preventDefault()
-    await api.createExpense(partyId, { amount: Number(expForm.amount), description: expForm.description, isShared: expForm.isShared })
-    setExpForm({ amount: '', description: '', isShared: true })
+    await api.createExpense(partyId, { amount: Number(expForm.amount), description: expForm.description, paidByUserId: expForm.paidByUserId ? Number(expForm.paidByUserId) : undefined })
+    setExpForm({ amount: '', description: '', paidByUserId: expForm.paidByUserId })
     load()
   }
 
@@ -312,6 +312,16 @@ export function PartyDetail() {
             <h3 className="font-semibold mb-3">Přidat výdaj</h3>
             <div className="flex flex-wrap gap-3 items-end">
               <div>
+                <label className="block text-xs text-gray-500 mb-1">Kdo platil</label>
+                <select value={expForm.paidByUserId} onChange={e => setExpForm({ ...expForm, paidByUserId: e.target.value })} required
+                  className="bg-gray-700 rounded px-3 py-2 text-white">
+                  <option value="">Vyber...</option>
+                  {party.attendance?.filter((a: any) => a.status === 'confirmed' || a.status === 'maybe').map((a: any) => (
+                    <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs text-gray-500 mb-1">Částka (Kč)</label>
                 <input type="number" step="0.01" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required
                   className="bg-gray-700 rounded px-3 py-2 text-white w-28" />
@@ -321,11 +331,6 @@ export function PartyDetail() {
                 <input value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} required
                   className="bg-gray-700 rounded px-3 py-2 text-white w-full" placeholder="Nákup, elektřina..." />
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={expForm.isShared} onChange={e => setExpForm({ ...expForm, isShared: e.target.checked })}
-                  className="rounded" />
-                Sdílený
-              </label>
               <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
             </div>
           </form>
@@ -340,7 +345,6 @@ export function PartyDetail() {
                     <span className="font-medium">{e.description}</span>
                     <span className="text-blue-400 ml-2 font-semibold">{e.amount} Kč</span>
                     <span className="text-xs text-gray-500 ml-2">– {e.paidBy.displayName}</span>
-                    {!e.isShared && <span className="text-xs text-yellow-500 ml-2">(osobní)</span>}
                   </div>
                   {(isAdmin || e.paidByUserId === user?.id) && (
                     <button onClick={async () => { await api.deleteExpense(e.id); load() }}
@@ -359,7 +363,7 @@ export function PartyDetail() {
             <section>
               <h3 className="font-semibold mb-3">Rozúčtování</h3>
               <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-                <p className="text-sm text-gray-400 mb-3">Sdílené náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong> / {split.totalNights} nocí</p>
+                <p className="text-sm text-gray-400 mb-3">Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong> / {split.totalNights} nocí</p>
                 <div className="space-y-2">
                   {split.perPerson?.map((p: any) => (
                     <div key={p.user.id} className="flex items-center justify-between text-sm">
