@@ -107,6 +107,7 @@ model FoodEstimate {
   category        String // "hotova_jidla" | "piti" | "sunky" | "syry" | "zelenina" | "parky" | "toustovy_chleb"
   unit            String @default("ks") // "ks" | "l" | "baleni" | "kg"
   perNight        Float  @default(0) // expected consumption per person per night
+  purchased       Boolean @default(false)
 
   party           Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
 

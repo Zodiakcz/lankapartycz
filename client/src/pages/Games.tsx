@@ -77,11 +77,11 @@ export function Games() {
     }
   }
 
-  const GameForm = () => (
+  const formJsx = (
     <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input placeholder="Název hry" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
-          className="bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+          className="bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}
           className="bg-gray-700 rounded px-3 py-2 text-white">
           {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -122,13 +122,12 @@ export function Games() {
         )}
       </div>
 
-      {(showForm || editingId) && !showForm && editingId && <GameForm />}
-      {showForm && !editingId && <GameForm />}
+      {showForm && !editingId && formJsx}
 
       <div className="space-y-2">
         {games.map(game => (
           editingId === game.id ? (
-            <GameForm key={game.id} />
+            <div key={game.id}>{formJsx}</div>
           ) : (
             <div key={game.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-center justify-between">
               <div className="flex items-center flex-wrap gap-2">

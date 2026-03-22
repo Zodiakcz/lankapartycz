@@ -68,6 +68,8 @@ export const api = {
   setFoodEstimate: (partyId: number, data: { category: string; perNight: number; unit: string }) =>
     request<any>(`/shopping/${partyId}/food`, { method: 'POST', body: JSON.stringify(data) }),
   calculateFood: (partyId: number) => request<any>(`/shopping/${partyId}/food/calculate`),
+  toggleFoodPurchased: (partyId: number, category: string) =>
+    request<any>(`/shopping/${partyId}/food/${category}/toggle`, { method: 'PATCH' }),
   getShoppingItems: (partyId: number) => request<any[]>(`/shopping/${partyId}/items`),
   addShoppingItem: (partyId: number, name: string) =>
     request<any>(`/shopping/${partyId}/items`, { method: 'POST', body: JSON.stringify({ name }) }),

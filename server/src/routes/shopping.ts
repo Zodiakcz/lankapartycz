@@ -84,6 +84,23 @@ router.get('/:partyId/food/calculate', requireAuth, async (req, res) => {
   })
 })
 
+// Toggle food estimate purchased status (any user)
+router.patch('/:partyId/food/:category/toggle', requireAuth, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const { category } = req.params
+
+  const est = await prisma.foodEstimate.findUnique({
+    where: { partyId_category: { partyId, category } },
+  })
+  if (!est) return res.status(404).json({ error: 'Kategorie nenalezena' })
+
+  const updated = await prisma.foodEstimate.update({
+    where: { id: est.id },
+    data: { purchased: !est.purchased },
+  })
+  res.json(updated)
+})
+
 // Get shopping items for a party
 router.get('/:partyId/items', requireAuth, async (req, res) => {
   const items = await prisma.shoppingItem.findMany({

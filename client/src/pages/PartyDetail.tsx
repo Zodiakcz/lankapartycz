@@ -75,6 +75,7 @@ export function PartyDetail() {
     await api.createExpense(partyId, { amount: Number(expForm.amount), description: expForm.description, paidByUserId: expForm.paidByUserId ? Number(expForm.paidByUserId) : undefined })
     setExpForm({ amount: '', description: '', paidByUserId: expForm.paidByUserId })
     load()
+    loadSplit()
   }
 
   const handleSchedule = async (e: React.FormEvent) => {
@@ -368,7 +369,7 @@ export function PartyDetail() {
                     <span className="text-xs text-gray-500 ml-2">– {e.paidBy.displayName}</span>
                   </div>
                   {(isAdmin || e.paidByUserId === user?.id) && (
-                    <button onClick={async () => { await api.deleteExpense(e.id); load() }}
+                    <button onClick={async () => { await api.deleteExpense(e.id); load(); loadSplit() }}
                       className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
                   )}
                 </div>
@@ -536,6 +537,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 text-left border-b border-gray-700">
+                <th className="px-4 py-2 w-10"></th>
                 <th className="px-4 py-2">Kategorie</th>
                 <th className="px-4 py-2 w-28">Na osobu/noc</th>
                 <th className="px-4 py-2 w-28">Jednotka</th>
@@ -550,8 +552,20 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                 const calcRow = calculation?.amounts?.find((a: any) => a.category === cat.key)
 
                 return (
-                  <tr key={cat.key} className="border-t border-gray-700">
-                    <td className="px-4 py-2 font-medium">{cat.label}</td>
+                  <tr key={cat.key} className={`border-t border-gray-700 ${est?.purchased ? 'opacity-50' : ''}`}>
+                    <td className="px-4 py-2">
+                      <input
+                        type="checkbox"
+                        checked={est?.purchased || false}
+                        onChange={async () => {
+                          if (!est) return
+                          await api.toggleFoodPurchased(partyId, cat.key)
+                          load()
+                        }}
+                        className="w-4 h-4 rounded"
+                      />
+                    </td>
+                    <td className={`px-4 py-2 font-medium ${est?.purchased ? 'line-through' : ''}`}>{cat.label}</td>
                     <td className="px-4 py-2">
                       {isAdmin ? (
                         <input
