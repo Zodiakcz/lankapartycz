@@ -36,6 +36,8 @@ export const api = {
   setAttendance: (partyId: number, data: any) =>
     request<any>(`/attendance/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
   getAttendance: (partyId: number) => request<any[]>(`/attendance/${partyId}`),
+  adminEditAttendance: (partyId: number, userId: number, data: any) =>
+    request<any>(`/attendance/${partyId}/user/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Games
   games: () => request<any[]>('/games'),

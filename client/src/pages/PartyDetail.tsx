@@ -36,6 +36,27 @@ export function PartyDetail() {
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
+  // Admin edit attendance
+  const [editAttId, setEditAttId] = useState<number | null>(null)
+  const [editAttForm, setEditAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
+
+  const startEditAtt = (a: any) => {
+    setEditAttId(a.userId)
+    setEditAttForm({
+      status: a.status,
+      arrival: a.arrival ? a.arrival.slice(0, 16) : '',
+      departure: a.departure ? a.departure.slice(0, 16) : '',
+      advance: String(a.advance || 0),
+    })
+  }
+
+  const saveEditAtt = async () => {
+    if (editAttId === null) return
+    await api.adminEditAttendance(partyId, editAttId, editAttForm)
+    setEditAttId(null)
+    load()
+  }
+
   // Schedule form
   const [schedForm, setSchedForm] = useState({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
 
@@ -197,10 +218,43 @@ export function PartyDetail() {
                     <th className="px-4 py-2 hidden sm:table-cell">Odjezd</th>
                     <th className="px-4 py-2">Nocí</th>
                     <th className="px-4 py-2">Záloha</th>
+                    {isAdmin && <th className="px-4 py-2"></th>}
                   </tr>
                 </thead>
                 <tbody>
                   {party.attendance?.map((a: any) => (
+                    editAttId === a.userId ? (
+                      <tr key={a.id} className="border-t border-gray-700 bg-gray-750">
+                        <td className="px-4 py-2 font-medium">{a.user.displayName}</td>
+                        <td className="px-4 py-2">
+                          <select value={editAttForm.status} onChange={e => setEditAttForm({ ...editAttForm, status: e.target.value })}
+                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                            <option value="confirmed">Potvrzeno</option>
+                            <option value="maybe">Možná</option>
+                            <option value="declined">Neúčast</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-2 hidden sm:table-cell">
+                          <input type="datetime-local" value={editAttForm.arrival} onChange={e => setEditAttForm({ ...editAttForm, arrival: e.target.value })}
+                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                        </td>
+                        <td className="px-4 py-2 hidden sm:table-cell">
+                          <input type="datetime-local" value={editAttForm.departure} onChange={e => setEditAttForm({ ...editAttForm, departure: e.target.value })}
+                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                        </td>
+                        <td className="px-4 py-2">–</td>
+                        <td className="px-4 py-2">
+                          <input type="number" value={editAttForm.advance} onChange={e => setEditAttForm({ ...editAttForm, advance: e.target.value })}
+                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs w-20" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex gap-2">
+                            <button onClick={saveEditAtt} className="text-green-400 hover:text-green-300 text-xs">Uložit</button>
+                            <button onClick={() => setEditAttId(null)} className="text-gray-400 hover:text-gray-300 text-xs">Zrušit</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
                     <tr key={a.id} className="border-t border-gray-700">
                       <td className="px-4 py-2">{a.user.displayName}</td>
                       <td className="px-4 py-2">
@@ -221,7 +275,13 @@ export function PartyDetail() {
                         return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
                       })() : '–'}</td>
                       <td className="px-4 py-2">{a.advance ? <span className="text-green-400">{a.advance} Kč</span> : '–'}</td>
+                      {isAdmin && (
+                        <td className="px-4 py-2">
+                          <button onClick={() => startEditAtt(a)} className="text-blue-400 hover:text-blue-300 text-xs">Upravit</button>
+                        </td>
+                      )}
                     </tr>
+                    )
                   ))}
                   {(!party.attendance || party.attendance.length === 0) && (
                     <tr><td colSpan={5} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
