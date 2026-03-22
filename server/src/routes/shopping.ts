@@ -87,7 +87,7 @@ router.get('/:partyId/food/calculate', requireAuth, async (req, res) => {
 // Toggle food estimate purchased status (any user)
 router.patch('/:partyId/food/:category/toggle', requireAuth, async (req, res) => {
   const partyId = Number(req.params.partyId)
-  const { category } = req.params
+  const category = String(req.params.category)
 
   const est = await prisma.foodEstimate.findUnique({
     where: { partyId_category: { partyId, category } },
