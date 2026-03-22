@@ -527,11 +527,12 @@ export function PartyDetail() {
                         <th className="px-4 py-2">Záloha</th>
                         <th className="px-4 py-2">Nakoupil</th>
                         <th className="px-4 py-2">Bilance</th>
+                        <th className="px-4 py-2">Vyrovnáno</th>
                       </tr>
                     </thead>
                     <tbody>
                       {split.perPerson?.map((p: any) => (
-                        <tr key={p.user.id} className="border-t border-gray-700">
+                        <tr key={p.user.id} className={`border-t border-gray-700 ${p.settled ? 'opacity-60' : ''}`}>
                           <td className="px-4 py-2 font-medium">{p.user.displayName}</td>
                           <td className="px-4 py-2 text-gray-400">{p.nights}</td>
                           <td className="px-4 py-2 text-gray-400">{p.owes} Kč</td>
@@ -539,6 +540,18 @@ export function PartyDetail() {
                           <td className="px-4 py-2 text-gray-400">{p.paid} Kč</td>
                           <td className={`px-4 py-2 font-semibold ${p.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {p.balance >= 0 ? `+${p.balance}` : p.balance} Kč
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={p.settled}
+                              disabled={!isAdmin}
+                              onChange={async (e) => {
+                                await api.setSettled(Number(partyId), p.user.id, e.target.checked)
+                                loadSplit()
+                              }}
+                              className={`w-4 h-4 accent-green-500 ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                            />
                           </td>
                         </tr>
                       ))}
