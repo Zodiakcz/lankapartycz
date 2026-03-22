@@ -21,7 +21,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
         <a href="https://github.com/Zodiakcz/lankapartycz/commits/master" target="_blank" rel="noopener noreferrer"
-          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v1.7</a>
+          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v1.7.1</a>
         <h1 className="text-2xl font-bold text-center mb-6 text-blue-400">LAN Party</h1>
         {error && <div className="bg-red-900/50 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>}
         <div className="mb-4">
