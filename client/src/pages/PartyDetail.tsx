@@ -195,6 +195,7 @@ export function PartyDetail() {
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2 hidden sm:table-cell">Příjezd</th>
                     <th className="px-4 py-2 hidden sm:table-cell">Odjezd</th>
+                    <th className="px-4 py-2">Nocí</th>
                     <th className="px-4 py-2">Záloha</th>
                   </tr>
                 </thead>
@@ -213,6 +214,12 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
                       <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.departure ? formatDateTime(a.departure) : '–'}</td>
+                      <td className="px-4 py-2 font-medium">{a.arrival && a.departure ? (() => {
+                        const arr = new Date(a.arrival); const dep = new Date(a.departure)
+                        const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
+                        const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
+                        return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
+                      })() : '–'}</td>
                       <td className="px-4 py-2">{a.advance ? <span className="text-green-400">{a.advance} Kč</span> : '–'}</td>
                     </tr>
                   ))}
@@ -389,6 +396,7 @@ export function PartyDetail() {
                   <span>Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong></span>
                   <span>Zálohy celkem: <strong className="text-white">{split.totalAdvances} Kč</strong></span>
                   <span>Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
+                  {split.totalNights > 0 && <span>Cena za noc: <strong className="text-white">{Math.round(split.sharedTotal / split.totalNights)} Kč</strong></span>}
                 </div>
                 <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
                   <table className="w-full text-sm">
@@ -554,16 +562,18 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                 return (
                   <tr key={cat.key} className={`border-t border-gray-700 ${est?.purchased ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-2">
-                      <input
-                        type="checkbox"
-                        checked={est?.purchased || false}
-                        onChange={async () => {
+                      <button
+                        onClick={async () => {
                           if (!est) return
                           await api.toggleFoodPurchased(partyId, cat.key)
                           load()
                         }}
-                        className="w-4 h-4 rounded"
-                      />
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                          est?.purchased ? 'bg-blue-600 border-blue-600' : 'border-gray-500'
+                        }`}
+                      >
+                        {est?.purchased && <span className="text-white text-xs">✓</span>}
+                      </button>
                     </td>
                     <td className={`px-4 py-2 font-medium ${est?.purchased ? 'line-through' : ''}`}>{cat.label}</td>
                     <td className="px-4 py-2">
