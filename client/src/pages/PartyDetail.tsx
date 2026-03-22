@@ -99,7 +99,7 @@ export function PartyDetail() {
   const handleAttendance = async (e: React.FormEvent) => {
     e.preventDefault()
     await api.setAttendance(partyId, attForm)
-    load()
+    await load()
   }
 
   const handleExpense = async (e: React.FormEvent) => {
@@ -220,13 +220,13 @@ export function PartyDetail() {
           <section>
             <h2 className="text-lg font-semibold mb-3">Kdo jede</h2>
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
-              <table className="w-full text-sm min-w-[400px]">
+              <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-gray-750">
                   <tr className="text-gray-400 text-left">
                     <th className="px-3 py-2">Jméno</th>
                     <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2 hidden sm:table-cell">Příjezd</th>
-                    <th className="px-3 py-2 hidden sm:table-cell">Odjezd</th>
+                    <th className="px-3 py-2">Příjezd</th>
+                    <th className="px-3 py-2">Odjezd</th>
                     <th className="px-3 py-2">Nocí</th>
                     <th className="px-3 py-2">Záloha</th>
                     {isAdmin && <th className="px-3 py-2"></th>}
@@ -245,11 +245,11 @@ export function PartyDetail() {
                             <option value="declined">Neúčast</option>
                           </select>
                         </td>
-                        <td className="px-4 py-2 hidden sm:table-cell">
+                        <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.arrival} onChange={e => setEditAttForm({ ...editAttForm, arrival: e.target.value })}
                             className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
                         </td>
-                        <td className="px-4 py-2 hidden sm:table-cell">
+                        <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.departure} onChange={e => setEditAttForm({ ...editAttForm, departure: e.target.value })}
                             className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
                         </td>
@@ -277,8 +277,8 @@ export function PartyDetail() {
                           {a.status === 'confirmed' ? 'Potvrzeno' : a.status === 'maybe' ? 'Možná' : 'Neúčast'}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
-                      <td className="px-4 py-2 text-gray-400 hidden sm:table-cell">{a.departure ? formatDateTime(a.departure) : '–'}</td>
+                      <td className="px-4 py-2 text-gray-400">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
+                      <td className="px-4 py-2 text-gray-400">{a.departure ? formatDateTime(a.departure) : '–'}</td>
                       <td className="px-4 py-2 font-medium">{a.arrival && a.departure ? (() => {
                         const arr = new Date(a.arrival); const dep = new Date(a.departure)
                         const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
@@ -313,11 +313,11 @@ export function PartyDetail() {
                           <option value="declined">Neúčast</option>
                         </select>
                       </td>
-                      <td className="px-4 py-2 hidden sm:table-cell">
+                      <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.arrival} onChange={e => setAddAttForm({ ...addAttForm, arrival: e.target.value })}
                           className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
                       </td>
-                      <td className="px-4 py-2 hidden sm:table-cell">
+                      <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.departure} onChange={e => setAddAttForm({ ...addAttForm, departure: e.target.value })}
                           className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
                       </td>
