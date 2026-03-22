@@ -55,9 +55,12 @@ export function PartyDetail() {
 
   const saveEditAtt = async () => {
     if (editAttId === null) return
-    await api.adminEditAttendance(partyId, editAttId, editAttForm)
+    const updated = await api.adminEditAttendance(partyId, editAttId, editAttForm)
+    setParty((prev: any) => ({
+      ...prev,
+      attendance: prev.attendance.map((a: any) => a.userId === editAttId ? { ...a, ...updated } : a),
+    }))
     setEditAttId(null)
-    load()
   }
 
   const saveAddAtt = async () => {
