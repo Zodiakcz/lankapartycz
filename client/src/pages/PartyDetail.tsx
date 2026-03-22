@@ -36,9 +36,12 @@ export function PartyDetail() {
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
-  // Admin edit attendance
+  // Admin edit/add attendance
   const [editAttId, setEditAttId] = useState<number | null>(null)
   const [editAttForm, setEditAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
+  const [addingAtt, setAddingAtt] = useState(false)
+  const [addAttForm, setAddAttForm] = useState({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
+  const [allUsers, setAllUsers] = useState<any[]>([])
 
   const startEditAtt = (a: any) => {
     setEditAttId(a.userId)
@@ -57,6 +60,14 @@ export function PartyDetail() {
     load()
   }
 
+  const saveAddAtt = async () => {
+    if (!addAttForm.userId) return
+    await api.adminEditAttendance(partyId, Number(addAttForm.userId), addAttForm)
+    setAddingAtt(false)
+    setAddAttForm({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
+    load()
+  }
+
   // Schedule form
   const [schedForm, setSchedForm] = useState({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
 
@@ -64,7 +75,7 @@ export function PartyDetail() {
   const [spotifyEdit, setSpotifyEdit] = useState(false)
   const [spotifyInfo, setSpotifyInfo] = useState('')
 
-  useEffect(() => { load() }, [partyId])
+  useEffect(() => { load(); if (isAdmin) api.users().then(setAllUsers) }, [partyId])
 
   const load = async () => {
     const [p, games] = await Promise.all([api.party(partyId), api.games()])
@@ -283,12 +294,58 @@ export function PartyDetail() {
                     </tr>
                     )
                   ))}
-                  {(!party.attendance || party.attendance.length === 0) && (
-                    <tr><td colSpan={5} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
+                  {addingAtt && (
+                    <tr className="border-t border-gray-700 bg-gray-750">
+                      <td className="px-4 py-2">
+                        <select value={addAttForm.userId} onChange={e => setAddAttForm({ ...addAttForm, userId: e.target.value })}
+                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                          <option value="">Vyber uživatele...</option>
+                          {allUsers
+                            .filter(u => !party.attendance?.some((a: any) => a.userId === u.id))
+                            .map((u: any) => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-4 py-2">
+                        <select value={addAttForm.status} onChange={e => setAddAttForm({ ...addAttForm, status: e.target.value })}
+                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                          <option value="confirmed">Potvrzeno</option>
+                          <option value="maybe">Možná</option>
+                          <option value="declined">Neúčast</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-2 hidden sm:table-cell">
+                        <input type="datetime-local" value={addAttForm.arrival} onChange={e => setAddAttForm({ ...addAttForm, arrival: e.target.value })}
+                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                      </td>
+                      <td className="px-4 py-2 hidden sm:table-cell">
+                        <input type="datetime-local" value={addAttForm.departure} onChange={e => setAddAttForm({ ...addAttForm, departure: e.target.value })}
+                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                      </td>
+                      <td className="px-4 py-2">–</td>
+                      <td className="px-4 py-2">
+                        <input type="number" value={addAttForm.advance} onChange={e => setAddAttForm({ ...addAttForm, advance: e.target.value })}
+                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs w-20" />
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex gap-2">
+                          <button onClick={saveAddAtt} className="text-green-400 hover:text-green-300 text-xs">Uložit</button>
+                          <button onClick={() => setAddingAtt(false)} className="text-gray-400 hover:text-gray-300 text-xs">Zrušit</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {(!party.attendance || party.attendance.length === 0) && !addingAtt && (
+                    <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
+            {isAdmin && !addingAtt && (
+              <button onClick={() => { setAddingAtt(true); setEditAttId(null) }}
+                className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                + Přidat účastníka
+              </button>
+            )}
           </section>
 
           {/* Games */}
