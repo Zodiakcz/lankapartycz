@@ -143,7 +143,7 @@ export function PartyDetail() {
   if (!party) return <div className="text-gray-500">Načítání...</div>
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
-  const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ')
+  const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
 
   const partyDays = Math.ceil((new Date(party.endDate).getTime() - new Date(party.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
   const partyGameIds = new Set(party.partyGames?.map((pg: any) => pg.gameId))
