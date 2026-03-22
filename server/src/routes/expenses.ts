@@ -65,12 +65,12 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
   if (!party) return res.status(404).json({ error: 'Párty nenalezena' })
 
   // Calculate nights and advance per person
-  const personData: Record<number, { user: { id: number; displayName: string }; nights: number; advance: number }> = {}
+  const personData: Record<number, { user: { id: number; displayName: string }; nights: number; advance: number; settled: boolean }> = {}
 
   for (const att of attendance) {
     if (!att.arrival || !att.departure) continue
     const nights = countNights(new Date(att.arrival), new Date(att.departure))
-    personData[att.userId] = { user: att.user, nights, advance: att.advance }
+    personData[att.userId] = { user: att.user, nights, advance: att.advance, settled: att.settled }
   }
 
   const totalNights = Object.values(personData).reduce((sum, p) => sum + p.nights, 0)
@@ -85,6 +85,7 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     owes: number
     paid: number
     balance: number
+    settled: boolean
   }> = {}
 
   for (const [userIdStr, data] of Object.entries(personData)) {
@@ -102,6 +103,7 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
       owes: Math.round(share * 100) / 100,
       paid: Math.round(expensesPaid * 100) / 100,
       balance: Math.round(balance * 100) / 100,
+      settled: data.settled,
     }
   }
 
@@ -111,6 +113,24 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     totalNights,
     perPerson: Object.values(perPerson),
   })
+})
+
+// Toggle settled status for a person (admin only)
+router.patch('/:partyId/settled/:userId', requireAdmin, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const userId = Number(req.params.userId)
+  const { settled } = req.body
+
+  const attendance = await prisma.attendance.findUnique({
+    where: { userId_partyId: { userId, partyId } },
+  })
+  if (!attendance) return res.status(404).json({ error: 'Účastník nenalezen' })
+
+  const updated = await prisma.attendance.update({
+    where: { userId_partyId: { userId, partyId } },
+    data: { settled: Boolean(settled) },
+  })
+  res.json({ settled: updated.settled })
 })
 
 export default router

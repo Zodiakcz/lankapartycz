@@ -63,6 +63,8 @@ export const api = {
     request<any>(`/expenses/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
   deleteExpense: (id: number) => request<any>(`/expenses/${id}`, { method: 'DELETE' }),
   getExpenseSplit: (partyId: number) => request<any>(`/expenses/${partyId}/split`),
+  setSettled: (partyId: number, userId: number, settled: boolean) =>
+    request<any>(`/expenses/${partyId}/settled/${userId}`, { method: 'PATCH', body: JSON.stringify({ settled }) }),
 
   // Shopping
   foodCategories: () => request<any[]>('/shopping/categories'),

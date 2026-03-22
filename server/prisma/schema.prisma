@@ -46,6 +46,7 @@ model Attendance {
   arrival   DateTime?
   departure DateTime?
   advance   Float    @default(0) // záloha - advance payment
+  settled   Boolean  @default(false) // vyrovnáno - payment confirmed by admin
 
   user      User     @relation(fields: [userId], references: [id])
   party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
