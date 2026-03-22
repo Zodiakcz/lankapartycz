@@ -63,13 +63,7 @@ sudo docker compose -f docker-compose.prod.yml pull
 sudo docker compose -f docker-compose.prod.yml up -d
 ```
 
-## Network
-
-- Internal: http://REDACTED (port 80)
-- External: http://REDACTED:8080 (MikroTik NAT forwards 8080 → REDACTED:80)
-- Domain: TBD (will register something cheap later)
-
 ## GitHub
 
-- Repo: https://github.com/Zodiakcz/lankapartycz (private)
-- Container images: ghcr.io/zodiakcz/lankapartycz/server and /client (public)
+- Repo: https://github.com/Zodiakcz/lankapartycz
+- Container images: ghcr.io/zodiakcz/lankapartycz/server and /client
