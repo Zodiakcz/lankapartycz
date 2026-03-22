@@ -129,7 +129,7 @@ export function Games() {
           editingId === game.id ? (
             <div key={game.id}>{formJsx}</div>
           ) : (
-            <div key={game.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-center justify-between">
+            <div key={game.id} className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center flex-wrap gap-2">
                 <span className="font-medium">{game.name}</span>
                 <span className={`text-xs px-2 py-0.5 rounded ${sourceBadgeClass(game.source)}`}>
@@ -141,7 +141,7 @@ export function Games() {
                 {game.sourceNote && <span className="text-xs text-gray-500">{game.sourceNote}</span>}
               </div>
               {isAdmin && (
-                <div className="flex gap-3 ml-4 flex-shrink-0">
+                <div className="flex gap-3 flex-shrink-0">
                   <button onClick={() => startEdit(game)} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
                   <button onClick={() => handleDelete(game.id)} className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
                 </div>
