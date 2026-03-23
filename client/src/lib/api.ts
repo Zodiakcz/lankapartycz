@@ -21,7 +21,12 @@ export const api = {
   me: () => request<any>('/auth/me'),
   register: (data: { username: string; displayName: string; password: string; role?: string }) =>
     request<any>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  selfRegister: (data: { username: string; displayName: string; password: string }) =>
+    request<any>('/auth/self-register', { method: 'POST', body: JSON.stringify(data) }),
   users: () => request<any[]>('/auth/users'),
+  pendingUsers: () => request<any[]>('/auth/pending'),
+  approveUser: (id: number) => request<any>(`/auth/approve/${id}`, { method: 'POST' }),
+  deleteUser: (id: number) => request<any>(`/auth/users/${id}`, { method: 'DELETE' }),
   changePassword: (data: { userId?: number; currentPassword?: string; newPassword: string }) =>
     request<any>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 
