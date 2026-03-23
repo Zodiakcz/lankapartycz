@@ -65,6 +65,7 @@ export interface Party {
   partyGames: PartyGame[]
   schedule: ScheduleItem[]
   expenses: Expense[]
+  _count?: { attendance: number; partyGames: number }
 }
 
 export interface PackingItem {

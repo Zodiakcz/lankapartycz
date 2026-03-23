@@ -25,11 +25,11 @@
 
 @layer components {
   .card {
-    @apply bg-zinc-900 border border-white/8 rounded-xl;
+    @apply bg-zinc-900 border border-white/10 rounded-xl;
   }
 
   .card-inner {
-    @apply bg-zinc-800/60 border border-white/6 rounded-lg;
+    @apply bg-zinc-800/60 border border-white/5 rounded-lg;
   }
 
   .btn-primary {
@@ -105,7 +105,7 @@
   }
 
   .tab-bar {
-    @apply flex border-b border-white/8 overflow-x-auto;
+    @apply flex border-b border-white/10 overflow-x-auto;
     scrollbar-width: none;
   }
 

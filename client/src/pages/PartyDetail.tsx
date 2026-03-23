@@ -19,17 +19,19 @@ export function PartyDetail() {
   const [split, setSplit] = useState<ExpenseSplit | null>(null)
   const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'packing'>('info')
 
+  type AttStatus = 'confirmed' | 'maybe' | 'declined'
+
   // Attendance form
-  const [attForm, setAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
+  const [attForm, setAttForm] = useState<{ status: AttStatus; arrival: string; departure: string; advance: string }>({ status: 'maybe', arrival: '', departure: '', advance: '0' })
 
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
   // Admin edit/add attendance
   const [editAttId, setEditAttId] = useState<number | null>(null)
-  const [editAttForm, setEditAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
+  const [editAttForm, setEditAttForm] = useState<{ status: AttStatus; arrival: string; departure: string; advance: string }>({ status: 'maybe', arrival: '', departure: '', advance: '0' })
   const [addingAtt, setAddingAtt] = useState(false)
-  const [addAttForm, setAddAttForm] = useState({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
+  const [addAttForm, setAddAttForm] = useState<{ userId: string; status: AttStatus; arrival: string; departure: string; advance: string }>({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
   const [allUsers, setAllUsers] = useState<User[]>([])
 
   const startEditAtt = (a: Attendance) => {
@@ -44,14 +46,14 @@ export function PartyDetail() {
 
   const saveEditAtt = async () => {
     if (editAttId === null) return
-    await api.adminEditAttendance(partyId, editAttId, editAttForm)
+    await api.adminEditAttendance(partyId, editAttId, { ...editAttForm, advance: Number(editAttForm.advance) })
     setEditAttId(null)
     load()
   }
 
   const saveAddAtt = async () => {
     if (!addAttForm.userId) return
-    await api.adminEditAttendance(partyId, Number(addAttForm.userId), addAttForm)
+    await api.adminEditAttendance(partyId, Number(addAttForm.userId), { ...addAttForm, userId: Number(addAttForm.userId), advance: Number(addAttForm.advance) })
     setAddingAtt(false)
     setAddAttForm({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
     load()
@@ -98,7 +100,7 @@ export function PartyDetail() {
 
   const handleAttendance = async (e: React.FormEvent) => {
     e.preventDefault()
-    await api.setAttendance(partyId, attForm)
+    await api.setAttendance(partyId, { ...attForm, advance: Number(attForm.advance) })
     await load()
   }
 
@@ -128,6 +130,7 @@ export function PartyDetail() {
   }
 
   const startPartyEdit = () => {
+    if (!party) return
     setPartyEditForm({
       name: party.name,
       location: party.location,
@@ -253,7 +256,7 @@ export function PartyDetail() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 items-end">
                 <div>
                   <label className="form-label">Status</label>
-                  <select value={attForm.status} onChange={e => setAttForm({ ...attForm, status: e.target.value })}
+                  <select value={attForm.status} onChange={e => setAttForm({ ...attForm, status: e.target.value as AttStatus })}
                     className="form-input">
                     <option value="confirmed">Potvrzeno</option>
                     <option value="maybe">Možná</option>
@@ -306,7 +309,7 @@ export function PartyDetail() {
                       <tr key={a.id} className="border-t border-white/8 bg-zinc-800/60">
                         <td className="px-4 py-2 font-medium">{a.user.displayName}</td>
                         <td className="px-4 py-2">
-                          <select value={editAttForm.status} onChange={e => setEditAttForm({ ...editAttForm, status: e.target.value })}
+                          <select value={editAttForm.status} onChange={e => setEditAttForm({ ...editAttForm, status: e.target.value as AttStatus })}
                             className="form-select">
                             <option value="confirmed">Potvrzeno</option>
                             <option value="maybe">Možná</option>
@@ -374,7 +377,7 @@ export function PartyDetail() {
                         </select>
                       </td>
                       <td className="px-4 py-2">
-                        <select value={addAttForm.status} onChange={e => setAddAttForm({ ...addAttForm, status: e.target.value })}
+                        <select value={addAttForm.status} onChange={e => setAddAttForm({ ...addAttForm, status: e.target.value as AttStatus })}
                           className="form-select">
                           <option value="confirmed">Potvrzeno</option>
                           <option value="maybe">Možná</option>
