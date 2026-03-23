@@ -4,6 +4,23 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import type { Party } from '../lib/types'
 
+function useCountdown(targetDate: Date | null) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!targetDate) return
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [targetDate])
+  if (!targetDate) return null
+  const diff = targetDate.getTime() - now.getTime()
+  if (diff <= 0) return null
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  return { days, hours, minutes, seconds }
+}
+
 export function Parties() {
   const { isAdmin } = useAuth()
   const [parties, setParties] = useState<Party[]>([])
@@ -25,6 +42,11 @@ export function Parties() {
   const now = new Date()
   const upcoming = parties.filter(p => new Date(p.endDate) >= now)
   const past = parties.filter(p => new Date(p.endDate) < now)
+
+  const nextParty = upcoming
+    .filter(p => new Date(p.startDate) > now)
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] || null
+  const countdown = useCountdown(nextParty ? new Date(nextParty.startDate) : null)
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
 
@@ -135,6 +157,32 @@ export function Parties() {
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Zrušit</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {countdown && nextParty && (
+        <div className="card p-5 mb-6 text-center">
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+            Další párty za
+          </p>
+          <div className="flex items-center justify-center gap-3 sm:gap-5 my-3">
+            {[
+              { value: countdown.days, label: 'dní' },
+              { value: countdown.hours, label: 'hod' },
+              { value: countdown.minutes, label: 'min' },
+              { value: countdown.seconds, label: 'sec' },
+            ].map(({ value, label }) => (
+              <div key={label} className="flex flex-col items-center">
+                <span className="text-3xl sm:text-4xl font-bold text-indigo-400 tabular-nums leading-none">
+                  {String(value).padStart(2, '0')}
+                </span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{label}</span>
+              </div>
+            ))}
+          </div>
+          <Link to={`/party/${nextParty.id}`} className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+            {nextParty.name} — {nextParty.location}
+          </Link>
         </div>
       )}
 
