@@ -23,7 +23,7 @@ type Ok = { ok: boolean }
 export const api = {
   // Auth
   login: (username: string, password: string) =>
-    request<{ user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+    request<User>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
   logout: () => request<Ok>('/auth/logout', { method: 'POST' }),
   me: () => request<User>('/auth/me'),
   register: (data: { username: string; displayName: string; password: string; role?: string }) =>
