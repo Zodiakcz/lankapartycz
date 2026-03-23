@@ -141,7 +141,7 @@ export function Admin() {
 
             {editingId === u.id && (
               <div className="border-t border-gray-700 p-3 bg-gray-850 space-y-3">
-                {editMsg?.id === u.id && (
+                {editMsg !== null && editMsg.id === u.id && (
                   <div className={`text-sm px-3 py-2 rounded ${editMsg.ok ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
                     {editMsg.text}
                   </div>
