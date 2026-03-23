@@ -38,7 +38,10 @@ Web app for organizing twice-yearly LAN parties for a Czech friend group (~8-12 
 - **Two roles:** admin (create parties, users, games, schedule) and member (attendance, expenses)
 - **Finance split** — shared expenses divided proportionally by nights stayed per person
 - **UI language:** Czech throughout
-- **Version shown on login page** — update the version in client/src/pages/Login.tsx when deploying
+- **Version shown on login page** — update the version in `client/src/version.ts` when deploying (single source of truth, imported by both Login and Layout)
+- **Design system** — reusable CSS component utilities defined in `client/src/index.css` (`card`, `btn-primary`, `btn-secondary`, `btn-ghost`, `btn-danger`, `btn-success`, `form-input`, `form-select`, `form-label`, `badge`, `badge-*`, `tab-bar`, `tab-item`, `tab-active`, `tab-inactive`). Use these instead of repeating raw Tailwind color classes.
+- **Color palette** — `zinc-950` body bg, `zinc-900` cards, `zinc-800` inputs; `indigo` as primary accent (not `blue`)
+- **Mobile nav** — bottom tab bar (fixed, `sm:hidden`) in Layout.tsx; desktop nav in top header
 
 ## Local Development
 
