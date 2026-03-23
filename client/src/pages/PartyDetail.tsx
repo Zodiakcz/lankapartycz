@@ -80,6 +80,10 @@ export function PartyDetail() {
   const [spotifyEdit, setSpotifyEdit] = useState(false)
   const [spotifyInfo, setSpotifyInfo] = useState('')
 
+  // Party detail edit
+  const [partyEdit, setPartyEdit] = useState(false)
+  const [partyEditForm, setPartyEditForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '' })
+
   useEffect(() => { load(); if (isAdmin) api.users().then(setAllUsers) }, [partyId])
 
   const load = async () => {
@@ -134,6 +138,23 @@ export function PartyDetail() {
     load()
   }
 
+  const startPartyEdit = () => {
+    setPartyEditForm({
+      name: party.name,
+      location: party.location,
+      startDate: party.startDate.slice(0, 10),
+      endDate: party.endDate.slice(0, 10),
+      description: party.description || '',
+    })
+    setPartyEdit(true)
+  }
+
+  const handleSavePartyDetails = async () => {
+    await api.updateParty(partyId, partyEditForm)
+    setPartyEdit(false)
+    load()
+  }
+
   const handleSavePlace = async () => {
     await api.updateParty(partyId, { placeAddress, placeStatus })
     setPlaceEdit(false)
@@ -174,9 +195,54 @@ export function PartyDetail() {
           {party.description && <p className="text-gray-400 mt-2">{party.description}</p>}
         </div>
         {isAdmin && (
-          <button onClick={handleDelete} className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
+          <div className="flex gap-3 items-center">
+            <button onClick={startPartyEdit} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
+            <button onClick={handleDelete} className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
+          </div>
         )}
       </div>
+
+      {/* Party Edit Modal */}
+      {partyEdit && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-lg">
+            <h2 className="text-lg font-semibold mb-4">Upravit událost</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Název</label>
+                <input type="text" value={partyEditForm.name} onChange={e => setPartyEditForm({ ...partyEditForm, name: e.target.value })}
+                  className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Místo</label>
+                <input type="text" value={partyEditForm.location} onChange={e => setPartyEditForm({ ...partyEditForm, location: e.target.value })}
+                  className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Začátek</label>
+                  <input type="date" value={partyEditForm.startDate} onChange={e => setPartyEditForm({ ...partyEditForm, startDate: e.target.value })}
+                    className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Konec</label>
+                  <input type="date" value={partyEditForm.endDate} onChange={e => setPartyEditForm({ ...partyEditForm, endDate: e.target.value })}
+                    className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Popis</label>
+                <textarea value={partyEditForm.description} onChange={e => setPartyEditForm({ ...partyEditForm, description: e.target.value })}
+                  rows={3} className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4 justify-end">
+              <button onClick={() => setPartyEdit(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200">Zrušit</button>
+              <button onClick={handleSavePartyDetails} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded">Uložit</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-700 overflow-x-auto">
