@@ -3,11 +3,16 @@ import { api } from '../lib/api'
 
 export function Admin() {
   const [users, setUsers] = useState<any[]>([])
+  const [pending, setPending] = useState<any[]>([])
   const [form, setForm] = useState({ username: '', displayName: '', password: '', role: 'member' })
   const [message, setMessage] = useState('')
 
   useEffect(() => { load() }, [])
-  const load = () => api.users().then(setUsers)
+
+  const load = () => {
+    api.users().then(setUsers)
+    api.pendingUsers().then(setPending)
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,9 +27,50 @@ export function Admin() {
     }
   }
 
+  const handleApprove = async (id: number) => {
+    await api.approveUser(id)
+    load()
+  }
+
+  const handleReject = async (id: number) => {
+    await api.deleteUser(id)
+    load()
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Správa uživatelů</h1>
+
+      {/* Pending approvals */}
+      {pending.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3 text-yellow-400">Čekající žádosti ({pending.length})</h2>
+          <div className="space-y-2">
+            {pending.map(u => (
+              <div key={u.id} className="bg-gray-800 rounded p-3 border border-yellow-700/50 flex items-center justify-between">
+                <div>
+                  <span className="font-medium">{u.displayName}</span>
+                  <span className="text-gray-500 text-sm ml-2">@{u.username}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(u.id)}
+                    className="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Schválit
+                  </button>
+                  <button
+                    onClick={() => handleReject(u.id)}
+                    className="bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Odmítnout
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* User list */}
       <div className="space-y-2 mb-8">

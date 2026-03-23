@@ -53,7 +53,7 @@ async function seed() {
   if (!adminExists) {
     const hash = await bcrypt.hash('admin123', 10)
     await prisma.user.create({
-      data: { username: 'admin', displayName: 'Admin', passwordHash: hash, role: 'admin' },
+      data: { username: 'admin', displayName: 'Admin', passwordHash: hash, role: 'admin', approved: true },
     })
     console.log('Vytvořen admin účet (admin / admin123)')
   }
