@@ -101,6 +101,17 @@ router.post('/approve/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true })
 })
 
+// Update user (admin only) - role, displayName
+router.patch('/users/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id)
+  const { role, displayName } = req.body
+  const data: any = {}
+  if (role !== undefined) data.role = role
+  if (displayName !== undefined) data.displayName = displayName
+  const user = await prisma.user.update({ where: { id }, data, select: { id: true, username: true, displayName: true, role: true } })
+  res.json(user)
+})
+
 // Delete/reject a user (admin only)
 router.delete('/users/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id)
