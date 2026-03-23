@@ -1,3 +1,8 @@
+import type {
+  User, Party, Game, Attendance, Expense, ExpenseSplit,
+  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem,
+} from './types'
+
 const BASE = '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -13,84 +18,87 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+type Ok = { ok: boolean }
+
 export const api = {
   // Auth
   login: (username: string, password: string) =>
-    request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  logout: () => request<any>('/auth/logout', { method: 'POST' }),
-  me: () => request<any>('/auth/me'),
+    request<{ user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  logout: () => request<Ok>('/auth/logout', { method: 'POST' }),
+  me: () => request<User>('/auth/me'),
   register: (data: { username: string; displayName: string; password: string; role?: string }) =>
-    request<any>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    request<User>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   selfRegister: (data: { username: string; displayName: string; password: string }) =>
-    request<any>('/auth/self-register', { method: 'POST', body: JSON.stringify(data) }),
-  users: () => request<any[]>('/auth/users'),
-  pendingUsers: () => request<any[]>('/auth/pending'),
-  approveUser: (id: number) => request<any>(`/auth/approve/${id}`, { method: 'POST' }),
+    request<User>('/auth/self-register', { method: 'POST', body: JSON.stringify(data) }),
+  users: () => request<User[]>('/auth/users'),
+  pendingUsers: () => request<User[]>('/auth/pending'),
+  approveUser: (id: number) => request<Ok>(`/auth/approve/${id}`, { method: 'POST' }),
   updateUser: (id: number, data: { role?: string; displayName?: string }) =>
-    request<any>(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteUser: (id: number) => request<any>(`/auth/users/${id}`, { method: 'DELETE' }),
+    request<User>(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteUser: (id: number) => request<Ok>(`/auth/users/${id}`, { method: 'DELETE' }),
   changePassword: (data: { userId?: number; currentPassword?: string; newPassword: string }) =>
-    request<any>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+    request<Ok>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 
   // Parties
-  parties: () => request<any[]>('/parties'),
-  party: (id: number) => request<any>(`/parties/${id}`),
-  createParty: (data: any) => request<any>('/parties', { method: 'POST', body: JSON.stringify(data) }),
-  updateParty: (id: number, data: any) => request<any>(`/parties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteParty: (id: number) => request<any>(`/parties/${id}`, { method: 'DELETE' }),
+  parties: () => request<Party[]>('/parties'),
+  party: (id: number) => request<Party>(`/parties/${id}`),
+  createParty: (data: Partial<Party>) => request<Party>('/parties', { method: 'POST', body: JSON.stringify(data) }),
+  updateParty: (id: number, data: Partial<Party>) => request<Party>(`/parties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteParty: (id: number) => request<Ok>(`/parties/${id}`, { method: 'DELETE' }),
 
   // Attendance
-  setAttendance: (partyId: number, data: any) =>
-    request<any>(`/attendance/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
-  getAttendance: (partyId: number) => request<any[]>(`/attendance/${partyId}`),
-  adminEditAttendance: (partyId: number, userId: number, data: any) =>
-    request<any>(`/attendance/${partyId}/user/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  setAttendance: (partyId: number, data: Partial<Attendance>) =>
+    request<Attendance>(`/attendance/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
+  getAttendance: (partyId: number) => request<Attendance[]>(`/attendance/${partyId}`),
+  adminEditAttendance: (partyId: number, userId: number, data: Partial<Attendance>) =>
+    request<Attendance>(`/attendance/${partyId}/user/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Games
-  games: () => request<any[]>('/games'),
-  createGame: (data: any) => request<any>('/games', { method: 'POST', body: JSON.stringify(data) }),
-  updateGame: (id: number, data: any) => request<any>(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteGame: (id: number) => request<any>(`/games/${id}`, { method: 'DELETE' }),
+  games: () => request<Game[]>('/games'),
+  createGame: (data: Partial<Game>) => request<Game>('/games', { method: 'POST', body: JSON.stringify(data) }),
+  updateGame: (id: number, data: Partial<Game>) => request<Game>(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteGame: (id: number) => request<Ok>(`/games/${id}`, { method: 'DELETE' }),
   addGameToParty: (partyId: number, gameId: number) =>
-    request<any>(`/games/party/${partyId}/${gameId}`, { method: 'POST' }),
+    request<Ok>(`/games/party/${partyId}/${gameId}`, { method: 'POST' }),
   removeGameFromParty: (partyId: number, gameId: number) =>
-    request<any>(`/games/party/${partyId}/${gameId}`, { method: 'DELETE' }),
+    request<Ok>(`/games/party/${partyId}/${gameId}`, { method: 'DELETE' }),
 
   // Schedule
-  getSchedule: (partyId: number) => request<any[]>(`/schedule/${partyId}`),
-  createScheduleItem: (partyId: number, data: any) =>
-    request<any>(`/schedule/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
-  updateScheduleItem: (id: number, data: any) =>
-    request<any>(`/schedule/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteScheduleItem: (id: number) => request<any>(`/schedule/${id}`, { method: 'DELETE' }),
+  getSchedule: (partyId: number) => request<Party['schedule']>(`/schedule/${partyId}`),
+  createScheduleItem: (partyId: number, data: { day: number; timeSlot: string; title: string; description?: string }) =>
+    request<Party['schedule'][0]>(`/schedule/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
+  updateScheduleItem: (id: number, data: { day?: number; timeSlot?: string; title?: string; description?: string }) =>
+    request<Party['schedule'][0]>(`/schedule/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteScheduleItem: (id: number) => request<Ok>(`/schedule/${id}`, { method: 'DELETE' }),
 
   // Expenses
-  getExpenses: (partyId: number) => request<any[]>(`/expenses/${partyId}`),
-  createExpense: (partyId: number, data: any) =>
-    request<any>(`/expenses/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
-  deleteExpense: (id: number) => request<any>(`/expenses/${id}`, { method: 'DELETE' }),
-  getExpenseSplit: (partyId: number) => request<any>(`/expenses/${partyId}/split`),
+  getExpenses: (partyId: number) => request<Expense[]>(`/expenses/${partyId}`),
+  createExpense: (partyId: number, data: { amount: number; description: string; paidByUserId?: number }) =>
+    request<Expense>(`/expenses/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteExpense: (id: number) => request<Ok>(`/expenses/${id}`, { method: 'DELETE' }),
+  getExpenseSplit: (partyId: number) => request<ExpenseSplit>(`/expenses/${partyId}/split`),
   setSettled: (partyId: number, userId: number, settled: boolean) =>
-    request<any>(`/expenses/${partyId}/settled/${userId}`, { method: 'PATCH', body: JSON.stringify({ settled }) }),
+    request<Ok>(`/expenses/${partyId}/settled/${userId}`, { method: 'PATCH', body: JSON.stringify({ settled }) }),
 
   // Shopping
-  foodCategories: () => request<any[]>('/shopping/categories'),
-  getFoodEstimates: (partyId: number) => request<any[]>(`/shopping/${partyId}/food`),
+  foodCategories: () => request<FoodCategory[]>('/shopping/categories'),
+  getFoodEstimates: (partyId: number) => request<FoodEstimate[]>(`/shopping/${partyId}/food`),
   setFoodEstimate: (partyId: number, data: { category: string; perNight: number; unit: string }) =>
-    request<any>(`/shopping/${partyId}/food`, { method: 'POST', body: JSON.stringify(data) }),
-  calculateFood: (partyId: number) => request<any>(`/shopping/${partyId}/food/calculate`),
+    request<FoodEstimate>(`/shopping/${partyId}/food`, { method: 'POST', body: JSON.stringify(data) }),
+  calculateFood: (partyId: number) => request<FoodCalculation>(`/shopping/${partyId}/food/calculate`),
   toggleFoodPurchased: (partyId: number, category: string) =>
-    request<any>(`/shopping/${partyId}/food/${category}/toggle`, { method: 'PATCH' }),
-  getShoppingItems: (partyId: number) => request<any[]>(`/shopping/${partyId}/items`),
+    request<Ok>(`/shopping/${partyId}/food/${category}/toggle`, { method: 'PATCH' }),
+  getShoppingItems: (partyId: number) => request<ShoppingItem[]>(`/shopping/${partyId}/items`),
   addShoppingItem: (partyId: number, name: string) =>
-    request<any>(`/shopping/${partyId}/items`, { method: 'POST', body: JSON.stringify({ name }) }),
+    request<ShoppingItem>(`/shopping/${partyId}/items`, { method: 'POST', body: JSON.stringify({ name }) }),
   toggleShoppingItem: (partyId: number, id: number) =>
-    request<any>(`/shopping/${partyId}/items/${id}`, { method: 'PATCH' }),
+    request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'PATCH' }),
   deleteShoppingItem: (partyId: number, id: number) =>
-    request<any>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
+    request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
 
   // Packing
-  getPacking: (partyId?: number) => request<any[]>(`/packing${partyId ? `/${partyId}` : ''}`),
-  createPackingItem: (data: any) => request<any>('/packing', { method: 'POST', body: JSON.stringify(data) }),
-  deletePackingItem: (id: number) => request<any>(`/packing/${id}`, { method: 'DELETE' }),
+  getPacking: (partyId?: number) => request<PackingItem[]>(`/packing${partyId ? `/${partyId}` : ''}`),
+  createPackingItem: (data: { name: string; category: string; partyId?: number }) =>
+    request<PackingItem>('/packing', { method: 'POST', body: JSON.stringify(data) }),
+  deletePackingItem: (id: number) => request<Ok>(`/packing/${id}`, { method: 'DELETE' }),
 }

@@ -1,30 +1,18 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-
-const CATEGORIES: Record<string, string> = {
-  hardware: 'Hardware',
-  general: 'Obecné',
-  food: 'Jídlo & pití',
-  other: 'Ostatní',
-}
-
-const CATEGORY_ICONS: Record<string, string> = {
-  hardware: '🖥️',
-  general: '🎒',
-  food: '🍕',
-  other: '📦',
-}
+import { PACKING_CATEGORIES, PACKING_CATEGORY_ICONS } from '../lib/constants'
+import type { PackingItem } from '../lib/types'
 
 export function Packing() {
   const { isAdmin } = useAuth()
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<PackingItem[]>([])
   const [newItem, setNewItem] = useState({ name: '', category: 'general' })
 
   useEffect(() => { load() }, [])
   const load = () => api.getPacking().then(setItems)
 
-  const grouped = items.reduce((acc: Record<string, any[]>, item) => {
+  const grouped = items.reduce((acc: Record<string, PackingItem[]>, item) => {
     const cat = item.category || 'general'
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(item)
@@ -46,15 +34,15 @@ export function Packing() {
       </p>
 
       <div className="space-y-5">
-        {Object.entries(CATEGORIES).map(([key, label]) => (
+        {Object.entries(PACKING_CATEGORIES).map(([key, label]) => (
           grouped[key]?.length ? (
             <div key={key}>
               <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <span>{CATEGORY_ICONS[key]}</span>
+                <span>{PACKING_CATEGORY_ICONS[key]}</span>
                 {label}
               </h2>
               <div className="space-y-1.5">
-                {grouped[key].map((item: any) => (
+                {grouped[key].map(item => (
                   <div key={item.id} className="card px-4 py-2.5 flex items-center justify-between">
                     <span className="text-sm text-zinc-200">{item.name}</span>
                     {isAdmin && (
@@ -87,7 +75,7 @@ export function Packing() {
             onChange={e => setNewItem({ ...newItem, category: e.target.value })}
             className="form-select sm:w-40"
           >
-            {Object.entries(CATEGORIES).map(([k, v]) => (
+            {Object.entries(PACKING_CATEGORIES).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </select>

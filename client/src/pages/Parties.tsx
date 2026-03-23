@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import type { Party } from '../lib/types'
 
 export function Parties() {
   const { isAdmin } = useAuth()
-  const [parties, setParties] = useState<any[]>([])
+  const [parties, setParties] = useState<Party[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '' })
 
@@ -33,8 +34,8 @@ export function Parties() {
     return <span className="badge badge-yellow">Nevyřízeno</span>
   }
 
-  const PartyCard = ({ party }: { party: any }) => {
-    const confirmed = party.attendance?.filter((a: any) => a.status === 'confirmed').length || 0
+  const PartyCard = ({ party }: { party: Party }) => {
+    const confirmed = party.attendance?.filter(a => a.status === 'confirmed').length || 0
     const placeStatus = party.placeStatus || 'pending'
     return (
       <Link

@@ -2,22 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { SOURCE_LABELS, TIME_SLOTS, sourceBadgeClass } from '../lib/constants'
+import type { Party, User, Game, Attendance, Expense, ExpenseSplit, PartyGame, ScheduleItem } from '../lib/types'
+import { ShoppingTab } from '../components/ShoppingTab'
+import { PackingList } from '../components/PackingList'
 import qrCode from '../img/qr_code.jpg'
-
-const TIME_SLOTS = [
-  { value: 'morning', label: 'Dopoledne' },
-  { value: 'afternoon', label: 'Odpoledne' },
-  { value: 'evening', label: 'Večer' },
-  { value: 'night', label: 'Noc' },
-]
-
-const SOURCE_LABELS: Record<string, string> = {
-  steam: 'Steam',
-  epic: 'Epic Games',
-  copied: 'Kopie',
-  free: 'Free',
-  other: 'Jiné',
-}
 
 export function PartyDetail() {
   const { id } = useParams()
@@ -25,9 +14,9 @@ export function PartyDetail() {
   const navigate = useNavigate()
   const partyId = Number(id)
 
-  const [party, setParty] = useState<any>(null)
-  const [allGames, setAllGames] = useState<any[]>([])
-  const [split, setSplit] = useState<any>(null)
+  const [party, setParty] = useState<Party | null>(null)
+  const [allGames, setAllGames] = useState<Game[]>([])
+  const [split, setSplit] = useState<ExpenseSplit | null>(null)
   const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'packing'>('info')
 
   // Attendance form
@@ -41,9 +30,9 @@ export function PartyDetail() {
   const [editAttForm, setEditAttForm] = useState({ status: 'maybe', arrival: '', departure: '', advance: '0' })
   const [addingAtt, setAddingAtt] = useState(false)
   const [addAttForm, setAddAttForm] = useState({ userId: '', status: 'maybe', arrival: '', departure: '', advance: '0' })
-  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
 
-  const startEditAtt = (a: any) => {
+  const startEditAtt = (a: Attendance) => {
     setEditAttId(a.userId)
     setEditAttForm({
       status: a.status,
@@ -94,7 +83,7 @@ export function PartyDetail() {
     setPlaceAddress(p.placeAddress || '')
     setPlaceStatus(p.placeStatus || 'pending')
 
-    const myAtt = p.attendance?.find((a: any) => a.userId === user?.id)
+    const myAtt = p.attendance?.find(a => a.userId === user?.id)
     if (myAtt) {
       setAttForm({
         status: myAtt.status,
@@ -180,7 +169,7 @@ export function PartyDetail() {
   const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
 
   const partyDays = Math.ceil((new Date(party.endDate).getTime() - new Date(party.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
-  const partyGameIds = new Set(party.partyGames?.map((pg: any) => pg.gameId))
+  const partyGameIds = new Set(party.partyGames?.map(pg => pg.gameId))
   const availableGames = allGames.filter(g => !partyGameIds.has(g.id))
 
   return (
@@ -237,8 +226,8 @@ export function PartyDetail() {
               </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
-              <button onClick={() => setPartyEdit(false)} className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200">Zrušit</button>
-              <button onClick={handleSavePartyDetails} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-400 text-white text-sm rounded">Uložit</button>
+              <button onClick={() => setPartyEdit(false)} className="btn-ghost">Zrušit</button>
+              <button onClick={handleSavePartyDetails} className="btn-primary">Uložit</button>
             </div>
           </div>
         </div>
@@ -298,7 +287,7 @@ export function PartyDetail() {
           {/* Who's coming */}
           <section>
             <h2 className="section-heading">Kdo jede</h2>
-            <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
+            <div className="card overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-zinc-800/60">
                   <tr className="text-zinc-400 text-left">
@@ -312,13 +301,13 @@ export function PartyDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {party.attendance?.map((a: any) => (
+                  {party.attendance?.map((a: Attendance) => (
                     editAttId === a.userId ? (
                       <tr key={a.id} className="border-t border-white/8 bg-zinc-800/60">
                         <td className="px-4 py-2 font-medium">{a.user.displayName}</td>
                         <td className="px-4 py-2">
                           <select value={editAttForm.status} onChange={e => setEditAttForm({ ...editAttForm, status: e.target.value })}
-                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
+                            className="form-select">
                             <option value="confirmed">Potvrzeno</option>
                             <option value="maybe">Možná</option>
                             <option value="declined">Neúčast</option>
@@ -326,16 +315,16 @@ export function PartyDetail() {
                         </td>
                         <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.arrival} onChange={e => setEditAttForm({ ...editAttForm, arrival: e.target.value })}
-                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
+                            className="form-input" />
                         </td>
                         <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.departure} onChange={e => setEditAttForm({ ...editAttForm, departure: e.target.value })}
-                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
+                            className="form-input" />
                         </td>
                         <td className="px-4 py-2">–</td>
                         <td className="px-4 py-2">
                           <input type="number" value={editAttForm.advance} onChange={e => setEditAttForm({ ...editAttForm, advance: e.target.value })}
-                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs w-20" />
+                            className="form-input w-20" />
                         </td>
                         <td className="px-4 py-2">
                           <div className="flex gap-2">
@@ -377,16 +366,16 @@ export function PartyDetail() {
                     <tr className="border-t border-white/8 bg-zinc-800/60">
                       <td className="px-4 py-2">
                         <select value={addAttForm.userId} onChange={e => setAddAttForm({ ...addAttForm, userId: e.target.value })}
-                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
+                          className="form-select">
                           <option value="">Vyber uživatele...</option>
                           {allUsers
-                            .filter(u => !party.attendance?.some((a: any) => a.userId === u.id))
-                            .map((u: any) => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+                            .filter(u => !party.attendance?.some(a => a.userId === u.id))
+                            .map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
                         </select>
                       </td>
                       <td className="px-4 py-2">
                         <select value={addAttForm.status} onChange={e => setAddAttForm({ ...addAttForm, status: e.target.value })}
-                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
+                          className="form-select">
                           <option value="confirmed">Potvrzeno</option>
                           <option value="maybe">Možná</option>
                           <option value="declined">Neúčast</option>
@@ -394,16 +383,16 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.arrival} onChange={e => setAddAttForm({ ...addAttForm, arrival: e.target.value })}
-                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
+                          className="form-input" />
                       </td>
                       <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.departure} onChange={e => setAddAttForm({ ...addAttForm, departure: e.target.value })}
-                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
+                          className="form-input" />
                       </td>
                       <td className="px-4 py-2">–</td>
                       <td className="px-4 py-2">
                         <input type="number" value={addAttForm.advance} onChange={e => setAddAttForm({ ...addAttForm, advance: e.target.value })}
-                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs w-20" />
+                          className="form-input w-20" />
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex gap-2">
@@ -500,17 +489,11 @@ export function PartyDetail() {
           <section>
             <h2 className="section-heading">Hry na této párty</h2>
             <div className="space-y-2">
-              {party.partyGames?.map((pg: any) => (
-                <div key={pg.id} className="bg-zinc-900 rounded p-3 border border-white/8 flex items-center justify-between">
+              {party.partyGames?.map((pg: PartyGame) => (
+                <div key={pg.id} className="card p-3 flex items-center justify-between">
                   <div className="flex items-center flex-wrap gap-2">
                     <span className="font-medium">{pg.game.name}</span>
-                    <span className={`badge ${
-                      pg.game.source === 'steam' ? 'badge-blue' :
-                      pg.game.source === 'epic' ? 'badge-orange' :
-                      pg.game.source === 'copied' ? 'badge-yellow' :
-                      pg.game.source === 'free' ? 'badge-green' :
-                      'badge-gray'
-                    }`}>{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
+                    <span className={sourceBadgeClass(pg.game.source)}>{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
                     <span className="badge badge-gray">
                       {pg.game.maxPlayers ? `${pg.game.minPlayers}–${pg.game.maxPlayers} hráčů` : `${pg.game.minPlayers}+ hráčů`}
                     </span>
@@ -542,14 +525,14 @@ export function PartyDetail() {
           {Array.from({ length: partyDays }, (_, i) => i + 1).map(day => {
             const dayDate = new Date(party.startDate)
             dayDate.setDate(dayDate.getDate() + day - 1)
-            const dayItems = party.schedule?.filter((s: any) => s.day === day) || []
+            const dayItems = party.schedule?.filter(s => s.day === day) || []
 
             return (
               <div key={day} className="card p-4">
                 <h3 className="font-semibold text-indigo-400 mb-3">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
                 {dayItems.length > 0 ? (
                   <div className="space-y-2">
-                    {dayItems.map((item: any) => (
+                    {dayItems.map((item: ScheduleItem) => (
                       <div key={item.id} className="flex items-start justify-between bg-zinc-800/60 rounded p-2">
                         <div>
                           <span className="text-xs text-zinc-500">{TIME_SLOTS.find(t => t.value === item.timeSlot)?.label}</span>
@@ -612,7 +595,7 @@ export function PartyDetail() {
                 <select value={expForm.paidByUserId} onChange={e => setExpForm({ ...expForm, paidByUserId: e.target.value })} required
                   className="form-input">
                   <option value="">Vyber...</option>
-                  {party.attendance?.filter((a: any) => a.status === 'confirmed' || a.status === 'maybe').map((a: any) => (
+                  {party.attendance?.filter(a => a.status === 'confirmed' || a.status === 'maybe').map((a: Attendance) => (
                     <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
                   ))}
                 </select>
@@ -620,7 +603,7 @@ export function PartyDetail() {
               <div>
                 <label className="form-label">Částka (Kč)</label>
                 <input type="number" step="0.01" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required
-                  className="bg-zinc-800 rounded-lg px-3 py-2 text-white w-28" />
+                  className="form-input w-28" />
               </div>
               <div className="flex-1 min-w-0 col-span-2">
                 <label className="form-label">Popis</label>
@@ -635,8 +618,8 @@ export function PartyDetail() {
           <section>
             <h3 className="font-semibold mb-3">Výdaje</h3>
             <div className="space-y-2">
-              {party.expenses?.map((e: any) => (
-                <div key={e.id} className="bg-zinc-900 rounded p-3 border border-white/8 flex items-center justify-between">
+              {party.expenses?.map((e: Expense) => (
+                <div key={e.id} className="card p-3 flex items-center justify-between">
                   <div>
                     <span className="font-medium">{e.description}</span>
                     <span className="text-indigo-400 ml-2 font-semibold">{e.amount} Kč</span>
@@ -665,7 +648,7 @@ export function PartyDetail() {
                   <span>Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
                   {split.totalNights > 0 && <span>Cena za noc: <strong className="text-white">{Math.round(split.sharedTotal / split.totalNights)} Kč</strong></span>}
                 </div>
-                <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
+                <div className="card overflow-x-auto">
                   <table className="w-full text-sm min-w-[500px]">
                     <thead>
                       <tr className="text-zinc-400 text-left border-b border-white/8">
@@ -679,7 +662,7 @@ export function PartyDetail() {
                       </tr>
                     </thead>
                     <tbody>
-                      {split.perPerson?.map((p: any) => (
+                      {split.perPerson?.map(p => (
                         <tr key={p.user.id} className={`border-t border-white/8 ${p.settled ? 'opacity-60' : ''}`}>
                           <td className="px-4 py-2 font-medium">{p.user.displayName}</td>
                           <td className="px-4 py-2 text-zinc-400">{p.nights}</td>
@@ -728,7 +711,7 @@ export function PartyDetail() {
                   <textarea value={spotifyInfo} onChange={e => setSpotifyInfo(e.target.value)}
                     className="form-input flex-1 w-auto" rows={3} placeholder="Přihlašovací údaje, playlist odkaz..." />
                   <div className="flex flex-col gap-2">
-                    <button onClick={handleSaveSpotify} className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm">Uložit</button>
+                    <button onClick={handleSaveSpotify} className="btn-primary">Uložit</button>
                     <button onClick={() => setSpotifyEdit(false)} className="btn-secondary">Zrušit</button>
                   </div>
                 </div>
@@ -752,243 +735,3 @@ export function PartyDetail() {
   )
 }
 
-function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
-  const [categories, setCategories] = useState<any[]>([])
-  const [estimates, setEstimates] = useState<any[]>([])
-  const [calculation, setCalculation] = useState<any>(null)
-  const [items, setItems] = useState<any[]>([])
-  const [newItem, setNewItem] = useState('')
-
-  useEffect(() => { load() }, [partyId])
-
-  const load = async () => {
-    const [cats, est, calc, itms] = await Promise.all([
-      api.foodCategories(),
-      api.getFoodEstimates(partyId),
-      api.calculateFood(partyId),
-      api.getShoppingItems(partyId),
-    ])
-    setCategories(cats)
-    setEstimates(est)
-    setCalculation(calc)
-    setItems(itms)
-  }
-
-  const handleEstimateChange = async (category: string, perNight: number, unit: string) => {
-    await api.setFoodEstimate(partyId, { category, perNight, unit })
-    load()
-  }
-
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newItem.trim()) return
-    await api.addShoppingItem(partyId, newItem.trim())
-    setNewItem('')
-    load()
-  }
-
-  const handleToggle = async (id: number) => {
-    await api.toggleShoppingItem(partyId, id)
-    load()
-  }
-
-  const handleDeleteItem = async (id: number) => {
-    await api.deleteShoppingItem(partyId, id)
-    load()
-  }
-
-  const getEstimate = (catKey: string) => estimates.find((e: any) => e.category === catKey)
-
-  return (
-    <div className="space-y-8">
-      {/* Food calculation */}
-      <section>
-        <h2 className="section-heading">Kalkulace jídla</h2>
-
-        {calculation && (
-          <div className="card p-4 mb-4">
-            <div className="flex gap-6 text-sm text-zinc-400">
-              <span>Potvrzených: <strong className="text-white">{calculation.confirmedPeople}</strong></span>
-              <span>Celkem nocí: <strong className="text-white">{calculation.totalNights}</strong></span>
-            </div>
-            {calculation.perPerson?.length > 0 && (
-              <div className="mt-2 text-xs text-zinc-500">
-                {calculation.perPerson.map((p: any) => (
-                  <span key={p.user.id} className="mr-3">{p.user.displayName}: {p.nights} nocí</span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
-          <table className="w-full text-sm min-w-[400px]">
-            <thead>
-              <tr className="text-zinc-400 text-left border-b border-white/8">
-                <th className="px-3 py-2 w-8"></th>
-                <th className="px-3 py-2">Kategorie</th>
-                <th className="px-3 py-2 w-24">Na os./noc</th>
-                <th className="px-3 py-2 w-20">Jednotka</th>
-                <th className="px-3 py-2 w-24">Koupit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((cat: any) => {
-                const est = getEstimate(cat.key)
-                const perNight = est?.perNight || 0
-                const unit = est?.unit || cat.defaultUnit
-                const calcRow = calculation?.amounts?.find((a: any) => a.category === cat.key)
-
-                return (
-                  <tr key={cat.key} className={`border-t border-white/8 ${est?.purchased ? 'opacity-50' : ''}`}>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={async () => {
-                          if (!est) return
-                          await api.toggleFoodPurchased(partyId, cat.key)
-                          load()
-                        }}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          est?.purchased ? 'bg-indigo-600 border-indigo-600' : 'border-zinc-600'
-                        }`}
-                      >
-                        {est?.purchased && <span className="text-white text-xs">✓</span>}
-                      </button>
-                    </td>
-                    <td className={`px-4 py-2 font-medium ${est?.purchased ? 'line-through' : ''}`}>{cat.label}</td>
-                    <td className="px-4 py-2">
-                      {isAdmin ? (
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          value={perNight}
-                          onChange={e => handleEstimateChange(cat.key, Number(e.target.value), unit)}
-                          className="bg-zinc-800 rounded-md px-2 py-1 text-white w-20"
-                        />
-                      ) : (
-                        <span>{perNight}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      {isAdmin ? (
-                        <select
-                          value={unit}
-                          onChange={e => handleEstimateChange(cat.key, perNight, e.target.value)}
-                          className="bg-zinc-800 rounded-md px-2 py-1 text-white"
-                        >
-                          <option value="ks">ks</option>
-                          <option value="l">l</option>
-                          <option value="baleni">balení</option>
-                          <option value="kg">kg</option>
-                        </select>
-                      ) : (
-                        <span>{unit}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className="font-semibold text-indigo-400">
-                        {calcRow ? `${calcRow.totalNeeded} ${unit}` : '–'}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Shopping list */}
-      <section>
-        <h2 className="section-heading">Nákupní seznam</h2>
-
-        <form onSubmit={handleAddItem} className="flex gap-2 mb-4">
-          <input
-            value={newItem}
-            onChange={e => setNewItem(e.target.value)}
-            placeholder="Přidat položku..."
-            className="form-input flex-1 w-auto focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <button type="submit" className="btn-primary">Přidat</button>
-        </form>
-
-        <div className="space-y-1">
-          {items.map((item: any) => (
-            <div key={item.id} className="flex items-center gap-3 bg-zinc-900 rounded p-3 border border-white/8">
-              <button
-                onClick={() => handleToggle(item.id)}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                  item.checked ? 'bg-indigo-600 border-indigo-600' : 'border-zinc-600'
-                }`}
-              >
-                {item.checked && <span className="text-white text-xs">✓</span>}
-              </button>
-              <span className={`flex-1 ${item.checked ? 'line-through text-zinc-500' : ''}`}>{item.name}</span>
-              <button onClick={() => handleDeleteItem(item.id)} className="text-red-500 hover:text-red-400 text-xs">Smazat</button>
-            </div>
-          ))}
-          {items.length === 0 && <p className="text-zinc-500 text-sm">Seznam je prázdný</p>}
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function PackingList({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
-  const [items, setItems] = useState<any[]>([])
-  const [newItem, setNewItem] = useState({ name: '', category: 'general' })
-
-  useEffect(() => { load() }, [partyId])
-  const load = () => api.getPacking(partyId).then(setItems)
-
-  const CATEGORIES: Record<string, string> = { hardware: 'Hardware', general: 'Obecné', food: 'Jídlo & pití', other: 'Ostatní' }
-
-  const grouped = items.reduce((acc: Record<string, any[]>, item) => {
-    const cat = item.category || 'general'
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(item)
-    return acc
-  }, {})
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await api.createPackingItem({ ...newItem, partyId })
-    setNewItem({ name: '', category: 'general' })
-    load()
-  }
-
-  return (
-    <div className="space-y-4">
-      {Object.entries(CATEGORIES).map(([key, label]) => (
-        grouped[key]?.length ? (
-          <div key={key}>
-            <h4 className="text-sm font-semibold text-zinc-400 mb-2">{label}</h4>
-            <div className="space-y-1">
-              {grouped[key].map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between bg-zinc-900 rounded p-2 border border-white/8">
-                  <span>{item.name} {item.partyId && <span className="text-xs text-indigo-400">(pro tuto párty)</span>}</span>
-                  {isAdmin && item.partyId && (
-                    <button onClick={async () => { await api.deletePackingItem(item.id); load() }}
-                      className="text-red-500 text-xs">Smazat</button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null
-      ))}
-      {isAdmin && (
-        <form onSubmit={handleAdd} className="flex gap-2 items-end">
-          <input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required
-            className="form-input flex-1 w-auto" placeholder="Nová položka..." />
-          <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-            className="form-input">
-            {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-          <button type="submit" className="btn-primary">Přidat</button>
-        </form>
-      )}
-    </div>
-  )
-}

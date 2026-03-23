@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
+import type { User } from '../lib/types'
 
 export function Admin() {
-  const [users, setUsers] = useState<any[]>([])
-  const [pending, setPending] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [pending, setPending] = useState<User[]>([])
   const [form, setForm] = useState({ username: '', displayName: '', password: '', role: 'member' })
   const [message, setMessage] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -40,7 +41,7 @@ export function Admin() {
     load()
   }
 
-  const handleToggleRole = async (u: any) => {
+  const handleToggleRole = async (u: User) => {
     const newRole = u.role === 'admin' ? 'member' : 'admin'
     try {
       await api.updateUser(u.id, { role: newRole })
@@ -51,7 +52,7 @@ export function Admin() {
     }
   }
 
-  const handleSetPassword = async (u: any) => {
+  const handleSetPassword = async (u: User) => {
     if (!editPw || editPw.length < 4) {
       setEditMsg({ id: u.id, text: 'Heslo musí mít alespoň 4 znaky', ok: false })
       return
@@ -65,7 +66,7 @@ export function Admin() {
     }
   }
 
-  const handleDelete = async (u: any) => {
+  const handleDelete = async (u: User) => {
     if (!confirm(`Opravdu smazat uživatele "${u.displayName}"?`)) return
     try {
       await api.deleteUser(u.id)

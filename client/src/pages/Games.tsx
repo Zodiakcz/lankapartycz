@@ -1,22 +1,8 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-
-const SOURCE_OPTIONS = [
-  { value: 'steam', label: 'Steam' },
-  { value: 'epic', label: 'Epic Games' },
-  { value: 'copied', label: 'Kopie' },
-  { value: 'free', label: 'Free' },
-  { value: 'other', label: 'Jiné' },
-]
-
-function sourceBadgeClass(source: string) {
-  return source === 'steam' ? 'badge badge-blue' :
-    source === 'epic' ? 'badge badge-orange' :
-    source === 'copied' ? 'badge badge-yellow' :
-    source === 'free' ? 'badge badge-green' :
-    'badge badge-gray'
-}
+import { SOURCE_OPTIONS, sourceBadgeClass } from '../lib/constants'
+import type { Game } from '../lib/types'
 
 function playerCountLabel(min: number, max: number | null) {
   if (!max) return `${min}+ hráčů`
@@ -29,7 +15,7 @@ const emptyForm: GameForm = { name: '', source: 'steam', sourceNote: '', minPlay
 
 export function Games() {
   const { isAdmin } = useAuth()
-  const [games, setGames] = useState<any[]>([])
+  const [games, setGames] = useState<Game[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<GameForm>({ ...emptyForm })
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -37,7 +23,7 @@ export function Games() {
   useEffect(() => { load() }, [])
   const load = () => api.games().then(setGames)
 
-  const startEdit = (game: any) => {
+  const startEdit = (game: Game) => {
     setEditingId(game.id)
     setForm({
       name: game.name,
