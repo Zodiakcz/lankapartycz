@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
-import type { FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem } from '../lib/types'
+import type { Party, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem } from '../lib/types'
 
 export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
   const [categories, setCategories] = useState<FoodCategory[]>([])
@@ -8,8 +8,16 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
   const [calculation, setCalculation] = useState<FoodCalculation | null>(null)
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [newItem, setNewItem] = useState('')
+  const [otherParties, setOtherParties] = useState<Party[]>([])
+  const [copyFrom, setCopyFrom] = useState('')
+  const [copying, setCopying] = useState(false)
 
   useEffect(() => { load() }, [partyId])
+  useEffect(() => {
+    if (isAdmin) {
+      api.parties().then(ps => setOtherParties(ps.filter(p => p.id !== partyId)))
+    }
+  }, [partyId, isAdmin])
 
   const load = async () => {
     const [cats, est, calc, itms] = await Promise.all([
@@ -22,6 +30,18 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
     setEstimates(est)
     setCalculation(calc)
     setItems(itms)
+  }
+
+  const handleCopy = async () => {
+    if (!copyFrom) return
+    setCopying(true)
+    try {
+      await api.copyShoppingFrom(partyId, Number(copyFrom))
+      setCopyFrom('')
+      load()
+    } finally {
+      setCopying(false)
+    }
   }
 
   const handleEstimateChange = async (category: string, perNight: number, unit: string) => {
@@ -51,6 +71,30 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
 
   return (
     <div className="space-y-8">
+      {/* Copy from another party */}
+      {isAdmin && otherParties.length > 0 && (
+        <div className="card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span className="text-sm text-zinc-400">Kopírovat z jiné párty:</span>
+          <select
+            value={copyFrom}
+            onChange={e => setCopyFrom(e.target.value)}
+            className="form-select flex-1 w-full sm:w-auto"
+          >
+            <option value="">— Vyberte párty —</option>
+            {otherParties.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleCopy}
+            disabled={!copyFrom || copying}
+            className="btn-secondary text-sm"
+          >
+            {copying ? 'Kopíruji…' : 'Kopírovat'}
+          </button>
+        </div>
+      )}
+
       {/* Food calculation */}
       <section>
         <h2 className="section-heading">Kalkulace jídla</h2>

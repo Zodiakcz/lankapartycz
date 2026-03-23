@@ -95,6 +95,8 @@ export const api = {
     request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'PATCH' }),
   deleteShoppingItem: (partyId: number, id: number) =>
     request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
+  copyShoppingFrom: (partyId: number, sourcePartyId: number) =>
+    request<Ok>(`/shopping/${partyId}/copy-from/${sourcePartyId}`, { method: 'POST' }),
 
   // Packing
   getPacking: (partyId?: number) => request<PackingItem[]>(`/packing${partyId ? `/${partyId}` : ''}`),

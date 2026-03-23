@@ -101,6 +101,40 @@ router.patch('/:partyId/food/:category/toggle', requireAuth, async (req, res) =>
   res.json(updated)
 })
 
+// Copy food estimates and shopping items from another party (admin)
+router.post('/:partyId/copy-from/:sourcePartyId', requireAdmin, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const sourcePartyId = Number(req.params.sourcePartyId)
+
+  const [sourceEstimates, sourceItems] = await Promise.all([
+    prisma.foodEstimate.findMany({ where: { partyId: sourcePartyId } }),
+    prisma.shoppingItem.findMany({ where: { partyId: sourcePartyId } }),
+  ])
+
+  // Upsert food estimates (overwrite existing, add missing)
+  for (const est of sourceEstimates) {
+    await prisma.foodEstimate.upsert({
+      where: { partyId_category: { partyId, category: est.category } },
+      update: { perNight: est.perNight, unit: est.unit, purchased: false },
+      create: { partyId, category: est.category, perNight: est.perNight, unit: est.unit },
+    })
+  }
+
+  // Copy shopping items (skip duplicates by name)
+  const existingItems = await prisma.shoppingItem.findMany({ where: { partyId } })
+  const existingNames = new Set(existingItems.map(i => i.name.toLowerCase()))
+
+  for (const item of sourceItems) {
+    if (!existingNames.has(item.name.toLowerCase())) {
+      await prisma.shoppingItem.create({
+        data: { partyId, name: item.name },
+      })
+    }
+  }
+
+  res.json({ ok: true, copiedEstimates: sourceEstimates.length, copiedItems: sourceItems.length })
+})
+
 // Get shopping items for a party
 router.get('/:partyId/items', requireAuth, async (req, res) => {
   const items = await prisma.shoppingItem.findMany({
