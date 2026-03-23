@@ -1,6 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/auth'
 import { APP_VERSION } from '../version'
+import { api } from '../lib/api'
 
 const CalendarIcon = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75} className="w-5 h-5">
@@ -37,6 +39,12 @@ const navItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAdmin } = useAuth()
   const location = useLocation()
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    api.pendingUsers().then(users => setPendingCount(users.length)).catch(() => {})
+  }, [isAdmin])
 
   const allNavItems = isAdmin ? [...navItems, { path: '/admin', label: 'Admin', Icon: AdminIcon }] : navItems
 
@@ -58,13 +66,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(item.path)
                       ? 'bg-indigo-600/20 text-indigo-400'
                       : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
                   }`}
                 >
                   {item.label}
+                  {item.path === '/admin' && pendingCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -105,7 +118,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   active ? 'text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                <item.Icon active={active} />
+                <span className="relative inline-flex">
+                  <item.Icon active={active} />
+                  {item.path === '/admin' && pendingCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {pendingCount}
+                    </span>
+                  )}
+                </span>
                 <span>{item.label}</span>
               </Link>
             )
