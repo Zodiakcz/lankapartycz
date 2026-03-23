@@ -31,7 +31,7 @@ export function Login() {
     }
     try {
       await api.selfRegister({ username, displayName, password })
-      setSuccess('Žádost odeslána. Admin tě schválí přes Discord.')
+      setSuccess('Žádost odeslána. Admin tě musí schválit — dej mu vědět přes Discord.')
       setUsername('')
       setPassword('')
       setDisplayName('')
@@ -53,7 +53,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
         <a href="https://github.com/Zodiakcz/lankapartycz/commits/master" target="_blank" rel="noopener noreferrer"
-          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v1.9</a>
+          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v2.0</a>
         <h1 className="text-2xl font-bold text-center mb-6 text-blue-400">LAN Party</h1>
 
         {/* Tab switcher */}
