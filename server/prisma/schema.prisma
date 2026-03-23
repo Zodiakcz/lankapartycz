@@ -26,9 +26,11 @@ model Party {
   location    String
   startDate   DateTime
   endDate     DateTime
-  description String       @default("")
-  spotifyInfo String       @default("")
-  createdAt   DateTime     @default(now())
+  description   String       @default("")
+  spotifyInfo   String       @default("")
+  placeAddress  String       @default("")
+  placeStatus   String       @default("pending") // "pending" | "booked" | "confirmed"
+  createdAt     DateTime     @default(now())
 
   attendance      Attendance[]
   partyGames      PartyGame[]

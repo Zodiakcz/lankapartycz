@@ -71,6 +71,11 @@ export function PartyDetail() {
   // Schedule form
   const [schedForm, setSchedForm] = useState({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
 
+  // Place edit
+  const [placeEdit, setPlaceEdit] = useState(false)
+  const [placeAddress, setPlaceAddress] = useState('')
+  const [placeStatus, setPlaceStatus] = useState('pending')
+
   // Spotify edit
   const [spotifyEdit, setSpotifyEdit] = useState(false)
   const [spotifyInfo, setSpotifyInfo] = useState('')
@@ -82,6 +87,8 @@ export function PartyDetail() {
     setParty(p)
     setAllGames(games)
     setSpotifyInfo(p.spotifyInfo || '')
+    setPlaceAddress(p.placeAddress || '')
+    setPlaceStatus(p.placeStatus || 'pending')
 
     const myAtt = p.attendance?.find((a: any) => a.userId === user?.id)
     if (myAtt) {
@@ -124,6 +131,12 @@ export function PartyDetail() {
 
   const handleRemoveGame = async (gameId: number) => {
     await api.removeGameFromParty(partyId, gameId)
+    load()
+  }
+
+  const handleSavePlace = async () => {
+    await api.updateParty(partyId, { placeAddress, placeStatus })
+    setPlaceEdit(false)
     load()
   }
 
@@ -346,6 +359,75 @@ export function PartyDetail() {
                 + Přidat účastníka
               </button>
             )}
+          </section>
+
+          {/* Place */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Místo</h2>
+              {isAdmin && !placeEdit && (
+                <button onClick={() => setPlaceEdit(true)} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
+              )}
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+              {placeEdit ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Adresa</label>
+                    <input
+                      type="text"
+                      value={placeAddress}
+                      onChange={e => setPlaceAddress(e.target.value)}
+                      placeholder="Ulice, město, PSČ..."
+                      className="bg-gray-700 rounded px-3 py-2 text-white w-full text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Stav rezervace</label>
+                    <select
+                      value={placeStatus}
+                      onChange={e => setPlaceStatus(e.target.value)}
+                      className="bg-gray-700 rounded px-3 py-2 text-white text-sm"
+                    >
+                      <option value="pending">Čeká na rezervaci</option>
+                      <option value="booked">Rezervováno</option>
+                      <option value="confirmed">Potvrzeno</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleSavePlace} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Uložit</button>
+                    <button onClick={() => { setPlaceEdit(false); setPlaceAddress(party.placeAddress || ''); setPlaceStatus(party.placeStatus || 'pending') }}
+                      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Zrušit</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-gray-300">{party.placeAddress || <span className="text-gray-500 italic">Adresa zatím není zadána</span>}</span>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      party.placeStatus === 'confirmed' ? 'bg-green-900/50 text-green-400' :
+                      party.placeStatus === 'booked' ? 'bg-blue-900/50 text-blue-400' :
+                      'bg-yellow-900/50 text-yellow-400'
+                    }`}>
+                      {party.placeStatus === 'confirmed' ? 'Potvrzeno' : party.placeStatus === 'booked' ? 'Rezervováno' : 'Čeká na rezervaci'}
+                    </span>
+                  </div>
+                  {party.placeAddress && (
+                    <div className="rounded overflow-hidden border border-gray-600" style={{ height: '220px' }}>
+                      <iframe
+                        title="Mapa místa"
+                        width="100%"
+                        height="220"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(party.placeAddress)}&output=embed`}
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </section>
 
           {/* Games */}
