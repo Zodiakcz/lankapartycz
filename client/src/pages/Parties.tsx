@@ -29,9 +29,19 @@ export function Parties() {
 
   const PartyCard = ({ party }: { party: any }) => {
     const confirmed = party.attendance?.filter((a: any) => a.status === 'confirmed').length || 0
+    const placeStatus = party.placeStatus || 'pending'
     return (
       <Link to={`/party/${party.id}`} className="block bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors border border-gray-700 hover:border-gray-600">
-        <h3 className="text-lg font-semibold text-blue-400">{party.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-lg font-semibold text-blue-400">{party.name}</h3>
+          <span className={`text-xs px-2 py-1 rounded flex-shrink-0 ${
+            placeStatus === 'confirmed' ? 'bg-green-900/50 text-green-400' :
+            placeStatus === 'booked' ? 'bg-blue-900/50 text-blue-400' :
+            'bg-yellow-900/50 text-yellow-400'
+          }`}>
+            {placeStatus === 'confirmed' ? 'Místo potvrzeno' : placeStatus === 'booked' ? 'Místo rezervováno' : 'Místo nevyřízeno'}
+          </span>
+        </div>
         <p className="text-sm text-gray-400 mt-1">{party.location}</p>
         <p className="text-sm text-gray-500 mt-1">{formatDate(party.startDate)} – {formatDate(party.endDate)}</p>
         <div className="flex gap-4 mt-3 text-xs text-gray-500">
