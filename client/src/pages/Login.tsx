@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
+import { APP_VERSION } from '../version'
 
 export function Login() {
   const { login } = useAuth()
@@ -53,7 +54,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
         <a href="https://github.com/Zodiakcz/lankapartycz/commits/master" target="_blank" rel="noopener noreferrer"
-          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v2.0</a>
+          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v{APP_VERSION}</a>
         <h1 className="text-2xl font-bold text-center mb-6 text-blue-400">LAN Party</h1>
 
         {/* Tab switcher */}
