@@ -60,6 +60,7 @@ export interface Party {
   description: string | null
   placeAddress: string | null
   placeStatus: string
+  advancePerNight: number
   spotifyInfo: string | null
   attendance: Attendance[]
   partyGames: PartyGame[]

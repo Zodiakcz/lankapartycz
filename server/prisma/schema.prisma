@@ -29,8 +29,9 @@ model Party {
   description   String       @default("")
   spotifyInfo   String       @default("")
   placeAddress  String       @default("")
-  placeStatus   String       @default("pending") // "pending" | "booked" | "confirmed"
-  createdAt     DateTime     @default(now())
+  placeStatus     String       @default("pending") // "pending" | "booked" | "confirmed"
+  advancePerNight Int          @default(0) // doporučená záloha za noc
+  createdAt       DateTime     @default(now())
 
   attendance      Attendance[]
   partyGames      PartyGame[]

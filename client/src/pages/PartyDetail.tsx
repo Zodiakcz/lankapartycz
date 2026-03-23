@@ -73,7 +73,7 @@ export function PartyDetail() {
 
   // Party detail edit
   const [partyEdit, setPartyEdit] = useState(false)
-  const [partyEditForm, setPartyEditForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '' })
+  const [partyEditForm, setPartyEditForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '', advancePerNight: '' })
 
   useEffect(() => { load(); if (isAdmin) api.users().then(setAllUsers) }, [partyId])
 
@@ -93,6 +93,10 @@ export function PartyDetail() {
         departure: myAtt.departure ? myAtt.departure.slice(0, 16) : '',
         advance: String(myAtt.advance || 0),
       })
+    } else {
+      const startNoon = p.startDate ? p.startDate.slice(0, 10) + 'T12:00' : ''
+      const endNoon = p.endDate ? p.endDate.slice(0, 10) + 'T12:00' : ''
+      setAttForm(prev => ({ ...prev, arrival: startNoon, departure: endNoon }))
     }
   }
 
@@ -137,12 +141,13 @@ export function PartyDetail() {
       startDate: party.startDate.slice(0, 10),
       endDate: party.endDate.slice(0, 10),
       description: party.description || '',
+      advancePerNight: String(party.advancePerNight || 0),
     })
     setPartyEdit(true)
   }
 
   const handleSavePartyDetails = async () => {
-    await api.updateParty(partyId, partyEditForm)
+    await api.updateParty(partyId, { ...partyEditForm, advancePerNight: Number(partyEditForm.advancePerNight) || 0 })
     setPartyEdit(false)
     load()
   }
@@ -227,6 +232,12 @@ export function PartyDetail() {
                 <textarea value={partyEditForm.description} onChange={e => setPartyEditForm({ ...partyEditForm, description: e.target.value })}
                   rows={3} className="form-input" />
               </div>
+              <div>
+                <label className="form-label">Záloha za noc (Kč)</label>
+                <input type="number" step="1" min="0" value={partyEditForm.advancePerNight}
+                  onChange={e => setPartyEditForm({ ...partyEditForm, advancePerNight: e.target.value })}
+                  className="form-input" />
+              </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
               <button onClick={() => setPartyEdit(false)} className="btn-ghost">Zrušit</button>
@@ -282,7 +293,21 @@ export function PartyDetail() {
               </div>
               <div className="mt-4 flex items-start gap-4">
                 <img src={qrCode} alt="QR platba" className="w-24 h-24 sm:w-32 sm:h-32 rounded border border-zinc-600 flex-shrink-0" />
-                <p className="text-xs text-zinc-400 mt-1">Naskenuj QR kód pro zaslání zálohy. Po odeslání zadej částku výše.</p>
+                <div>
+                  <p className="text-xs text-zinc-400 mt-1">Naskenuj QR kód pro zaslání zálohy. Po odeslání zadej částku výše.</p>
+                  {party.advancePerNight > 0 && (() => {
+                    const nights = attForm.arrival && attForm.departure
+                      ? Math.max(0, Math.round((new Date(attForm.departure).getTime() - new Date(attForm.arrival).getTime()) / (1000 * 60 * 60 * 24)))
+                      : 0
+                    const recommended = nights * party.advancePerNight
+                    return (
+                      <p className="text-sm text-yellow-400 mt-2 font-medium">
+                        Doporučená záloha: {recommended} Kč
+                        <span className="text-xs text-zinc-500 ml-1">({nights} {nights === 1 ? 'noc' : nights >= 2 && nights <= 4 ? 'noci' : 'nocí'} × {party.advancePerNight} Kč)</span>
+                      </p>
+                    )
+                  })()}
+                </div>
               </div>
             </form>
           </section>

@@ -8,7 +8,7 @@ export function Parties() {
   const { isAdmin } = useAuth()
   const [parties, setParties] = useState<Party[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '' })
+  const [form, setForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '', advancePerNight: '' })
 
   useEffect(() => { loadParties() }, [])
 
@@ -16,8 +16,8 @@ export function Parties() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    await api.createParty(form)
-    setForm({ name: '', location: '', startDate: '', endDate: '', description: '' })
+    await api.createParty({ ...form, advancePerNight: Number(form.advancePerNight) || 0 })
+    setForm({ name: '', location: '', startDate: '', endDate: '', description: '', advancePerNight: '' })
     setShowForm(false)
     loadParties()
   }
@@ -122,6 +122,12 @@ export function Parties() {
                 <textarea placeholder="Poznámky k akci..." value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   className="form-input" rows={2} />
+              </div>
+              <div>
+                <label className="form-label">Záloha za noc (Kč)</label>
+                <input type="number" step="1" min="0" placeholder="0" value={form.advancePerNight}
+                  onChange={e => setForm({ ...form, advancePerNight: e.target.value })}
+                  className="form-input" />
               </div>
             </div>
             <div className="flex gap-2 mt-4">

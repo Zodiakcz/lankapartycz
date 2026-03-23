@@ -35,16 +35,16 @@ router.get('/:id', requireAuth, async (req, res) => {
 
 // Create party (admin)
 router.post('/', requireAdmin, async (req, res) => {
-  const { name, location, startDate, endDate, description } = req.body
+  const { name, location, startDate, endDate, description, advancePerNight } = req.body
   const party = await prisma.party.create({
-    data: { name, location, startDate: new Date(startDate), endDate: new Date(endDate), description: description || '' },
+    data: { name, location, startDate: new Date(startDate), endDate: new Date(endDate), description: description || '', advancePerNight: advancePerNight ? Number(advancePerNight) : 0 },
   })
   res.json(party)
 })
 
 // Update party (admin)
 router.put('/:id', requireAdmin, async (req, res) => {
-  const { name, location, startDate, endDate, description, spotifyInfo, placeAddress, placeStatus } = req.body
+  const { name, location, startDate, endDate, description, spotifyInfo, placeAddress, placeStatus, advancePerNight } = req.body
   const party = await prisma.party.update({
     where: { id: Number(req.params.id) },
     data: {
@@ -56,6 +56,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
       ...(spotifyInfo !== undefined && { spotifyInfo }),
       ...(placeAddress !== undefined && { placeAddress }),
       ...(placeStatus !== undefined && { placeStatus }),
+      ...(advancePerNight !== undefined && { advancePerNight: Number(advancePerNight) }),
     },
   })
   res.json(party)
