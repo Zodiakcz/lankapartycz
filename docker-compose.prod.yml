@@ -12,11 +12,24 @@ services:
 
   client:
     image: ghcr.io/zodiakcz/lankapartycz/client:latest
-    ports:
-      - "80:80"
     depends_on:
       - server
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - client
+    restart: unless-stopped
+
 volumes:
   db-data:
+  caddy-data:
+  caddy-config:
