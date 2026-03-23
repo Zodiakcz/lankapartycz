@@ -67,9 +67,9 @@ export function PartyDetail() {
   const [placeAddress, setPlaceAddress] = useState('')
   const [placeStatus, setPlaceStatus] = useState('pending')
 
-  // Spotify edit
-  const [spotifyEdit, setSpotifyEdit] = useState(false)
-  const [spotifyInfo, setSpotifyInfo] = useState('')
+  // Notes edit
+  const [notesEdit, setNotesEdit] = useState(false)
+  const [notes, setNotes] = useState('')
 
   // Party detail edit
   const [partyEdit, setPartyEdit] = useState(false)
@@ -81,7 +81,7 @@ export function PartyDetail() {
     const [p, games] = await Promise.all([api.party(partyId), api.games()])
     setParty(p)
     setAllGames(games)
-    setSpotifyInfo(p.spotifyInfo || '')
+    setNotes(p.notes || '')
     setPlaceAddress(p.placeAddress || '')
     setPlaceStatus(p.placeStatus || 'pending')
 
@@ -158,9 +158,9 @@ export function PartyDetail() {
     load()
   }
 
-  const handleSaveSpotify = async () => {
-    await api.updateParty(partyId, { spotifyInfo })
-    setSpotifyEdit(false)
+  const handleSaveNotes = async () => {
+    await api.updateParty(partyId, { notes })
+    setNotesEdit(false)
     load()
   }
 
@@ -252,7 +252,7 @@ export function PartyDetail() {
         {(['info', 'schedule', 'expenses', 'shopping', 'packing'] as const).map(t => (
           <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
             className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
-            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', packing: 'Balení & Spotify' }[t]}
+            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', packing: 'Balení' }[t]}
           </button>
         ))}
       </div>
@@ -727,35 +727,35 @@ export function PartyDetail() {
       {/* Shopping Tab */}
       {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
 
-      {/* Packing & Spotify Tab */}
+      {/* Packing & Notes Tab */}
       {tab === 'packing' && (
         <div className="space-y-6">
-          {/* Spotify */}
-          <section>
-            <h2 className="section-heading">Spotify</h2>
-            <div className="card p-4">
-              {spotifyEdit ? (
-                <div className="flex gap-2">
-                  <textarea value={spotifyInfo} onChange={e => setSpotifyInfo(e.target.value)}
-                    className="form-input flex-1 w-auto" rows={3} placeholder="Přihlašovací údaje, playlist odkaz..." />
-                  <div className="flex flex-col gap-2">
-                    <button onClick={handleSaveSpotify} className="btn-primary">Uložit</button>
-                    <button onClick={() => setSpotifyEdit(false)} className="btn-secondary">Zrušit</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start justify-between">
-                  <p className="text-zinc-300 whitespace-pre-wrap">{party.spotifyInfo || 'Zatím nezadáno'}</p>
-                  {isAdmin && <button onClick={() => setSpotifyEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm ml-4">Upravit</button>}
-                </div>
-              )}
-            </div>
-          </section>
-
           {/* Packing list */}
           <section>
             <h2 className="section-heading">Co zabalit</h2>
             <PackingList partyId={partyId} isAdmin={isAdmin} />
+          </section>
+
+          {/* Notes */}
+          <section>
+            <h2 className="section-heading">Poznámky</h2>
+            <div className="card p-4">
+              {notesEdit ? (
+                <div className="flex gap-2">
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                    className="form-input flex-1 w-auto" rows={4} placeholder="WiFi heslo, Spotify přihlášení, důležité info..." />
+                  <div className="flex flex-col gap-2">
+                    <button onClick={handleSaveNotes} className="btn-primary">Uložit</button>
+                    <button onClick={() => setNotesEdit(false)} className="btn-secondary">Zrušit</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between">
+                  <p className="text-zinc-300 whitespace-pre-wrap">{party.notes || 'Zatím nezadáno'}</p>
+                  {isAdmin && <button onClick={() => setNotesEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm ml-4">Upravit</button>}
+                </div>
+              )}
+            </div>
           </section>
         </div>
       )}

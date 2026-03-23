@@ -44,7 +44,7 @@ router.post('/', requireAdmin, async (req, res) => {
 
 // Update party (admin)
 router.put('/:id', requireAdmin, async (req, res) => {
-  const { name, location, startDate, endDate, description, spotifyInfo, placeAddress, placeStatus, advancePerNight } = req.body
+  const { name, location, startDate, endDate, description, notes, placeAddress, placeStatus, advancePerNight } = req.body
   const party = await prisma.party.update({
     where: { id: Number(req.params.id) },
     data: {
@@ -53,7 +53,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
       ...(startDate !== undefined && { startDate: new Date(startDate) }),
       ...(endDate !== undefined && { endDate: new Date(endDate) }),
       ...(description !== undefined && { description }),
-      ...(spotifyInfo !== undefined && { spotifyInfo }),
+      ...(notes !== undefined && { notes }),
       ...(placeAddress !== undefined && { placeAddress }),
       ...(placeStatus !== undefined && { placeStatus }),
       ...(advancePerNight !== undefined && { advancePerNight: Number(advancePerNight) }),

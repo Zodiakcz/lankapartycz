@@ -27,7 +27,7 @@ model Party {
   startDate   DateTime
   endDate     DateTime
   description   String       @default("")
-  spotifyInfo   String       @default("")
+  notes         String       @default("") @map("spotifyInfo")
   placeAddress  String       @default("")
   placeStatus     String       @default("pending") // "pending" | "booked" | "confirmed"
   advancePerNight Int          @default(0) // doporučená záloha za noc
