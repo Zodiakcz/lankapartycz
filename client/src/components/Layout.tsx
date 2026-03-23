@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { APP_VERSION } from '../version'
 
 const navItems = [
   { path: '/', label: 'Párty' },
@@ -69,6 +70,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
         {children}
       </main>
+      <footer className="bg-gray-800 border-t border-gray-700 py-3 text-center text-xs text-gray-500">
+        Made by Zodiak • v{APP_VERSION}
+      </footer>
     </div>
   )
 }
