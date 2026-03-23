@@ -5,7 +5,6 @@ import { useAuth } from '../lib/auth'
 import { SOURCE_LABELS, TIME_SLOTS, sourceBadgeClass } from '../lib/constants'
 import type { Party, User, Game, Attendance, Expense, ExpenseSplit, PartyGame, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
-import { PackingList } from '../components/PackingList'
 import qrCode from '../img/qr_code.jpg'
 
 export function PartyDetail() {
@@ -17,7 +16,7 @@ export function PartyDetail() {
   const [party, setParty] = useState<Party | null>(null)
   const [allGames, setAllGames] = useState<Game[]>([])
   const [split, setSplit] = useState<ExpenseSplit | null>(null)
-  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'packing'>('info')
+  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'notes'>('info')
 
   type AttStatus = 'confirmed' | 'maybe' | 'declined'
 
@@ -249,10 +248,10 @@ export function PartyDetail() {
 
       {/* Tabs */}
       <div className="tab-bar mb-6">
-        {(['info', 'schedule', 'expenses', 'shopping', 'packing'] as const).map(t => (
+        {(['info', 'schedule', 'expenses', 'shopping', 'notes'] as const).map(t => (
           <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
             className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
-            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', packing: 'Balení' }[t]}
+            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', notes: 'Poznámky' }[t]}
           </button>
         ))}
       </div>
@@ -544,6 +543,7 @@ export function PartyDetail() {
               </div>
             )}
           </section>
+
         </div>
       )}
 
@@ -727,38 +727,27 @@ export function PartyDetail() {
       {/* Shopping Tab */}
       {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
 
-      {/* Packing & Notes Tab */}
-      {tab === 'packing' && (
-        <div className="space-y-6">
-          {/* Packing list */}
-          <section>
-            <h2 className="section-heading">Co zabalit</h2>
-            <PackingList partyId={partyId} isAdmin={isAdmin} />
-          </section>
-
-          {/* Notes */}
-          <section>
-            <h2 className="section-heading">Poznámky</h2>
-            <div className="card p-4">
-              {notesEdit ? (
-                <div className="flex gap-2">
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                    className="form-input flex-1 w-auto" rows={4} placeholder="WiFi heslo, Spotify přihlášení, důležité info..." />
-                  <div className="flex flex-col gap-2">
-                    <button onClick={handleSaveNotes} className="btn-primary">Uložit</button>
-                    <button onClick={() => setNotesEdit(false)} className="btn-secondary">Zrušit</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start justify-between">
-                  <p className="text-zinc-300 whitespace-pre-wrap">{party.notes || 'Zatím nezadáno'}</p>
-                  {isAdmin && <button onClick={() => setNotesEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm ml-4">Upravit</button>}
-                </div>
-              )}
+      {/* Notes Tab */}
+      {tab === 'notes' && (
+        <div className="card p-4">
+          {notesEdit ? (
+            <div className="flex gap-2">
+              <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                className="form-input flex-1 w-auto" rows={4} placeholder="WiFi heslo, Spotify přihlášení, důležité info..." />
+              <div className="flex flex-col gap-2">
+                <button onClick={handleSaveNotes} className="btn-primary">Uložit</button>
+                <button onClick={() => setNotesEdit(false)} className="btn-secondary">Zrušit</button>
+              </div>
             </div>
-          </section>
+          ) : (
+            <div className="flex items-start justify-between">
+              <p className="text-zinc-300 whitespace-pre-wrap">{party.notes || 'Zatím nezadáno'}</p>
+              {isAdmin && <button onClick={() => setNotesEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm ml-4">Upravit</button>}
+            </div>
+          )}
         </div>
       )}
+
     </div>
   )
 }
