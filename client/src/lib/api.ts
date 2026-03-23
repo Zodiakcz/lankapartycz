@@ -26,6 +26,8 @@ export const api = {
   users: () => request<any[]>('/auth/users'),
   pendingUsers: () => request<any[]>('/auth/pending'),
   approveUser: (id: number) => request<any>(`/auth/approve/${id}`, { method: 'POST' }),
+  updateUser: (id: number, data: { role?: string; displayName?: string }) =>
+    request<any>(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteUser: (id: number) => request<any>(`/auth/users/${id}`, { method: 'DELETE' }),
   changePassword: (data: { userId?: number; currentPassword?: string; newPassword: string }) =>
     request<any>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
