@@ -35,30 +35,57 @@ export function ChangePassword() {
 
   return (
     <div className="max-w-md">
-      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 hover:text-gray-300 mb-4">&larr; Zpět</button>
-      <h1 className="text-2xl font-bold mb-6">Změna hesla</h1>
-      <p className="text-gray-400 text-sm mb-4">Přihlášen jako <strong>{user?.displayName}</strong></p>
+      <button onClick={() => navigate(-1)} className="btn-ghost text-sm -ml-3 mb-4">
+        &larr; Zpět
+      </button>
+      <h1 className="page-heading mb-1">Změna hesla</h1>
+      <p className="text-zinc-500 text-sm mb-6">
+        Přihlášen jako <span className="text-zinc-300 font-medium">{user?.displayName}</span>
+      </p>
 
-      {error && <div className="bg-red-900/50 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>}
-      {message && <div className="bg-green-900/50 text-green-300 p-3 rounded mb-4 text-sm">{message}</div>}
+      {error && (
+        <div className="bg-red-900/30 border border-red-800/50 text-red-400 p-3 rounded-lg mb-4 text-sm">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="bg-emerald-900/30 border border-emerald-800/50 text-emerald-400 p-3 rounded-lg mb-4 text-sm">
+          {message}
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-4 border border-gray-700 space-y-4">
+      <form onSubmit={handleSubmit} className="card p-5 space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Současné heslo</label>
-          <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required
-            className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="form-label">Současné heslo</label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            required
+            className="form-input"
+          />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Nové heslo</label>
-          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required
-            className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="form-label">Nové heslo</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            required
+            className="form-input"
+          />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Nové heslo znovu</label>
-          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
-            className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="form-label">Nové heslo znovu</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            required
+            className="form-input"
+          />
         </div>
-        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium transition-colors">
+        <button type="submit" className="btn-primary w-full">
           Změnit heslo
         </button>
       </form>

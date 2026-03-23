@@ -84,30 +84,26 @@ export function Admin() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Správa uživatelů</h1>
+      <h1 className="page-heading mb-6">Správa uživatelů</h1>
 
       {/* Pending approvals */}
       {pending.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-3 text-yellow-400">Čekající žádosti ({pending.length})</h2>
+          <h2 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-3">
+            Čekající žádosti ({pending.length})
+          </h2>
           <div className="space-y-2">
             {pending.map(u => (
-              <div key={u.id} className="bg-gray-800 rounded p-3 border border-yellow-700/50 flex items-center justify-between">
+              <div key={u.id} className="card px-4 py-3 border-amber-800/30 flex items-center justify-between gap-3">
                 <div>
-                  <span className="font-medium">{u.displayName}</span>
-                  <span className="text-gray-500 text-sm ml-2">@{u.username}</span>
+                  <span className="font-medium text-zinc-100">{u.displayName}</span>
+                  <span className="text-zinc-500 text-sm ml-2">@{u.username}</span>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleApprove(u.id)}
-                    className="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >
+                  <button onClick={() => handleApprove(u.id)} className="btn-success">
                     Schválit
                   </button>
-                  <button
-                    onClick={() => handleReject(u.id)}
-                    className="bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >
+                  <button onClick={() => handleReject(u.id)} className="btn-danger">
                     Odmítnout
                   </button>
                 </div>
@@ -119,73 +115,72 @@ export function Admin() {
 
       {/* User list */}
       <div className="space-y-2 mb-8">
+        <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Uživatelé</h2>
         {users.map(u => (
-          <div key={u.id} className="bg-gray-800 rounded border border-gray-700 overflow-hidden">
-            <div className="p-3 flex items-center justify-between">
+          <div key={u.id} className="card overflow-hidden">
+            <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div>
-                  <span className="font-medium">{u.displayName}</span>
-                  <span className="text-gray-500 text-sm ml-2">@{u.username}</span>
+                  <span className="font-medium text-zinc-100">{u.displayName}</span>
+                  <span className="text-zinc-500 text-sm ml-2">@{u.username}</span>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${u.role === 'admin' ? 'bg-purple-900/50 text-purple-400' : 'bg-gray-700 text-gray-400'}`}>
+                <span className={`badge ${u.role === 'admin' ? 'badge-purple' : 'badge-gray'}`}>
                   {u.role === 'admin' ? 'Admin' : 'Člen'}
                 </span>
               </div>
               <button
                 onClick={() => toggleEdit(u.id)}
-                className="text-gray-400 hover:text-white px-2 py-1 rounded text-sm transition-colors"
+                className="btn-ghost text-sm py-1"
               >
                 {editingId === u.id ? '✕ Zavřít' : '✎ Upravit'}
               </button>
             </div>
 
             {editingId === u.id && (
-              <div className="border-t border-gray-700 p-3 bg-gray-850 space-y-3">
+              <div className="border-t border-white/8 px-4 py-4 bg-zinc-800/30 space-y-4">
                 {editMsg !== null && editMsg.id === u.id && (
-                  <div className={`text-sm px-3 py-2 rounded ${editMsg.ok ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
+                  <div className={`text-sm px-3 py-2 rounded-lg ${
+                    editMsg.ok
+                      ? 'bg-emerald-900/30 border border-emerald-800/50 text-emerald-400'
+                      : 'bg-red-900/30 border border-red-800/50 text-red-400'
+                  }`}>
                     {editMsg.text}
                   </div>
                 )}
 
-                {/* Change password */}
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Nové heslo</p>
+                  <p className="form-label">Nové heslo</p>
                   <div className="flex gap-2">
                     <input
                       type="password"
-                      placeholder="Nové heslo (min. 4 znaky)"
+                      placeholder="Min. 4 znaky"
                       value={editPw}
                       onChange={e => setEditPw(e.target.value)}
-                      className="bg-gray-700 rounded px-3 py-1.5 text-white text-sm flex-1"
+                      className="form-input"
                     />
-                    <button
-                      onClick={() => handleSetPassword(u)}
-                      className="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm transition-colors"
-                    >
-                      Nastavit heslo
+                    <button onClick={() => handleSetPassword(u)} className="btn-primary flex-shrink-0">
+                      Nastavit
                     </button>
                   </div>
                 </div>
 
-                {/* Toggle role */}
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-400">Aktuální role: <span className={u.role === 'admin' ? 'text-purple-400' : 'text-gray-300'}>{u.role === 'admin' ? 'Admin' : 'Člen'}</span></p>
-                  </div>
+                  <p className="text-sm text-zinc-400">
+                    Role:{' '}
+                    <span className={u.role === 'admin' ? 'text-violet-400' : 'text-zinc-300'}>
+                      {u.role === 'admin' ? 'Admin' : 'Člen'}
+                    </span>
+                  </p>
                   <button
                     onClick={() => handleToggleRole(u)}
-                    className="bg-purple-800 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm transition-colors"
+                    className="btn-secondary text-violet-400 border-violet-800/50 text-sm"
                   >
                     {u.role === 'admin' ? 'Změnit na Člen' : 'Změnit na Admin'}
                   </button>
                 </div>
 
-                {/* Delete */}
-                <div className="flex justify-end pt-1 border-t border-gray-700">
-                  <button
-                    onClick={() => handleDelete(u)}
-                    className="bg-red-900 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded text-sm transition-colors"
-                  >
+                <div className="flex justify-end pt-1 border-t border-white/8">
+                  <button onClick={() => handleDelete(u)} className="btn-danger">
                     Smazat uživatele
                   </button>
                 </div>
@@ -195,24 +190,43 @@ export function Admin() {
         ))}
       </div>
 
-      {/* Register form */}
-      <h2 className="text-lg font-semibold mb-3">Přidat uživatele</h2>
-      {message && <div className="bg-gray-800 text-blue-400 p-3 rounded mb-4 text-sm">{message}</div>}
-      <form onSubmit={handleRegister} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input placeholder="Uživatelské jméno" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required
-            className="bg-gray-700 rounded px-3 py-2 text-white" />
-          <input placeholder="Zobrazované jméno" value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} required
-            className="bg-gray-700 rounded px-3 py-2 text-white" />
-          <input type="password" placeholder="Heslo" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required
-            className="bg-gray-700 rounded px-3 py-2 text-white" />
-          <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
-            className="bg-gray-700 rounded px-3 py-2 text-white">
-            <option value="member">Člen</option>
-            <option value="admin">Admin</option>
-          </select>
+      {/* Create user form */}
+      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Přidat uživatele</h2>
+      {message && (
+        <div className="bg-indigo-900/30 border border-indigo-800/50 text-indigo-300 p-3 rounded-lg mb-4 text-sm">
+          {message}
         </div>
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm mt-4">Vytvořit účet</button>
+      )}
+      <form onSubmit={handleRegister} className="card p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="form-label">Uživatelské jméno</label>
+            <input placeholder="jannovak" value={form.username}
+              onChange={e => setForm({ ...form, username: e.target.value })} required
+              className="form-input" />
+          </div>
+          <div>
+            <label className="form-label">Zobrazované jméno</label>
+            <input placeholder="Jan Novák" value={form.displayName}
+              onChange={e => setForm({ ...form, displayName: e.target.value })} required
+              className="form-input" />
+          </div>
+          <div>
+            <label className="form-label">Heslo</label>
+            <input type="password" placeholder="Min. 4 znaky" value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })} required
+              className="form-input" />
+          </div>
+          <div>
+            <label className="form-label">Role</label>
+            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
+              className="form-select">
+              <option value="member">Člen</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" className="btn-primary mt-4">Vytvořit účet</button>
       </form>
     </div>
   )

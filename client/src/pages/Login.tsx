@@ -51,102 +51,130 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
-        <a href="https://github.com/Zodiakcz/lankapartycz/commits/master" target="_blank" rel="noopener noreferrer"
-          className="block text-xs text-gray-500 hover:text-gray-300 text-center mb-2 transition-colors">v{APP_VERSION}</a>
-        <h1 className="text-2xl font-bold text-center mb-6 text-blue-400">LAN Party</h1>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
+      {/* Background glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+      </div>
 
-        {/* Tab switcher */}
-        <div className="flex rounded-lg overflow-hidden border border-gray-700 mb-6">
-          <button
-            type="button"
-            onClick={() => switchMode('login')}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
+      <div className="w-full max-w-sm relative">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">
+            LAN <span className="text-indigo-400">Party</span>
+          </h1>
+          <a
+            href="https://github.com/Zodiakcz/lankapartycz/commits/master"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors mt-1 inline-block"
           >
-            Přihlášení
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode('register')}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-white'}`}
-          >
-            Registrace
-          </button>
+            v{APP_VERSION}
+          </a>
         </div>
 
-        {error && <div className="bg-red-900/50 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>}
-        {success && <div className="bg-green-900/50 text-green-300 p-3 rounded mb-4 text-sm">{success}</div>}
+        <div className="card p-6">
+          {/* Tab switcher */}
+          <div className="flex rounded-lg overflow-hidden border border-zinc-700 mb-6">
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                mode === 'login'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Přihlášení
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                mode === 'register'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Registrace
+            </button>
+          </div>
 
-        {mode === 'login' ? (
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Uživatelské jméno</label>
-              <input
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
+          {error && (
+            <div className="badge-red bg-red-900/30 border border-red-800/50 text-red-400 p-3 rounded-lg mb-4 text-sm">
+              {error}
             </div>
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-1">Heslo</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          )}
+          {success && (
+            <div className="badge-green bg-emerald-900/30 border border-emerald-800/50 text-emerald-400 p-3 rounded-lg mb-4 text-sm">
+              {success}
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium transition-colors"
-            >
-              Přihlásit se
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleRegister}>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Uživatelské jméno</label>
-              <input
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">Zobrazované jméno</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-1">Heslo (min. 4 znaky)</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium transition-colors"
-            >
-              Odeslat žádost
-            </button>
-          </form>
-        )}
+          )}
+
+          {mode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="form-label">Uživatelské jméno</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  className="form-input"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="form-label">Heslo</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="form-input"
+                />
+              </div>
+              <button type="submit" className="btn-primary w-full mt-2">
+                Přihlásit se
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="form-label">Uživatelské jméno</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  className="form-input"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div>
+                <label className="form-label">Zobrazované jméno</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div>
+                <label className="form-label">Heslo (min. 4 znaky)</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <button type="submit" className="btn-primary w-full mt-2">
+                Odeslat žádost
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   )

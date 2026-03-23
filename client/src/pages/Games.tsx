@@ -11,11 +11,11 @@ const SOURCE_OPTIONS = [
 ]
 
 function sourceBadgeClass(source: string) {
-  return source === 'steam' ? 'bg-blue-900/50 text-blue-400' :
-    source === 'epic' ? 'bg-orange-900/50 text-orange-400' :
-    source === 'copied' ? 'bg-yellow-900/50 text-yellow-400' :
-    source === 'free' ? 'bg-green-900/50 text-green-400' :
-    'bg-gray-700 text-gray-400'
+  return source === 'steam' ? 'badge badge-blue' :
+    source === 'epic' ? 'badge badge-orange' :
+    source === 'copied' ? 'badge badge-yellow' :
+    source === 'free' ? 'badge badge-green' :
+    'badge badge-gray'
 }
 
 function playerCountLabel(min: number, max: number | null) {
@@ -57,7 +57,6 @@ export function Games() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const data = { ...form, maxPlayers: form.maxPlayers ? Number(form.maxPlayers) : null }
-
     if (editingId) {
       await api.updateGame(editingId, data)
       setEditingId(null)
@@ -78,35 +77,48 @@ export function Games() {
   }
 
   const formJsx = (
-    <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input placeholder="Název hry" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
-          className="bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}
-          className="bg-gray-700 rounded px-3 py-2 text-white">
-          {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <input placeholder="Poznámka ke zdroji (volitelné)" value={form.sourceNote} onChange={e => setForm({ ...form, sourceNote: e.target.value })}
-          className="bg-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <form onSubmit={handleSubmit} className="card p-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="form-label">Název hry</label>
+          <input placeholder="Counter-Strike 2" value={form.name}
+            onChange={e => setForm({ ...form, name: e.target.value })} required
+            className="form-input" />
+        </div>
+        <div>
+          <label className="form-label">Zdroj</label>
+          <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}
+            className="form-select">
+            {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="form-label">Poznámka ke zdroji</label>
+          <input placeholder="Volitelné" value={form.sourceNote}
+            onChange={e => setForm({ ...form, sourceNote: e.target.value })}
+            className="form-input" />
+        </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="block text-xs text-gray-500 mb-1">Min hráčů</label>
-            <input type="number" value={form.minPlayers} onChange={e => setForm({ ...form, minPlayers: Number(e.target.value) })}
-              className="bg-gray-700 rounded px-3 py-2 text-white w-full" min="1" />
+            <label className="form-label">Min hráčů</label>
+            <input type="number" value={form.minPlayers}
+              onChange={e => setForm({ ...form, minPlayers: Number(e.target.value) })}
+              className="form-input" min="1" />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-gray-500 mb-1">Max hráčů</label>
-            <input type="number" placeholder="–" value={form.maxPlayers} onChange={e => setForm({ ...form, maxPlayers: e.target.value })}
-              className="bg-gray-700 rounded px-3 py-2 text-white w-full" min="1" />
+            <label className="form-label">Max hráčů</label>
+            <input type="number" placeholder="–" value={form.maxPlayers}
+              onChange={e => setForm({ ...form, maxPlayers: e.target.value })}
+              className="form-input" min="1" />
           </div>
         </div>
       </div>
       <div className="flex gap-2 mt-4">
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+        <button type="submit" className="btn-primary">
           {editingId ? 'Uložit' : 'Přidat'}
         </button>
         <button type="button" onClick={() => { editingId ? cancelEdit() : setShowForm(false) }}
-          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Zrušit</button>
+          className="btn-secondary">Zrušit</button>
       </div>
     </form>
   )
@@ -114,9 +126,9 @@ export function Games() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Hry</h1>
+        <h1 className="page-heading">Hry</h1>
         {isAdmin && !editingId && (
-          <button onClick={() => { setShowForm(!showForm); cancelEdit() }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+          <button onClick={() => { setShowForm(!showForm); cancelEdit() }} className="btn-primary">
             + Přidat hru
           </button>
         )}
@@ -129,27 +141,29 @@ export function Games() {
           editingId === game.id ? (
             <div key={game.id}>{formJsx}</div>
           ) : (
-            <div key={game.id} className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center flex-wrap gap-2">
-                <span className="font-medium">{game.name}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${sourceBadgeClass(game.source)}`}>
+                <span className="font-medium text-zinc-100">{game.name}</span>
+                <span className={sourceBadgeClass(game.source)}>
                   {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                <span className="badge badge-gray">
                   {playerCountLabel(game.minPlayers, game.maxPlayers)}
                 </span>
-                {game.sourceNote && <span className="text-xs text-gray-500">{game.sourceNote}</span>}
+                {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
               </div>
               {isAdmin && (
-                <div className="flex gap-3 flex-shrink-0">
-                  <button onClick={() => startEdit(game)} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
-                  <button onClick={() => handleDelete(game.id)} className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={() => startEdit(game)} className="btn-ghost text-xs py-1">Upravit</button>
+                  <button onClick={() => handleDelete(game.id)} className="btn-danger text-xs py-1">Smazat</button>
                 </div>
               )}
             </div>
           )
         ))}
-        {games.length === 0 && <p className="text-gray-500 text-center mt-8">Zatím žádné hry</p>}
+        {games.length === 0 && (
+          <p className="text-zinc-600 text-center mt-8 text-sm">Zatím žádné hry</p>
+        )}
       </div>
     </div>
   )

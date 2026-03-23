@@ -174,7 +174,7 @@ export function PartyDetail() {
     }
   }
 
-  if (!party) return <div className="text-gray-500">Načítání...</div>
+  if (!party) return <div className="text-zinc-500">Načítání...</div>
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
   const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
@@ -188,16 +188,16 @@ export function PartyDetail() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <button onClick={() => navigate('/')} className="text-sm text-gray-500 hover:text-gray-300 mb-2">&larr; Zpět</button>
-          <h1 className="text-2xl font-bold text-blue-400">{party.name}</h1>
-          <p className="text-gray-400">{party.location}</p>
-          <p className="text-sm text-gray-500">{formatDate(party.startDate)} – {formatDate(party.endDate)} ({partyDays} dní)</p>
-          {party.description && <p className="text-gray-400 mt-2">{party.description}</p>}
+          <button onClick={() => navigate('/')} className="btn-ghost text-xs mb-2 -ml-3">&larr; Zpět</button>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{party.name}</h1>
+          <p className="text-zinc-400 mt-0.5">{party.location}</p>
+          <p className="text-sm text-zinc-500 mt-0.5">{formatDate(party.startDate)} – {formatDate(party.endDate)} ({partyDays} dní)</p>
+          {party.description && <p className="text-zinc-400 mt-2 text-sm">{party.description}</p>}
         </div>
         {isAdmin && (
-          <div className="flex gap-3 items-center">
-            <button onClick={startPartyEdit} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
-            <button onClick={handleDelete} className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
+          <div className="flex gap-1 items-center">
+            <button onClick={startPartyEdit} className="btn-ghost text-sm">Upravit</button>
+            <button onClick={handleDelete} className="btn-danger text-sm">Smazat</button>
           </div>
         )}
       </div>
@@ -205,50 +205,50 @@ export function PartyDetail() {
       {/* Party Edit Modal */}
       {partyEdit && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-lg">
+          <div className="card p-6 w-full max-w-lg">
             <h2 className="text-lg font-semibold mb-4">Upravit událost</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Název</label>
+                <label className="form-label">Název</label>
                 <input type="text" value={partyEditForm.name} onChange={e => setPartyEditForm({ ...partyEditForm, name: e.target.value })}
-                  className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="form-input" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Místo</label>
+                <label className="form-label">Místo</label>
                 <input type="text" value={partyEditForm.location} onChange={e => setPartyEditForm({ ...partyEditForm, location: e.target.value })}
-                  className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="form-input" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Začátek</label>
+                  <label className="form-label">Začátek</label>
                   <input type="date" value={partyEditForm.startDate} onChange={e => setPartyEditForm({ ...partyEditForm, startDate: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="form-input" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Konec</label>
+                  <label className="form-label">Konec</label>
                   <input type="date" value={partyEditForm.endDate} onChange={e => setPartyEditForm({ ...partyEditForm, endDate: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="form-input" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Popis</label>
+                <label className="form-label">Popis</label>
                 <textarea value={partyEditForm.description} onChange={e => setPartyEditForm({ ...partyEditForm, description: e.target.value })}
-                  rows={3} className="bg-gray-700 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  rows={3} className="form-input" />
               </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
-              <button onClick={() => setPartyEdit(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200">Zrušit</button>
-              <button onClick={handleSavePartyDetails} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded">Uložit</button>
+              <button onClick={() => setPartyEdit(false)} className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200">Zrušit</button>
+              <button onClick={handleSavePartyDetails} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-400 text-white text-sm rounded">Uložit</button>
             </div>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-700 overflow-x-auto">
+      <div className="tab-bar mb-6">
         {(['info', 'schedule', 'expenses', 'shopping', 'packing'] as const).map(t => (
           <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
-            className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap ${tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-200'}`}>
+            className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
             {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', packing: 'Balení & Spotify' }[t]}
           </button>
         ))}
@@ -259,49 +259,49 @@ export function PartyDetail() {
         <div className="space-y-6">
           {/* Attendance */}
           <section>
-            <h2 className="text-lg font-semibold mb-3">Moje účast</h2>
-            <form onSubmit={handleAttendance} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <h2 className="section-heading">Moje účast</h2>
+            <form onSubmit={handleAttendance} className="card p-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 items-end">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Status</label>
+                  <label className="form-label">Status</label>
                   <select value={attForm.status} onChange={e => setAttForm({ ...attForm, status: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full">
+                    className="form-input">
                     <option value="confirmed">Potvrzeno</option>
                     <option value="maybe">Možná</option>
                     <option value="declined">Neúčast</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Příjezd</label>
+                  <label className="form-label">Příjezd</label>
                   <input type="datetime-local" value={attForm.arrival} onChange={e => setAttForm({ ...attForm, arrival: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full" />
+                    className="form-input" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Odjezd</label>
+                  <label className="form-label">Odjezd</label>
                   <input type="datetime-local" value={attForm.departure} onChange={e => setAttForm({ ...attForm, departure: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full" />
+                    className="form-input" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Záloha (Kč)</label>
+                  <label className="form-label">Záloha (Kč)</label>
                   <input type="number" step="1" min="0" value={attForm.advance} onChange={e => setAttForm({ ...attForm, advance: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full" />
+                    className="form-input" />
                 </div>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm col-span-2 sm:col-span-1">Uložit</button>
+                <button type="submit" className="btn-primary col-span-2 sm:col-span-1">Uložit</button>
               </div>
               <div className="mt-4 flex items-start gap-4">
-                <img src={qrCode} alt="QR platba" className="w-24 h-24 sm:w-32 sm:h-32 rounded border border-gray-600 flex-shrink-0" />
-                <p className="text-xs text-gray-400 mt-1">Naskenuj QR kód pro zaslání zálohy. Po odeslání zadej částku výše.</p>
+                <img src={qrCode} alt="QR platba" className="w-24 h-24 sm:w-32 sm:h-32 rounded border border-zinc-600 flex-shrink-0" />
+                <p className="text-xs text-zinc-400 mt-1">Naskenuj QR kód pro zaslání zálohy. Po odeslání zadej částku výše.</p>
               </div>
             </form>
           </section>
 
           {/* Who's coming */}
           <section>
-            <h2 className="text-lg font-semibold mb-3">Kdo jede</h2>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
+            <h2 className="section-heading">Kdo jede</h2>
+            <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
-                <thead className="bg-gray-750">
-                  <tr className="text-gray-400 text-left">
+                <thead className="bg-zinc-800/60">
+                  <tr className="text-zinc-400 text-left">
                     <th className="px-3 py-2">Jméno</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Příjezd</th>
@@ -314,11 +314,11 @@ export function PartyDetail() {
                 <tbody>
                   {party.attendance?.map((a: any) => (
                     editAttId === a.userId ? (
-                      <tr key={a.id} className="border-t border-gray-700 bg-gray-750">
+                      <tr key={a.id} className="border-t border-white/8 bg-zinc-800/60">
                         <td className="px-4 py-2 font-medium">{a.user.displayName}</td>
                         <td className="px-4 py-2">
                           <select value={editAttForm.status} onChange={e => setEditAttForm({ ...editAttForm, status: e.target.value })}
-                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
                             <option value="confirmed">Potvrzeno</option>
                             <option value="maybe">Možná</option>
                             <option value="declined">Neúčast</option>
@@ -326,58 +326,58 @@ export function PartyDetail() {
                         </td>
                         <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.arrival} onChange={e => setEditAttForm({ ...editAttForm, arrival: e.target.value })}
-                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
                         </td>
                         <td className="px-4 py-2">
                           <input type="datetime-local" value={editAttForm.departure} onChange={e => setEditAttForm({ ...editAttForm, departure: e.target.value })}
-                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
                         </td>
                         <td className="px-4 py-2">–</td>
                         <td className="px-4 py-2">
                           <input type="number" value={editAttForm.advance} onChange={e => setEditAttForm({ ...editAttForm, advance: e.target.value })}
-                            className="bg-gray-700 rounded px-2 py-1 text-white text-xs w-20" />
+                            className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs w-20" />
                         </td>
                         <td className="px-4 py-2">
                           <div className="flex gap-2">
-                            <button onClick={saveEditAtt} className="text-green-400 hover:text-green-300 text-xs">Uložit</button>
-                            <button onClick={() => setEditAttId(null)} className="text-gray-400 hover:text-gray-300 text-xs">Zrušit</button>
+                            <button onClick={saveEditAtt} className="text-emerald-400 hover:text-emerald-300 text-xs">Uložit</button>
+                            <button onClick={() => setEditAttId(null)} className="text-zinc-400 hover:text-zinc-300 text-xs">Zrušit</button>
                           </div>
                         </td>
                       </tr>
                     ) : (
-                    <tr key={a.id} className="border-t border-gray-700">
+                    <tr key={a.id} className="border-t border-white/8">
                       <td className="px-4 py-2">{a.user.displayName}</td>
                       <td className="px-4 py-2">
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          a.status === 'confirmed' ? 'bg-green-900/50 text-green-400' :
-                          a.status === 'maybe' ? 'bg-yellow-900/50 text-yellow-400' :
-                          'bg-red-900/50 text-red-400'
+                        <span className={`badge ${
+                          a.status === 'confirmed' ? 'badge-green' :
+                          a.status === 'maybe' ? 'badge-yellow' :
+                          'badge-red'
                         }`}>
                           {a.status === 'confirmed' ? 'Potvrzeno' : a.status === 'maybe' ? 'Možná' : 'Neúčast'}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-gray-400">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
-                      <td className="px-4 py-2 text-gray-400">{a.departure ? formatDateTime(a.departure) : '–'}</td>
+                      <td className="px-4 py-2 text-zinc-400">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
+                      <td className="px-4 py-2 text-zinc-400">{a.departure ? formatDateTime(a.departure) : '–'}</td>
                       <td className="px-4 py-2 font-medium">{a.arrival && a.departure ? (() => {
                         const arr = new Date(a.arrival); const dep = new Date(a.departure)
                         const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
                         const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
                         return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
                       })() : '–'}</td>
-                      <td className="px-4 py-2">{a.advance ? <span className="text-green-400">{a.advance} Kč</span> : '–'}</td>
+                      <td className="px-4 py-2">{a.advance ? <span className="text-emerald-400">{a.advance} Kč</span> : '–'}</td>
                       {isAdmin && (
                         <td className="px-4 py-2">
-                          <button onClick={() => startEditAtt(a)} className="text-blue-400 hover:text-blue-300 text-xs">Upravit</button>
+                          <button onClick={() => startEditAtt(a)} className="text-indigo-400 hover:text-indigo-300 text-xs">Upravit</button>
                         </td>
                       )}
                     </tr>
                     )
                   ))}
                   {addingAtt && (
-                    <tr className="border-t border-gray-700 bg-gray-750">
+                    <tr className="border-t border-white/8 bg-zinc-800/60">
                       <td className="px-4 py-2">
                         <select value={addAttForm.userId} onChange={e => setAddAttForm({ ...addAttForm, userId: e.target.value })}
-                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
                           <option value="">Vyber uživatele...</option>
                           {allUsers
                             .filter(u => !party.attendance?.some((a: any) => a.userId === u.id))
@@ -386,7 +386,7 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2">
                         <select value={addAttForm.status} onChange={e => setAddAttForm({ ...addAttForm, status: e.target.value })}
-                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs">
+                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs">
                           <option value="confirmed">Potvrzeno</option>
                           <option value="maybe">Možná</option>
                           <option value="declined">Neúčast</option>
@@ -394,34 +394,34 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.arrival} onChange={e => setAddAttForm({ ...addAttForm, arrival: e.target.value })}
-                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
                       </td>
                       <td className="px-4 py-2">
                         <input type="datetime-local" value={addAttForm.departure} onChange={e => setAddAttForm({ ...addAttForm, departure: e.target.value })}
-                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs" />
+                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs" />
                       </td>
                       <td className="px-4 py-2">–</td>
                       <td className="px-4 py-2">
                         <input type="number" value={addAttForm.advance} onChange={e => setAddAttForm({ ...addAttForm, advance: e.target.value })}
-                          className="bg-gray-700 rounded px-2 py-1 text-white text-xs w-20" />
+                          className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-white text-xs w-20" />
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex gap-2">
-                          <button onClick={saveAddAtt} className="text-green-400 hover:text-green-300 text-xs">Uložit</button>
-                          <button onClick={() => setAddingAtt(false)} className="text-gray-400 hover:text-gray-300 text-xs">Zrušit</button>
+                          <button onClick={saveAddAtt} className="text-emerald-400 hover:text-emerald-300 text-xs">Uložit</button>
+                          <button onClick={() => setAddingAtt(false)} className="text-zinc-400 hover:text-zinc-300 text-xs">Zrušit</button>
                         </div>
                       </td>
                     </tr>
                   )}
                   {(!party.attendance || party.attendance.length === 0) && !addingAtt && (
-                    <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-4 text-gray-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
+                    <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-4 text-zinc-500 text-center">Nikdo se zatím nepřihlásil</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
             {isAdmin && !addingAtt && (
               <button onClick={() => { setAddingAtt(true); setEditAttId(null) }}
-                className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                className="mt-3 btn-primary">
                 + Přidat účastníka
               </button>
             )}
@@ -432,28 +432,28 @@ export function PartyDetail() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">Místo</h2>
               {isAdmin && !placeEdit && (
-                <button onClick={() => setPlaceEdit(true)} className="text-blue-400 hover:text-blue-300 text-sm">Upravit</button>
+                <button onClick={() => setPlaceEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm">Upravit</button>
               )}
             </div>
-            <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <div className="card p-4">
               {placeEdit ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Adresa</label>
+                    <label className="form-label">Adresa</label>
                     <input
                       type="text"
                       value={placeAddress}
                       onChange={e => setPlaceAddress(e.target.value)}
                       placeholder="Ulice, město, PSČ..."
-                      className="bg-gray-700 rounded px-3 py-2 text-white w-full text-sm"
+                      className="form-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Stav rezervace</label>
+                    <label className="form-label">Stav rezervace</label>
                     <select
                       value={placeStatus}
                       onChange={e => setPlaceStatus(e.target.value)}
-                      className="bg-gray-700 rounded px-3 py-2 text-white text-sm"
+                      className="form-input"
                     >
                       <option value="pending">Čeká na rezervaci</option>
                       <option value="booked">Rezervováno</option>
@@ -461,25 +461,25 @@ export function PartyDetail() {
                     </select>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleSavePlace} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Uložit</button>
+                    <button onClick={handleSavePlace} className="btn-primary">Uložit</button>
                     <button onClick={() => { setPlaceEdit(false); setPlaceAddress(party.placeAddress || ''); setPlaceStatus(party.placeStatus || 'pending') }}
-                      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Zrušit</button>
+                      className="btn-secondary">Zrušit</button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-gray-300">{party.placeAddress || <span className="text-gray-500 italic">Adresa zatím není zadána</span>}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      party.placeStatus === 'confirmed' ? 'bg-green-900/50 text-green-400' :
-                      party.placeStatus === 'booked' ? 'bg-blue-900/50 text-blue-400' :
-                      'bg-yellow-900/50 text-yellow-400'
+                    <span className="text-zinc-300">{party.placeAddress || <span className="text-zinc-500 italic">Adresa zatím není zadána</span>}</span>
+                    <span className={`badge ${
+                      party.placeStatus === 'confirmed' ? 'badge-green' :
+                      party.placeStatus === 'booked' ? 'badge-blue' :
+                      'badge-yellow'
                     }`}>
                       {party.placeStatus === 'confirmed' ? 'Potvrzeno' : party.placeStatus === 'booked' ? 'Rezervováno' : 'Čeká na rezervaci'}
                     </span>
                   </div>
                   {party.placeAddress && (
-                    <div className="rounded overflow-hidden border border-gray-600" style={{ height: '220px' }}>
+                    <div className="rounded overflow-hidden border border-zinc-600" style={{ height: '220px' }}>
                       <iframe
                         title="Mapa místa"
                         width="100%"
@@ -498,25 +498,25 @@ export function PartyDetail() {
 
           {/* Games */}
           <section>
-            <h2 className="text-lg font-semibold mb-3">Hry na této párty</h2>
+            <h2 className="section-heading">Hry na této párty</h2>
             <div className="space-y-2">
               {party.partyGames?.map((pg: any) => (
-                <div key={pg.id} className="bg-gray-800 rounded p-3 border border-gray-700 flex items-center justify-between">
+                <div key={pg.id} className="bg-zinc-900 rounded p-3 border border-white/8 flex items-center justify-between">
                   <div className="flex items-center flex-wrap gap-2">
                     <span className="font-medium">{pg.game.name}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      pg.game.source === 'steam' ? 'bg-blue-900/50 text-blue-400' :
-                      pg.game.source === 'epic' ? 'bg-orange-900/50 text-orange-400' :
-                      pg.game.source === 'copied' ? 'bg-yellow-900/50 text-yellow-400' :
-                      pg.game.source === 'free' ? 'bg-green-900/50 text-green-400' :
-                      'bg-gray-700 text-gray-400'
+                    <span className={`badge ${
+                      pg.game.source === 'steam' ? 'badge-blue' :
+                      pg.game.source === 'epic' ? 'badge-orange' :
+                      pg.game.source === 'copied' ? 'badge-yellow' :
+                      pg.game.source === 'free' ? 'badge-green' :
+                      'badge-gray'
                     }`}>{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                    <span className="badge badge-gray">
                       {pg.game.maxPlayers ? `${pg.game.minPlayers}–${pg.game.maxPlayers} hráčů` : `${pg.game.minPlayers}+ hráčů`}
                     </span>
                   </div>
                   {isAdmin && (
-                    <button onClick={() => handleRemoveGame(pg.gameId)} className="text-red-500 hover:text-red-400 text-sm">Odebrat</button>
+                    <button onClick={() => handleRemoveGame(pg.gameId)} className="btn-danger text-xs py-1">Odebrat</button>
                   )}
                 </div>
               ))}
@@ -524,12 +524,12 @@ export function PartyDetail() {
             {isAdmin && availableGames.length > 0 && (
               <div className="mt-3 flex gap-2">
                 <select onChange={e => { if (e.target.value) handleAddGame(Number(e.target.value)); e.target.value = '' }}
-                  className="bg-gray-700 rounded px-3 py-2 text-white text-sm">
+                  className="form-input">
                   <option value="">+ Přidat hru...</option>
                   {availableGames.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
                 <button onClick={async () => { for (const g of availableGames) await api.addGameToParty(partyId, g.id); load() }}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">Přidat všechny</button>
+                  className="btn-secondary">Přidat všechny</button>
               </div>
             )}
           </section>
@@ -545,16 +545,16 @@ export function PartyDetail() {
             const dayItems = party.schedule?.filter((s: any) => s.day === day) || []
 
             return (
-              <div key={day} className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-                <h3 className="font-semibold text-blue-400 mb-3">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+              <div key={day} className="card p-4">
+                <h3 className="font-semibold text-indigo-400 mb-3">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
                 {dayItems.length > 0 ? (
                   <div className="space-y-2">
                     {dayItems.map((item: any) => (
-                      <div key={item.id} className="flex items-start justify-between bg-gray-750 rounded p-2">
+                      <div key={item.id} className="flex items-start justify-between bg-zinc-800/60 rounded p-2">
                         <div>
-                          <span className="text-xs text-gray-500">{TIME_SLOTS.find(t => t.value === item.timeSlot)?.label}</span>
+                          <span className="text-xs text-zinc-500">{TIME_SLOTS.find(t => t.value === item.timeSlot)?.label}</span>
                           <span className="ml-2 font-medium">{item.title}</span>
-                          {item.description && <p className="text-sm text-gray-400 mt-1">{item.description}</p>}
+                          {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
                         </div>
                         {isAdmin && (
                           <button onClick={async () => { await api.deleteScheduleItem(item.id); load() }}
@@ -564,36 +564,36 @@ export function PartyDetail() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">Zatím nic naplánováno</p>
+                  <p className="text-zinc-500 text-sm">Zatím nic naplánováno</p>
                 )}
               </div>
             )
           })}
 
           {isAdmin && (
-            <form onSubmit={handleSchedule} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <form onSubmit={handleSchedule} className="card p-4">
               <h3 className="font-semibold mb-3">Přidat do programu</h3>
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Den</label>
+                  <label className="form-label">Den</label>
                   <select value={schedForm.day} onChange={e => setSchedForm({ ...schedForm, day: Number(e.target.value) })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white">
+                    className="form-input">
                     {Array.from({ length: partyDays }, (_, i) => <option key={i + 1} value={i + 1}>Den {i + 1}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Čas</label>
+                  <label className="form-label">Čas</label>
                   <select value={schedForm.timeSlot} onChange={e => setSchedForm({ ...schedForm, timeSlot: e.target.value })}
-                    className="bg-gray-700 rounded px-3 py-2 text-white">
+                    className="form-input">
                     {TIME_SLOTS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div className="flex-1 min-w-0 col-span-2">
-                  <label className="block text-xs text-gray-500 mb-1">Název</label>
+                  <label className="form-label">Název</label>
                   <input value={schedForm.title} onChange={e => setSchedForm({ ...schedForm, title: e.target.value })} required
-                    className="bg-gray-700 rounded px-3 py-2 text-white w-full" placeholder="CS2 turnaj, večeře..." />
+                    className="form-input" placeholder="CS2 turnaj, večeře..." />
                 </div>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+                <button type="submit" className="btn-primary">Přidat</button>
               </div>
             </form>
           )}
@@ -604,13 +604,13 @@ export function PartyDetail() {
       {tab === 'expenses' && (
         <div className="space-y-6">
           {/* Add expense */}
-          <form onSubmit={handleExpense} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <form onSubmit={handleExpense} className="card p-4">
             <h3 className="font-semibold mb-3">Přidat výdaj</h3>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Kdo platil</label>
+                <label className="form-label">Kdo platil</label>
                 <select value={expForm.paidByUserId} onChange={e => setExpForm({ ...expForm, paidByUserId: e.target.value })} required
-                  className="bg-gray-700 rounded px-3 py-2 text-white">
+                  className="form-input">
                   <option value="">Vyber...</option>
                   {party.attendance?.filter((a: any) => a.status === 'confirmed' || a.status === 'maybe').map((a: any) => (
                     <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
@@ -618,16 +618,16 @@ export function PartyDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Částka (Kč)</label>
+                <label className="form-label">Částka (Kč)</label>
                 <input type="number" step="0.01" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required
-                  className="bg-gray-700 rounded px-3 py-2 text-white w-28" />
+                  className="bg-zinc-800 rounded-lg px-3 py-2 text-white w-28" />
               </div>
               <div className="flex-1 min-w-0 col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">Popis</label>
+                <label className="form-label">Popis</label>
                 <input value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} required
-                  className="bg-gray-700 rounded px-3 py-2 text-white w-full" placeholder="Nákup, elektřina..." />
+                  className="form-input" placeholder="Nákup, elektřina..." />
               </div>
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+              <button type="submit" className="btn-primary">Přidat</button>
             </div>
           </form>
 
@@ -636,11 +636,11 @@ export function PartyDetail() {
             <h3 className="font-semibold mb-3">Výdaje</h3>
             <div className="space-y-2">
               {party.expenses?.map((e: any) => (
-                <div key={e.id} className="bg-gray-800 rounded p-3 border border-gray-700 flex items-center justify-between">
+                <div key={e.id} className="bg-zinc-900 rounded p-3 border border-white/8 flex items-center justify-between">
                   <div>
                     <span className="font-medium">{e.description}</span>
-                    <span className="text-blue-400 ml-2 font-semibold">{e.amount} Kč</span>
-                    <span className="text-xs text-gray-500 ml-2">– {e.paidBy.displayName}</span>
+                    <span className="text-indigo-400 ml-2 font-semibold">{e.amount} Kč</span>
+                    <span className="text-xs text-zinc-500 ml-2">– {e.paidBy.displayName}</span>
                   </div>
                   {(isAdmin || e.paidByUserId === user?.id) && (
                     <button onClick={async () => { await api.deleteExpense(e.id); load(); loadSplit() }}
@@ -649,7 +649,7 @@ export function PartyDetail() {
                 </div>
               ))}
               {(!party.expenses || party.expenses.length === 0) && (
-                <p className="text-gray-500">Zatím žádné výdaje</p>
+                <p className="text-zinc-500">Zatím žádné výdaje</p>
               )}
             </div>
           </section>
@@ -658,17 +658,17 @@ export function PartyDetail() {
           {split && (
             <section>
               <h3 className="font-semibold mb-3">Rozúčtování</h3>
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-400 mb-4">
+              <div className="card p-4">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400 mb-4">
                   <span>Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong></span>
                   <span>Zálohy celkem: <strong className="text-white">{split.totalAdvances} Kč</strong></span>
                   <span>Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
                   {split.totalNights > 0 && <span>Cena za noc: <strong className="text-white">{Math.round(split.sharedTotal / split.totalNights)} Kč</strong></span>}
                 </div>
-                <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
+                <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
                   <table className="w-full text-sm min-w-[500px]">
                     <thead>
-                      <tr className="text-gray-400 text-left border-b border-gray-700">
+                      <tr className="text-zinc-400 text-left border-b border-white/8">
                         <th className="px-4 py-2">Jméno</th>
                         <th className="px-4 py-2">Nocí</th>
                         <th className="px-4 py-2">Podíl</th>
@@ -680,13 +680,13 @@ export function PartyDetail() {
                     </thead>
                     <tbody>
                       {split.perPerson?.map((p: any) => (
-                        <tr key={p.user.id} className={`border-t border-gray-700 ${p.settled ? 'opacity-60' : ''}`}>
+                        <tr key={p.user.id} className={`border-t border-white/8 ${p.settled ? 'opacity-60' : ''}`}>
                           <td className="px-4 py-2 font-medium">{p.user.displayName}</td>
-                          <td className="px-4 py-2 text-gray-400">{p.nights}</td>
-                          <td className="px-4 py-2 text-gray-400">{p.owes} Kč</td>
-                          <td className="px-4 py-2 text-gray-400">{p.advance} Kč</td>
-                          <td className="px-4 py-2 text-gray-400">{p.paid} Kč</td>
-                          <td className={`px-4 py-2 font-semibold ${p.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <td className="px-4 py-2 text-zinc-400">{p.nights}</td>
+                          <td className="px-4 py-2 text-zinc-400">{p.owes} Kč</td>
+                          <td className="px-4 py-2 text-zinc-400">{p.advance} Kč</td>
+                          <td className="px-4 py-2 text-zinc-400">{p.paid} Kč</td>
+                          <td className={`px-4 py-2 font-semibold ${p.balance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {p.balance >= 0 ? `+${p.balance}` : p.balance} Kč
                           </td>
                           <td className="px-4 py-2 text-center">
@@ -698,7 +698,7 @@ export function PartyDetail() {
                                 await api.setSettled(Number(partyId), p.user.id, e.target.checked)
                                 loadSplit()
                               }}
-                              className={`w-4 h-4 accent-green-500 ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                              className={`w-4 h-4 accent-emerald-500 ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                             />
                           </td>
                         </tr>
@@ -706,7 +706,7 @@ export function PartyDetail() {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-gray-500 mt-3">Bilance = záloha + nákupy − podíl. Kladná = přeplatek, záporná = doplatit.</p>
+                <p className="text-xs text-zinc-500 mt-3">Bilance = záloha + nákupy − podíl. Kladná = přeplatek, záporná = doplatit.</p>
               </div>
             </section>
           )}
@@ -721,21 +721,21 @@ export function PartyDetail() {
         <div className="space-y-6">
           {/* Spotify */}
           <section>
-            <h2 className="text-lg font-semibold mb-3">Spotify</h2>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+            <h2 className="section-heading">Spotify</h2>
+            <div className="card p-4">
               {spotifyEdit ? (
                 <div className="flex gap-2">
                   <textarea value={spotifyInfo} onChange={e => setSpotifyInfo(e.target.value)}
-                    className="bg-gray-700 rounded px-3 py-2 text-white flex-1" rows={3} placeholder="Přihlašovací údaje, playlist odkaz..." />
+                    className="form-input flex-1 w-auto" rows={3} placeholder="Přihlašovací údaje, playlist odkaz..." />
                   <div className="flex flex-col gap-2">
-                    <button onClick={handleSaveSpotify} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Uložit</button>
-                    <button onClick={() => setSpotifyEdit(false)} className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">Zrušit</button>
+                    <button onClick={handleSaveSpotify} className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm">Uložit</button>
+                    <button onClick={() => setSpotifyEdit(false)} className="btn-secondary">Zrušit</button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start justify-between">
-                  <p className="text-gray-300 whitespace-pre-wrap">{party.spotifyInfo || 'Zatím nezadáno'}</p>
-                  {isAdmin && <button onClick={() => setSpotifyEdit(true)} className="text-blue-400 hover:text-blue-300 text-sm ml-4">Upravit</button>}
+                  <p className="text-zinc-300 whitespace-pre-wrap">{party.spotifyInfo || 'Zatím nezadáno'}</p>
+                  {isAdmin && <button onClick={() => setSpotifyEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm ml-4">Upravit</button>}
                 </div>
               )}
             </div>
@@ -743,7 +743,7 @@ export function PartyDetail() {
 
           {/* Packing list */}
           <section>
-            <h2 className="text-lg font-semibold mb-3">Co zabalit</h2>
+            <h2 className="section-heading">Co zabalit</h2>
             <PackingList partyId={partyId} isAdmin={isAdmin} />
           </section>
         </div>
@@ -803,16 +803,16 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
     <div className="space-y-8">
       {/* Food calculation */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">Kalkulace jídla</h2>
+        <h2 className="section-heading">Kalkulace jídla</h2>
 
         {calculation && (
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 mb-4">
-            <div className="flex gap-6 text-sm text-gray-400">
+          <div className="card p-4 mb-4">
+            <div className="flex gap-6 text-sm text-zinc-400">
               <span>Potvrzených: <strong className="text-white">{calculation.confirmedPeople}</strong></span>
               <span>Celkem nocí: <strong className="text-white">{calculation.totalNights}</strong></span>
             </div>
             {calculation.perPerson?.length > 0 && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-zinc-500">
                 {calculation.perPerson.map((p: any) => (
                   <span key={p.user.id} className="mr-3">{p.user.displayName}: {p.nights} nocí</span>
                 ))}
@@ -821,10 +821,10 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
+        <div className="bg-zinc-900 rounded-xl border border-white/8 overflow-x-auto">
           <table className="w-full text-sm min-w-[400px]">
             <thead>
-              <tr className="text-gray-400 text-left border-b border-gray-700">
+              <tr className="text-zinc-400 text-left border-b border-white/8">
                 <th className="px-3 py-2 w-8"></th>
                 <th className="px-3 py-2">Kategorie</th>
                 <th className="px-3 py-2 w-24">Na os./noc</th>
@@ -840,7 +840,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                 const calcRow = calculation?.amounts?.find((a: any) => a.category === cat.key)
 
                 return (
-                  <tr key={cat.key} className={`border-t border-gray-700 ${est?.purchased ? 'opacity-50' : ''}`}>
+                  <tr key={cat.key} className={`border-t border-white/8 ${est?.purchased ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-2">
                       <button
                         onClick={async () => {
@@ -849,7 +849,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                           load()
                         }}
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          est?.purchased ? 'bg-blue-600 border-blue-600' : 'border-gray-500'
+                          est?.purchased ? 'bg-indigo-600 border-indigo-600' : 'border-zinc-600'
                         }`}
                       >
                         {est?.purchased && <span className="text-white text-xs">✓</span>}
@@ -864,7 +864,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                           min="0"
                           value={perNight}
                           onChange={e => handleEstimateChange(cat.key, Number(e.target.value), unit)}
-                          className="bg-gray-700 rounded px-2 py-1 text-white w-20"
+                          className="bg-zinc-800 rounded-md px-2 py-1 text-white w-20"
                         />
                       ) : (
                         <span>{perNight}</span>
@@ -875,7 +875,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                         <select
                           value={unit}
                           onChange={e => handleEstimateChange(cat.key, perNight, e.target.value)}
-                          className="bg-gray-700 rounded px-2 py-1 text-white"
+                          className="bg-zinc-800 rounded-md px-2 py-1 text-white"
                         >
                           <option value="ks">ks</option>
                           <option value="l">l</option>
@@ -887,7 +887,7 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
                       )}
                     </td>
                     <td className="px-4 py-2">
-                      <span className="font-semibold text-blue-400">
+                      <span className="font-semibold text-indigo-400">
                         {calcRow ? `${calcRow.totalNeeded} ${unit}` : '–'}
                       </span>
                     </td>
@@ -901,34 +901,34 @@ function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
 
       {/* Shopping list */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">Nákupní seznam</h2>
+        <h2 className="section-heading">Nákupní seznam</h2>
 
         <form onSubmit={handleAddItem} className="flex gap-2 mb-4">
           <input
             value={newItem}
             onChange={e => setNewItem(e.target.value)}
             placeholder="Přidat položku..."
-            className="bg-gray-700 rounded px-3 py-2 text-white flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="form-input flex-1 w-auto focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+          <button type="submit" className="btn-primary">Přidat</button>
         </form>
 
         <div className="space-y-1">
           {items.map((item: any) => (
-            <div key={item.id} className="flex items-center gap-3 bg-gray-800 rounded p-3 border border-gray-700">
+            <div key={item.id} className="flex items-center gap-3 bg-zinc-900 rounded p-3 border border-white/8">
               <button
                 onClick={() => handleToggle(item.id)}
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                  item.checked ? 'bg-blue-600 border-blue-600' : 'border-gray-500'
+                  item.checked ? 'bg-indigo-600 border-indigo-600' : 'border-zinc-600'
                 }`}
               >
                 {item.checked && <span className="text-white text-xs">✓</span>}
               </button>
-              <span className={`flex-1 ${item.checked ? 'line-through text-gray-500' : ''}`}>{item.name}</span>
+              <span className={`flex-1 ${item.checked ? 'line-through text-zinc-500' : ''}`}>{item.name}</span>
               <button onClick={() => handleDeleteItem(item.id)} className="text-red-500 hover:text-red-400 text-xs">Smazat</button>
             </div>
           ))}
-          {items.length === 0 && <p className="text-gray-500 text-sm">Seznam je prázdný</p>}
+          {items.length === 0 && <p className="text-zinc-500 text-sm">Seznam je prázdný</p>}
         </div>
       </section>
     </div>
@@ -963,11 +963,11 @@ function PackingList({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
       {Object.entries(CATEGORIES).map(([key, label]) => (
         grouped[key]?.length ? (
           <div key={key}>
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">{label}</h4>
+            <h4 className="text-sm font-semibold text-zinc-400 mb-2">{label}</h4>
             <div className="space-y-1">
               {grouped[key].map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between bg-gray-800 rounded p-2 border border-gray-700">
-                  <span>{item.name} {item.partyId && <span className="text-xs text-blue-400">(pro tuto párty)</span>}</span>
+                <div key={item.id} className="flex items-center justify-between bg-zinc-900 rounded p-2 border border-white/8">
+                  <span>{item.name} {item.partyId && <span className="text-xs text-indigo-400">(pro tuto párty)</span>}</span>
                   {isAdmin && item.partyId && (
                     <button onClick={async () => { await api.deletePackingItem(item.id); load() }}
                       className="text-red-500 text-xs">Smazat</button>
@@ -981,12 +981,12 @@ function PackingList({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }
       {isAdmin && (
         <form onSubmit={handleAdd} className="flex gap-2 items-end">
           <input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required
-            className="bg-gray-700 rounded px-3 py-2 text-white flex-1" placeholder="Nová položka..." />
+            className="form-input flex-1 w-auto" placeholder="Nová položka..." />
           <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-            className="bg-gray-700 rounded px-3 py-2 text-white">
+            className="form-input">
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+          <button type="submit" className="btn-primary">Přidat</button>
         </form>
       )}
     </div>

@@ -9,6 +9,13 @@ const CATEGORIES: Record<string, string> = {
   other: 'Ostatní',
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+  hardware: '🖥️',
+  general: '🎒',
+  food: '🍕',
+  other: '📦',
+}
+
 export function Packing() {
   const { isAdmin } = useAuth()
   const [items, setItems] = useState<any[]>([])
@@ -33,21 +40,30 @@ export function Packing() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Co zabalit</h1>
-      <p className="text-gray-400 text-sm mb-6">Obecný seznam věcí, které se hodí na každou párty. Jednotlivé párty mohou mít navíc vlastní položky.</p>
+      <h1 className="page-heading mb-1">Co zabalit</h1>
+      <p className="text-zinc-500 text-sm mb-6">
+        Obecný seznam věcí pro každou párty. Jednotlivé párty mohou mít navíc vlastní položky.
+      </p>
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         {Object.entries(CATEGORIES).map(([key, label]) => (
           grouped[key]?.length ? (
             <div key={key}>
-              <h2 className="text-lg font-semibold text-gray-300 mb-2">{label}</h2>
-              <div className="space-y-1">
+              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <span>{CATEGORY_ICONS[key]}</span>
+                {label}
+              </h2>
+              <div className="space-y-1.5">
                 {grouped[key].map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between bg-gray-800 rounded p-3 border border-gray-700">
-                    <span>{item.name}</span>
+                  <div key={item.id} className="card px-4 py-2.5 flex items-center justify-between">
+                    <span className="text-sm text-zinc-200">{item.name}</span>
                     {isAdmin && (
-                      <button onClick={async () => { await api.deletePackingItem(item.id); load() }}
-                        className="text-red-500 hover:text-red-400 text-xs">Smazat</button>
+                      <button
+                        onClick={async () => { await api.deletePackingItem(item.id); load() }}
+                        className="btn-danger text-xs py-0.5 px-2"
+                      >
+                        Smazat
+                      </button>
                     )}
                   </div>
                 ))}
@@ -58,14 +74,24 @@ export function Packing() {
       </div>
 
       {isAdmin && (
-        <form onSubmit={handleAdd} className="flex gap-2 items-end mt-6">
-          <input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required
-            className="bg-gray-700 rounded px-3 py-2 text-white flex-1" placeholder="Nová položka..." />
-          <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-            className="bg-gray-700 rounded px-3 py-2 text-white">
-            {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2 mt-8">
+          <input
+            value={newItem.name}
+            onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+            required
+            className="form-input"
+            placeholder="Nová položka..."
+          />
+          <select
+            value={newItem.category}
+            onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+            className="form-select sm:w-40"
+          >
+            {Object.entries(CATEGORIES).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
           </select>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Přidat</button>
+          <button type="submit" className="btn-primary sm:w-auto">Přidat</button>
         </form>
       )}
     </div>
