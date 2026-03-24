@@ -40,13 +40,14 @@ export function Parties() {
   }
 
   const now = new Date()
-  const upcoming = parties.filter(p => new Date(p.endDate) >= now)
   const past = parties.filter(p => new Date(p.endDate) < now)
+  const future = parties
+    .filter(p => new Date(p.endDate) >= now)
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 
-  const nextParty = upcoming
-    .filter(p => new Date(p.startDate) > now)
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] || null
-  const countdown = useCountdown(nextParty ? new Date(nextParty.startDate) : null)
+  const nextParty = future[0] || null
+  const laterParties = future.slice(1)
+  const countdown = useCountdown(nextParty && new Date(nextParty.startDate) > now ? new Date(nextParty.startDate) : null)
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
 
@@ -186,18 +187,27 @@ export function Parties() {
         </div>
       )}
 
-      {upcoming.length > 0 && (
+      {nextParty && (
         <section className="mb-8">
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Nadcházející</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {upcoming.map(p => <PartyCard key={p.id} party={p} />)}
+            <PartyCard party={nextParty} />
+          </div>
+        </section>
+      )}
+
+      {laterParties.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Plánované</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {laterParties.map(p => <PartyCard key={p.id} party={p} />)}
           </div>
         </section>
       )}
 
       {past.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Minulé</h2>
+          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Historie</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-70">
             {past.map(p => <PartyCard key={p.id} party={p} />)}
           </div>
