@@ -1,6 +1,6 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
-  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem,
+  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem,
 } from './types'
 
 const BASE = '/api'
@@ -99,4 +99,12 @@ export const api = {
   createPackingItem: (data: { name: string; category: string; partyId?: number }) =>
     request<PackingItem>('/packing', { method: 'POST', body: JSON.stringify(data) }),
   deletePackingItem: (id: number) => request<Ok>(`/packing/${id}`, { method: 'DELETE' }),
+
+  // FAQ
+  getFaq: () => request<FaqItem[]>('/faq'),
+  createFaqItem: (data: { question: string; answer: string; order?: number }) =>
+    request<FaqItem>('/faq', { method: 'POST', body: JSON.stringify(data) }),
+  updateFaqItem: (id: number, data: { question: string; answer: string; order?: number }) =>
+    request<FaqItem>(`/faq/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteFaqItem: (id: number) => request<Ok>(`/faq/${id}`, { method: 'DELETE' }),
 }

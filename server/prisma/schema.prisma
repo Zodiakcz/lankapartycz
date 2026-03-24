@@ -137,3 +137,11 @@ model PackingItem {
 
   party    Party?  @relation(fields: [partyId], references: [id], onDelete: Cascade)
 }
+
+model FaqItem {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}

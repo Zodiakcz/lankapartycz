@@ -8,6 +8,7 @@ import { Games } from './pages/Games'
 import { Packing } from './pages/Packing'
 import { Admin } from './pages/Admin'
 import { ChangePassword } from './pages/ChangePassword'
+import { Faq } from './pages/Faq'
 
 function AppRoutes() {
   const { user, loading, isAdmin } = useAuth()
@@ -25,6 +26,7 @@ function AppRoutes() {
         <Route path="/party/:id" element={<PartyDetail />} />
         <Route path="/games" element={<Games />} />
         <Route path="/packing" element={<Packing />} />
+        <Route path="/faq" element={<Faq />} />
         <Route path="/password" element={<ChangePassword />} />
         {isAdmin && <Route path="/admin" element={<Admin />} />}
         <Route path="*" element={<Navigate to="/" />} />
