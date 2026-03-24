@@ -63,6 +63,7 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
   }
 
   const handleDeleteItem = async (id: number) => {
+    if (!confirm('Opravdu smazat tuto položku?')) return
     await api.deleteShoppingItem(partyId, id)
     load()
   }

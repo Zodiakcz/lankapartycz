@@ -35,7 +35,7 @@ export function PackingList({ partyId, isAdmin }: { partyId: number; isAdmin: bo
                 <div key={item.id} className="card flex items-center justify-between p-2">
                   <span>{item.name} {item.partyId && <span className="text-xs text-indigo-400">(pro tuto párty)</span>}</span>
                   {isAdmin && item.partyId && (
-                    <button onClick={async () => { await api.deletePackingItem(item.id); load() }}
+                    <button onClick={async () => { if (!confirm(`Opravdu smazat položku "${item.name}"?`)) return; await api.deletePackingItem(item.id); load() }}
                       className="btn-danger text-xs py-0.5 px-2">Smazat</button>
                   )}
                 </div>
