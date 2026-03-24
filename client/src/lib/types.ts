@@ -27,11 +27,6 @@ export interface Game {
   maxPlayers: number | null
 }
 
-export interface PartyGame {
-  id: number
-  gameId: number
-  game: Game
-}
 
 export interface ScheduleItem {
   id: number
@@ -63,10 +58,9 @@ export interface Party {
   advancePerNight: number
   notes: string | null
   attendance: Attendance[]
-  partyGames: PartyGame[]
   schedule: ScheduleItem[]
   expenses: Expense[]
-  _count?: { attendance: number; partyGames: number }
+  _count?: { attendance: number }
 }
 
 export interface PackingItem {

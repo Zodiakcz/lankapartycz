@@ -7,10 +7,7 @@ const prisma = new PrismaClient()
 
 // List all games
 router.get('/', requireAuth, async (_req, res) => {
-  const games = await prisma.game.findMany({
-    orderBy: { name: 'asc' },
-    include: { _count: { select: { partyGames: true } } },
-  })
+  const games = await prisma.game.findMany({ orderBy: { name: 'asc' } })
   res.json(games)
 })
 
@@ -42,23 +39,6 @@ router.put('/:id', requireAdmin, async (req, res) => {
 // Delete game (admin)
 router.delete('/:id', requireAdmin, async (req, res) => {
   await prisma.game.delete({ where: { id: Number(req.params.id) } })
-  res.json({ ok: true })
-})
-
-// Add game to party (admin)
-router.post('/party/:partyId/:gameId', requireAdmin, async (req, res) => {
-  const partyGame = await prisma.partyGame.create({
-    data: { partyId: Number(req.params.partyId), gameId: Number(req.params.gameId) },
-    include: { game: true },
-  })
-  res.json(partyGame)
-})
-
-// Remove game from party (admin)
-router.delete('/party/:partyId/:gameId', requireAdmin, async (req, res) => {
-  await prisma.partyGame.delete({
-    where: { partyId_gameId: { partyId: Number(req.params.partyId), gameId: Number(req.params.gameId) } },
-  })
   res.json({ ok: true })
 })
 

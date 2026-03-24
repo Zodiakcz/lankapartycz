@@ -10,7 +10,7 @@ router.get('/', requireAuth, async (_req, res) => {
   const parties = await prisma.party.findMany({
     include: {
       attendance: { include: { user: { select: { id: true, displayName: true } } } },
-      _count: { select: { partyGames: true, expenses: true } },
+      _count: { select: { expenses: true } },
     },
     orderBy: { startDate: 'desc' },
   })
@@ -23,7 +23,6 @@ router.get('/:id', requireAuth, async (req, res) => {
     where: { id: Number(req.params.id) },
     include: {
       attendance: { include: { user: { select: { id: true, displayName: true } } } },
-      partyGames: { include: { game: true } },
       schedule: { orderBy: [{ day: 'asc' }, { timeSlot: 'asc' }] },
       expenses: { include: { paidBy: { select: { id: true, displayName: true } } }, orderBy: { createdAt: 'desc' } },
       packingItems: { orderBy: { category: 'asc' } },

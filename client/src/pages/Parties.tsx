@@ -91,10 +91,6 @@ export function Parties() {
           <span className="text-xs text-zinc-500">
             <span className="text-zinc-300 font-medium">{confirmed}</span> potvrzených
           </span>
-          <span className="text-zinc-700">•</span>
-          <span className="text-xs text-zinc-500">
-            <span className="text-zinc-300 font-medium">{party._count?.partyGames || 0}</span> her
-          </span>
         </div>
       </Link>
     )

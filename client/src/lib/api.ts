@@ -58,10 +58,6 @@ export const api = {
   createGame: (data: Partial<Game>) => request<Game>('/games', { method: 'POST', body: JSON.stringify(data) }),
   updateGame: (id: number, data: Partial<Game>) => request<Game>(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGame: (id: number) => request<Ok>(`/games/${id}`, { method: 'DELETE' }),
-  addGameToParty: (partyId: number, gameId: number) =>
-    request<Ok>(`/games/party/${partyId}/${gameId}`, { method: 'POST' }),
-  removeGameFromParty: (partyId: number, gameId: number) =>
-    request<Ok>(`/games/party/${partyId}/${gameId}`, { method: 'DELETE' }),
 
   // Schedule
   getSchedule: (partyId: number) => request<Party['schedule']>(`/schedule/${partyId}`),
