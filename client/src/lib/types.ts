@@ -122,3 +122,11 @@ export interface ExpenseSplit {
   totalNights: number
   perPerson: ExpenseSplitPerson[]
 }
+
+export interface FaqItem {
+  id: number
+  question: string
+  answer: string
+  order: number
+  createdAt: string
+}

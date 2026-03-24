@@ -30,10 +30,18 @@ const AdminIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
+const FaqIcon = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75} className="w-5 h-5">
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" />
+  </svg>
+)
+
 const navItems = [
   { path: '/', label: 'Párty', Icon: CalendarIcon },
   { path: '/games', label: 'Hry', Icon: GamepadIcon },
   { path: '/packing', label: 'Balení', Icon: BagIcon },
+  { path: '/faq', label: 'FAQ', Icon: FaqIcon },
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {
