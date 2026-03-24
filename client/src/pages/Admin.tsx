@@ -37,6 +37,7 @@ export function Admin() {
   }
 
   const handleReject = async (id: number) => {
+    if (!confirm('Opravdu odmítnout a smazat tohoto uživatele?')) return
     await api.deleteUser(id)
     load()
   }

@@ -47,7 +47,7 @@ export function Packing() {
                     <span className="text-sm text-zinc-200">{item.name}</span>
                     {isAdmin && (
                       <button
-                        onClick={async () => { await api.deletePackingItem(item.id); load() }}
+                        onClick={async () => { if (!confirm(`Opravdu smazat položku "${item.name}"?`)) return; await api.deletePackingItem(item.id); load() }}
                         className="btn-danger text-xs py-0.5 px-2"
                       >
                         Smazat

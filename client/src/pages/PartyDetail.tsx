@@ -522,7 +522,7 @@ export function PartyDetail() {
                           {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
                         </div>
                         {isAdmin && (
-                          <button onClick={async () => { await api.deleteScheduleItem(item.id); load() }}
+                          <button onClick={async () => { if (!confirm('Opravdu smazat tuto položku programu?')) return; await api.deleteScheduleItem(item.id); load() }}
                             className="text-red-500 hover:text-red-400 text-xs ml-2">Smazat</button>
                         )}
                       </div>
@@ -608,7 +608,7 @@ export function PartyDetail() {
                     <span className="text-xs text-zinc-500 ml-2">– {e.paidBy.displayName}</span>
                   </div>
                   {(isAdmin || e.paidByUserId === user?.id) && (
-                    <button onClick={async () => { await api.deleteExpense(e.id); load(); loadSplit() }}
+                    <button onClick={async () => { if (!confirm('Opravdu smazat tento výdaj?')) return; await api.deleteExpense(e.id); load(); loadSplit() }}
                       className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
                   )}
                 </div>
