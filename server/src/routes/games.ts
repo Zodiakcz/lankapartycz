@@ -7,8 +7,7 @@ const prisma = new PrismaClient()
 
 // List games — admins see all, members see only approved
 router.get('/', requireAuth, async (req, res) => {
-  const user = (req as any).user
-  const where = user.role === 'admin' ? {} : { approved: true }
+  const where = req.session.role === 'admin' ? {} : { approved: true }
   const games = await prisma.game.findMany({
     where,
     orderBy: { name: 'asc' },
@@ -19,7 +18,6 @@ router.get('/', requireAuth, async (req, res) => {
 
 // Create game — any authenticated user; admin submissions are auto-approved
 router.post('/', requireAuth, async (req, res) => {
-  const user = (req as any).user
   const { name, source, sourceNote, minPlayers, maxPlayers, storeUrl } = req.body
   const game = await prisma.game.create({
     data: {
@@ -29,8 +27,8 @@ router.post('/', requireAuth, async (req, res) => {
       minPlayers: minPlayers || 1,
       maxPlayers,
       storeUrl: storeUrl || '',
-      approved: user.role === 'admin',
-      submittedById: user.id,
+      approved: req.session.role === 'admin',
+      submittedById: req.session.userId,
     },
     include: { submittedBy: { select: { id: true, displayName: true } } },
   })
