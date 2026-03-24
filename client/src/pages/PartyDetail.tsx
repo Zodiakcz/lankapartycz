@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { SOURCE_LABELS, TIME_SLOTS, sourceBadgeClass } from '../lib/constants'
-import type { Party, User, Game, Attendance, Expense, ExpenseSplit, PartyGame, ScheduleItem } from '../lib/types'
+import { TIME_SLOTS } from '../lib/constants'
+import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
 import qrCode from '../img/qr_code.jpg'
 
@@ -14,7 +14,6 @@ export function PartyDetail() {
   const partyId = Number(id)
 
   const [party, setParty] = useState<Party | null>(null)
-  const [allGames, setAllGames] = useState<Game[]>([])
   const [split, setSplit] = useState<ExpenseSplit | null>(null)
   const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'notes'>('info')
 
@@ -77,9 +76,8 @@ export function PartyDetail() {
   useEffect(() => { load(); if (isAdmin) api.users().then(setAllUsers) }, [partyId])
 
   const load = async () => {
-    const [p, games] = await Promise.all([api.party(partyId), api.games()])
+    const p = await api.party(partyId)
     setParty(p)
-    setAllGames(games)
     setNotes(p.notes || '')
     setPlaceAddress(p.placeAddress || '')
     setPlaceStatus(p.placeStatus || 'pending')
@@ -119,16 +117,6 @@ export function PartyDetail() {
     e.preventDefault()
     await api.createScheduleItem(partyId, schedForm)
     setSchedForm({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
-    load()
-  }
-
-  const handleAddGame = async (gameId: number) => {
-    await api.addGameToParty(partyId, gameId)
-    load()
-  }
-
-  const handleRemoveGame = async (gameId: number) => {
-    await api.removeGameFromParty(partyId, gameId)
     load()
   }
 
@@ -176,8 +164,6 @@ export function PartyDetail() {
   const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
 
   const partyDays = Math.ceil((new Date(party.endDate).getTime() - new Date(party.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
-  const partyGameIds = new Set(party.partyGames?.map(pg => pg.gameId))
-  const availableGames = allGames.filter(g => !partyGameIds.has(g.id))
 
   return (
     <div>
@@ -510,38 +496,6 @@ export function PartyDetail() {
                 </div>
               )}
             </div>
-          </section>
-
-          {/* Games */}
-          <section>
-            <h2 className="section-heading">Hry na této párty</h2>
-            <div className="space-y-2">
-              {party.partyGames?.map((pg: PartyGame) => (
-                <div key={pg.id} className="card p-3 flex items-center justify-between">
-                  <div className="flex items-center flex-wrap gap-2">
-                    <span className="font-medium">{pg.game.name}</span>
-                    <span className={sourceBadgeClass(pg.game.source)}>{SOURCE_LABELS[pg.game.source] || pg.game.source}</span>
-                    <span className="badge badge-gray">
-                      {pg.game.maxPlayers ? `${pg.game.minPlayers}–${pg.game.maxPlayers} hráčů` : `${pg.game.minPlayers}+ hráčů`}
-                    </span>
-                  </div>
-                  {isAdmin && (
-                    <button onClick={() => handleRemoveGame(pg.gameId)} className="btn-danger text-xs py-1">Odebrat</button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {isAdmin && availableGames.length > 0 && (
-              <div className="mt-3 flex gap-2">
-                <select onChange={e => { if (e.target.value) handleAddGame(Number(e.target.value)); e.target.value = '' }}
-                  className="form-input">
-                  <option value="">+ Přidat hru...</option>
-                  {availableGames.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
-                <button onClick={async () => { for (const g of availableGames) await api.addGameToParty(partyId, g.id); load() }}
-                  className="btn-secondary">Přidat všechny</button>
-              </div>
-            )}
           </section>
 
         </div>
