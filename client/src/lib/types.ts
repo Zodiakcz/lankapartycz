@@ -25,6 +25,10 @@ export interface Game {
   sourceNote: string | null
   minPlayers: number
   maxPlayers: number | null
+  storeUrl: string
+  approved: boolean
+  submittedById: number | null
+  submittedBy: { id: number; displayName: string } | null
 }
 
 

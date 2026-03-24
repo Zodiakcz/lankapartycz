@@ -10,8 +10,8 @@ function playerCountLabel(min: number, max: number | null) {
   return `${min}–${max} hráčů`
 }
 
-type GameForm = { name: string; source: string; sourceNote: string; minPlayers: number; maxPlayers: string }
-const emptyForm: GameForm = { name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '' }
+type GameForm = { name: string; source: string; sourceNote: string; minPlayers: number; maxPlayers: string; storeUrl: string }
+const emptyForm: GameForm = { name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '', storeUrl: '' }
 
 export function Games() {
   const { isAdmin } = useAuth()
@@ -31,6 +31,7 @@ export function Games() {
       sourceNote: game.sourceNote || '',
       minPlayers: game.minPlayers,
       maxPlayers: game.maxPlayers ? String(game.maxPlayers) : '',
+      storeUrl: game.storeUrl || '',
     })
     setShowForm(false)
   }
@@ -62,6 +63,11 @@ export function Games() {
     }
   }
 
+  const handleApprove = async (id: number) => {
+    await api.approveGame(id)
+    load()
+  }
+
   const formJsx = (
     <form onSubmit={handleSubmit} className="card p-4 mb-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -84,6 +90,12 @@ export function Games() {
             onChange={e => setForm({ ...form, sourceNote: e.target.value })}
             className="form-input" />
         </div>
+        <div>
+          <label className="form-label">Odkaz na obchod</label>
+          <input placeholder="https://store.steampowered.com/app/..." value={form.storeUrl}
+            onChange={e => setForm({ ...form, storeUrl: e.target.value })}
+            className="form-input" />
+        </div>
         <div className="flex gap-2">
           <div className="flex-1">
             <label className="form-label">Min hráčů</label>
@@ -101,7 +113,7 @@ export function Games() {
       </div>
       <div className="flex gap-2 mt-4">
         <button type="submit" className="btn-primary">
-          {editingId ? 'Uložit' : 'Přidat'}
+          {editingId ? 'Uložit' : 'Navrhnout'}
         </button>
         <button type="button" onClick={() => { editingId ? cancelEdit() : setShowForm(false) }}
           className="btn-secondary">Zrušit</button>
@@ -109,46 +121,84 @@ export function Games() {
     </form>
   )
 
+  const approvedGames = games.filter(g => g.approved)
+  const pendingGames = games.filter(g => !g.approved)
+
+  const gameCard = (game: Game) => (
+    editingId === game.id ? (
+      <div key={game.id}>{formJsx}</div>
+    ) : (
+      <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          <span className="font-medium text-zinc-100">{game.name}</span>
+          <span className={sourceBadgeClass(game.source)}>
+            {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
+          </span>
+          <span className="badge badge-gray">
+            {playerCountLabel(game.minPlayers, game.maxPlayers)}
+          </span>
+          {game.storeUrl && (
+            <a href={game.storeUrl} target="_blank" rel="noopener noreferrer"
+              className="badge badge-blue hover:opacity-80 transition-opacity">
+              Obchod ↗
+            </a>
+          )}
+          {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
+          {!game.approved && game.submittedBy && (
+            <span className="text-xs text-zinc-500">od {game.submittedBy.displayName}</span>
+          )}
+        </div>
+        <div className="flex gap-1 flex-shrink-0">
+          {isAdmin && !game.approved && (
+            <button onClick={() => handleApprove(game.id)} className="btn-success text-xs py-1">Schválit</button>
+          )}
+          {isAdmin && (
+            <>
+              <button onClick={() => startEdit(game)} className="btn-ghost text-xs py-1">Upravit</button>
+              <button onClick={() => handleDelete(game.id)} className="btn-danger text-xs py-1">Smazat</button>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  )
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="page-heading">Hry</h1>
-        {isAdmin && !editingId && (
+        {!editingId && (
           <button onClick={() => { setShowForm(!showForm); cancelEdit() }} className="btn-primary">
-            + Přidat hru
+            + Navrhnout hru
           </button>
         )}
       </div>
 
       {showForm && !editingId && formJsx}
 
+      {isAdmin && pendingGames.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+            Ke schválení ({pendingGames.length})
+          </h2>
+          <div className="space-y-2">
+            {pendingGames.map(gameCard)}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
-        {games.map(game => (
-          editingId === game.id ? (
-            <div key={game.id}>{formJsx}</div>
-          ) : (
-            <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center flex-wrap gap-2">
-                <span className="font-medium text-zinc-100">{game.name}</span>
-                <span className={sourceBadgeClass(game.source)}>
-                  {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
-                </span>
-                <span className="badge badge-gray">
-                  {playerCountLabel(game.minPlayers, game.maxPlayers)}
-                </span>
-                {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
-              </div>
-              {isAdmin && (
-                <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => startEdit(game)} className="btn-ghost text-xs py-1">Upravit</button>
-                  <button onClick={() => handleDelete(game.id)} className="btn-danger text-xs py-1">Smazat</button>
-                </div>
-              )}
-            </div>
-          )
-        ))}
-        {games.length === 0 && (
+        {isAdmin && pendingGames.length > 0 && approvedGames.length > 0 && (
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+            Schválené hry
+          </h2>
+        )}
+        {approvedGames.map(gameCard)}
+        {approvedGames.length === 0 && pendingGames.length === 0 && (
           <p className="text-zinc-600 text-center mt-8 text-sm">Zatím žádné hry</p>
+        )}
+        {approvedGames.length === 0 && !isAdmin && (
+          <p className="text-zinc-600 text-center mt-8 text-sm">Zatím žádné schválené hry</p>
         )}
       </div>
     </div>

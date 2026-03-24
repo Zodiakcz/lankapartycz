@@ -16,8 +16,9 @@ model User {
   approved     Boolean      @default(false)
   createdAt    DateTime     @default(now())
 
-  attendance   Attendance[]
-  expenses     Expense[]
+  attendance      Attendance[]
+  expenses        Expense[]
+  submittedGames  Game[]
 }
 
 model Party {
@@ -59,15 +60,19 @@ model Attendance {
 }
 
 model Game {
-  id         Int         @id @default(autoincrement())
-  name       String
-  source     String      @default("steam") // "steam" | "copied" | "free" | "other"
-  sourceNote String      @default("")
-  minPlayers Int         @default(1)
-  maxPlayers Int?
-  imageUrl   String      @default("")
+  id            Int         @id @default(autoincrement())
+  name          String
+  source        String      @default("steam") // "steam" | "copied" | "free" | "other"
+  sourceNote    String      @default("")
+  minPlayers    Int         @default(1)
+  maxPlayers    Int?
+  imageUrl      String      @default("")
+  storeUrl      String      @default("")
+  approved      Boolean     @default(true)
+  submittedById Int?
 
-  partyGames PartyGame[]
+  submittedBy   User?       @relation(fields: [submittedById], references: [id])
+  partyGames    PartyGame[]
 }
 
 model PartyGame {
