@@ -56,6 +56,7 @@ export const api = {
   // Games
   games: () => request<Game[]>('/games'),
   createGame: (data: Partial<Game>) => request<Game>('/games', { method: 'POST', body: JSON.stringify(data) }),
+  approveGame: (id: number) => request<Game>(`/games/${id}/approve`, { method: 'POST' }),
   updateGame: (id: number, data: Partial<Game>) => request<Game>(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGame: (id: number) => request<Ok>(`/games/${id}`, { method: 'DELETE' }),
 
