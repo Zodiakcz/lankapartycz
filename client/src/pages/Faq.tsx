@@ -69,6 +69,19 @@ export function Faq() {
     }
   }
 
+  async function handleMove(index: number, direction: -1 | 1) {
+    const newItems = [...items]
+    const swapIndex = index + direction
+    ;[newItems[index], newItems[swapIndex]] = [newItems[swapIndex], newItems[index]]
+    setItems(newItems)
+    try {
+      await api.reorderFaq(newItems.map(i => i.id))
+    } catch {
+      setItems(items)
+      setError('Nepodařilo se změnit pořadí')
+    }
+  }
+
   function startEdit(item: FaqItem) {
     setEditId(item.id)
     setEditQ(item.question)
@@ -135,7 +148,7 @@ export function Faq() {
       )}
 
       <div className="space-y-3">
-        {items.map(item => (
+        {items.map((item, index) => (
           <div key={item.id} className="card">
             {editId === item.id ? (
               <div className="space-y-3">
@@ -171,6 +184,22 @@ export function Faq() {
                   <h3 className="font-semibold text-white text-sm">{item.question}</h3>
                   {isAdmin && (
                     <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => handleMove(index, -1)}
+                        disabled={index === 0}
+                        className="btn-ghost text-xs px-1.5 py-1 disabled:opacity-30"
+                        title="Posunout nahoru"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => handleMove(index, 1)}
+                        disabled={index === items.length - 1}
+                        className="btn-ghost text-xs px-1.5 py-1 disabled:opacity-30"
+                        title="Posunout dolů"
+                      >
+                        ↓
+                      </button>
                       <button onClick={() => startEdit(item)} className="btn-ghost text-xs px-2 py-1">Upravit</button>
                       <button onClick={() => handleDelete(item.id)} className="btn-danger text-xs px-2 py-1">Smazat</button>
                     </div>

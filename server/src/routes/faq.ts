@@ -22,6 +22,20 @@ router.post('/', requireAdmin, async (req, res) => {
   res.json(item)
 })
 
+// PUT reorder FAQ items (admin only) — must be before /:id
+router.put('/reorder', requireAdmin, async (req, res) => {
+  const { orderedIds } = req.body as { orderedIds: number[] }
+  if (!Array.isArray(orderedIds)) {
+    res.status(400).json({ error: 'orderedIds musí být pole' })
+    return
+  }
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.faqItem.update({ where: { id }, data: { order: index } }))
+  )
+  const items = await prisma.faqItem.findMany({ orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] })
+  res.json(items)
+})
+
 // PUT update FAQ item (admin only)
 router.put('/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id)

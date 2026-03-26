@@ -107,5 +107,7 @@ export const api = {
     request<FaqItem>('/faq', { method: 'POST', body: JSON.stringify(data) }),
   updateFaqItem: (id: number, data: { question: string; answer: string; order?: number }) =>
     request<FaqItem>(`/faq/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  reorderFaq: (orderedIds: number[]) =>
+    request<FaqItem[]>('/faq/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) }),
   deleteFaqItem: (id: number) => request<Ok>(`/faq/${id}`, { method: 'DELETE' }),
 }
