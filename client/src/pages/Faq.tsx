@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import type { FaqItem } from '../lib/types'
@@ -108,12 +109,13 @@ export function Faq() {
           <div>
             <label className="form-label">Odpověď</label>
             <textarea
-              className="form-input w-full min-h-[100px] resize-y"
+              className="form-input w-full min-h-[200px] resize-y"
               value={newA}
               onChange={e => setNewA(e.target.value)}
               placeholder="Podrobná odpověď..."
               required
             />
+            <p className="text-xs text-zinc-500 mt-1">Formátování: **tučně**, *kurzíva*, - seznamy, [text odkazu](url)</p>
           </div>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => { setShowForm(false); setNewQ(''); setNewA('') }} className="btn-secondary text-sm">
@@ -149,11 +151,12 @@ export function Faq() {
                 <div>
                   <label className="form-label">Odpověď</label>
                   <textarea
-                    className="form-input w-full min-h-[100px] resize-y"
+                    className="form-input w-full min-h-[200px] resize-y"
                     value={editA}
                     onChange={e => setEditA(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-zinc-500 mt-1">Formátování: **tučně**, *kurzíva*, - seznamy, [text odkazu](url)</p>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setEditId(null)} className="btn-secondary text-sm">Zrušit</button>
@@ -173,7 +176,17 @@ export function Faq() {
                     </div>
                   )}
                 </div>
-                <p className="text-zinc-300 text-sm mt-2 whitespace-pre-wrap">{item.answer}</p>
+                <div className="text-zinc-300 text-sm mt-2 prose prose-sm prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-a:text-indigo-400 hover:prose-a:text-indigo-300 max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      a: ({ children, href, ...props }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
+                      ),
+                    }}
+                  >
+                    {item.answer}
+                  </ReactMarkdown>
+                </div>
               </div>
             )}
           </div>
