@@ -107,7 +107,7 @@ export function Faq() {
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
       {isAdmin && showForm && (
-        <form onSubmit={handleCreate} className="card space-y-3">
+        <form onSubmit={handleCreate} className="card p-4 space-y-3">
           <h2 className="text-sm font-semibold text-zinc-300">Nová položka</h2>
           <div>
             <label className="form-label">Otázka</label>
@@ -142,14 +142,14 @@ export function Faq() {
       )}
 
       {items.length === 0 && !showForm && (
-        <div className="card text-center text-zinc-500 text-sm py-8">
+        <div className="card p-4 text-center text-zinc-500 text-sm py-8">
           Zatím žádné položky FAQ.{isAdmin ? ' Přidejte první pomocí tlačítka výše.' : ''}
         </div>
       )}
 
       <div className="space-y-3">
         {items.map((item, index) => (
-          <div key={item.id} className="card">
+          <div key={item.id} className="card p-4">
             {editId === item.id ? (
               <div className="space-y-3">
                 <div>
