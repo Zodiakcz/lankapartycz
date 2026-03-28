@@ -59,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const allNavItems = isAdmin ? [...navItems, { path: '/admin', label: 'Admin', Icon: AdminIcon }] : navItems
 
   const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+    path === '/' ? location.pathname === '/' || location.pathname.startsWith('/party/') : location.pathname.startsWith(path)
 
   return (
     <div className="min-h-screen flex flex-col">
