@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth'
 import { useSubHeader } from '../lib/subheader'
 import { APP_VERSION } from '../version'
@@ -51,10 +51,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const [pendingCount, setPendingCount] = useState(0)
 
-  useEffect(() => {
+  const refreshPendingCount = useCallback(() => {
     if (!isAdmin) return
     api.pendingUsers().then(users => setPendingCount(users.length)).catch(() => {})
   }, [isAdmin])
+
+  useEffect(() => {
+    refreshPendingCount()
+  }, [refreshPendingCount])
+
+  useEffect(() => {
+    const handler = () => refreshPendingCount()
+    window.addEventListener('pending-users-changed', handler)
+    return () => window.removeEventListener('pending-users-changed', handler)
+  }, [refreshPendingCount])
 
   const allNavItems = isAdmin ? [...navItems, { path: '/admin', label: 'Admin', Icon: AdminIcon }] : navItems
 
