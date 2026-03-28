@@ -161,7 +161,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <footer className="hidden sm:block bg-zinc-900/50 border-t border-white/8 py-3 text-center text-xs text-zinc-600">
-        Made by Zodiak • v{APP_VERSION}
+        Made by Zodiak • {APP_VERSION}
       </footer>
     </div>
   )

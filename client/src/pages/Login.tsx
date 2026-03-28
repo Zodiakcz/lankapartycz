@@ -69,7 +69,7 @@ export function Login() {
             rel="noopener noreferrer"
             className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors mt-1 inline-block"
           >
-            v{APP_VERSION}
+            {APP_VERSION}
           </a>
         </div>
 
