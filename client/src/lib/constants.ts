@@ -20,13 +20,6 @@ export function sourceBadgeClass(source: string): string {
     'badge badge-gray'
 }
 
-export const TIME_SLOTS = [
-  { value: 'morning', label: 'Dopoledne' },
-  { value: 'afternoon', label: 'Odpoledne' },
-  { value: 'evening', label: 'Večer' },
-  { value: 'night', label: 'Noc' },
-] as const
-
 export const PACKING_CATEGORIES: Record<string, string> = {
   hardware: 'Hardware',
   general: 'Obecné',

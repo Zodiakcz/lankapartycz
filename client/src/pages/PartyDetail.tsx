@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useSubHeader } from '../lib/subheader'
-import { TIME_SLOTS } from '../lib/constants'
 import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
 import qrCode from '../img/qr_code.jpg'
@@ -59,7 +58,7 @@ export function PartyDetail() {
   }
 
   // Schedule form
-  const [schedForm, setSchedForm] = useState({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
+  const [schedForm, setSchedForm] = useState({ day: 1, time: '14:00', title: '', description: '' })
 
   // Place edit
   const [placeEdit, setPlaceEdit] = useState(false)
@@ -133,7 +132,7 @@ export function PartyDetail() {
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault()
     await api.createScheduleItem(partyId, schedForm)
-    setSchedForm({ day: 1, timeSlot: 'afternoon', title: '', description: '' })
+    setSchedForm({ day: 1, time: '14:00', title: '', description: '' })
     load()
   }
 
@@ -537,7 +536,7 @@ export function PartyDetail() {
                     {dayItems.map((item: ScheduleItem) => (
                       <div key={item.id} className="flex items-start justify-between bg-zinc-800/60 rounded p-2">
                         <div>
-                          <span className="text-xs text-zinc-500">{TIME_SLOTS.find(t => t.value === item.timeSlot)?.label}</span>
+                          <span className="text-xs text-zinc-500">{item.time}</span>
                           <span className="ml-2 font-medium">{item.title}</span>
                           {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
                         </div>
@@ -568,10 +567,8 @@ export function PartyDetail() {
                 </div>
                 <div>
                   <label className="form-label">Čas</label>
-                  <select value={schedForm.timeSlot} onChange={e => setSchedForm({ ...schedForm, timeSlot: e.target.value })}
-                    className="form-input">
-                    {TIME_SLOTS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  <input type="time" value={schedForm.time} onChange={e => setSchedForm({ ...schedForm, time: e.target.value })}
+                    className="form-input" required />
                 </div>
                 <div className="flex-1 min-w-0 col-span-2">
                   <label className="form-label">Název</label>

@@ -62,9 +62,9 @@ export const api = {
 
   // Schedule
   getSchedule: (partyId: number) => request<Party['schedule']>(`/schedule/${partyId}`),
-  createScheduleItem: (partyId: number, data: { day: number; timeSlot: string; title: string; description?: string }) =>
+  createScheduleItem: (partyId: number, data: { day: number; time: string; title: string; description?: string }) =>
     request<Party['schedule'][0]>(`/schedule/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
-  updateScheduleItem: (id: number, data: { day?: number; timeSlot?: string; title?: string; description?: string }) =>
+  updateScheduleItem: (id: number, data: { day?: number; time?: string; title?: string; description?: string }) =>
     request<Party['schedule'][0]>(`/schedule/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteScheduleItem: (id: number) => request<Ok>(`/schedule/${id}`, { method: 'DELETE' }),
 

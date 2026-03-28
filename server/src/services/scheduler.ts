@@ -105,7 +105,90 @@ async function markSent(partyId: number, type: string): Promise<void> {
   })
 }
 
-async function checkAndSendNotifications() {
+// --- Schedule item notifications (15 min before + on time) ---
+
+function getScheduleItemDate(partyStart: Date, day: number, time: string): Date {
+  const date = new Date(partyStart)
+  date.setDate(date.getDate() + day - 1)
+  const [hours, minutes] = time.split(':').map(Number)
+  date.setHours(hours, minutes, 0, 0)
+  return date
+}
+
+async function checkScheduleNotifications() {
+  try {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    // Get parties that are currently running or starting today
+    const parties = await prisma.party.findMany({
+      where: {
+        startDate: { lte: new Date(now.getTime() + 15 * 60 * 1000) },
+        endDate: { gte: today },
+      },
+      include: {
+        schedule: true,
+      },
+    })
+
+    for (const party of parties) {
+      for (const item of party.schedule) {
+        const itemDate = getScheduleItemDate(party.startDate, item.day, item.time)
+        const minutesUntil = Math.round((itemDate.getTime() - now.getTime()) / (1000 * 60))
+
+        // 15 minutes before
+        if (minutesUntil >= 0 && minutesUntil <= 15) {
+          const type = `schedule_15min_${item.id}`
+          if (!(await alreadySent(party.id, type))) {
+            await sendWebhook({
+              embeds: [{
+                title: `⏰ Za 15 minut: ${item.title}`,
+                color: 0xeab308,
+                fields: [
+                  { name: 'Akce', value: party.name, inline: true },
+                  { name: 'Čas', value: item.time, inline: true },
+                  ...(item.description ? [{ name: 'Popis', value: item.description }] : []),
+                  { name: 'Odkaz', value: `[Otevřít aplikaci](${APP_URL})` },
+                ],
+                timestamp: new Date().toISOString(),
+              }],
+            })
+            await markSent(party.id, type)
+            console.log(`[Scheduler] Sent 15min reminder for "${item.title}" at ${party.name}`)
+          }
+        }
+
+        // On time
+        if (minutesUntil >= -2 && minutesUntil <= 0) {
+          const type = `schedule_now_${item.id}`
+          if (!(await alreadySent(party.id, type))) {
+            await sendWebhook({
+              embeds: [{
+                title: `🎬 Právě začíná: ${item.title}`,
+                color: 0x22c55e,
+                fields: [
+                  { name: 'Akce', value: party.name, inline: true },
+                  { name: 'Čas', value: item.time, inline: true },
+                  ...(item.description ? [{ name: 'Popis', value: item.description }] : []),
+                  { name: 'Odkaz', value: `[Otevřít aplikaci](${APP_URL})` },
+                ],
+                timestamp: new Date().toISOString(),
+              }],
+            })
+            await markSent(party.id, type)
+            console.log(`[Scheduler] Sent on-time notification for "${item.title}" at ${party.name}`)
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Scheduler] Error checking schedule notifications:', err)
+  }
+}
+
+// --- Daily party notifications ---
+
+async function checkDailyNotifications() {
   try {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -142,16 +225,19 @@ async function checkAndSendNotifications() {
       }
     }
   } catch (err) {
-    console.error('[Scheduler] Error checking notifications:', err)
+    console.error('[Scheduler] Error checking daily notifications:', err)
   }
 }
 
 export function startScheduler() {
-  // Run daily at 9:00 AM
-  cron.schedule('0 9 * * *', checkAndSendNotifications)
+  // Daily party reminders at 9:00 AM
+  cron.schedule('0 9 * * *', checkDailyNotifications)
+
+  // Schedule item alerts every minute
+  cron.schedule('* * * * *', checkScheduleNotifications)
 
   // Catch up on missed notifications 10s after startup
-  setTimeout(checkAndSendNotifications, 10_000)
+  setTimeout(checkDailyNotifications, 10_000)
 
-  console.log('[Scheduler] Notification scheduler started (daily at 9:00)')
+  console.log('[Scheduler] Notification scheduler started (daily at 9:00 + per-minute schedule checks)')
 }

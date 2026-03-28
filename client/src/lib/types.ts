@@ -37,7 +37,7 @@ export interface ScheduleItem {
   id: number
   partyId: number
   day: number
-  timeSlot: string
+  time: string
   title: string
   description: string | null
 }

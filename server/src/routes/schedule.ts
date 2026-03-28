@@ -9,19 +9,19 @@ const prisma = new PrismaClient()
 router.get('/:partyId', requireAuth, async (req, res) => {
   const schedule = await prisma.schedule.findMany({
     where: { partyId: Number(req.params.partyId) },
-    orderBy: [{ day: 'asc' }, { timeSlot: 'asc' }],
+    orderBy: [{ day: 'asc' }, { time: 'asc' }],
   })
   res.json(schedule)
 })
 
 // Add schedule item (admin)
 router.post('/:partyId', requireAdmin, async (req, res) => {
-  const { day, timeSlot, title, description, gameId } = req.body
+  const { day, time, title, description, gameId } = req.body
   const item = await prisma.schedule.create({
     data: {
       partyId: Number(req.params.partyId),
       day,
-      timeSlot,
+      time,
       title,
       description: description || '',
       gameId,
@@ -32,12 +32,12 @@ router.post('/:partyId', requireAdmin, async (req, res) => {
 
 // Update schedule item (admin)
 router.put('/:id', requireAdmin, async (req, res) => {
-  const { day, timeSlot, title, description, gameId } = req.body
+  const { day, time, title, description, gameId } = req.body
   const item = await prisma.schedule.update({
     where: { id: Number(req.params.id) },
     data: {
       ...(day !== undefined && { day }),
-      ...(timeSlot !== undefined && { timeSlot }),
+      ...(time !== undefined && { time }),
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
       ...(gameId !== undefined && { gameId }),

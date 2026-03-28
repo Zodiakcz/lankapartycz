@@ -23,7 +23,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     where: { id: Number(req.params.id) },
     include: {
       attendance: { include: { user: { select: { id: true, displayName: true } } } },
-      schedule: { orderBy: [{ day: 'asc' }, { timeSlot: 'asc' }] },
+      schedule: { orderBy: [{ day: 'asc' }, { time: 'asc' }] },
       expenses: { include: { paidBy: { select: { id: true, displayName: true } } }, orderBy: { createdAt: 'desc' } },
       packingItems: { orderBy: { category: 'asc' } },
     },
