@@ -6,6 +6,7 @@ services:
       - SESSION_SECRET=${SESSION_SECRET:-change-this-in-production}
       - NODE_ENV=production
       - PORT=3000
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
     volumes:
       - db-data:/data
     restart: unless-stopped

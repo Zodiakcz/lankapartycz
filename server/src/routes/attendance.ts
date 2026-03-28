@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
+import { notifyAttendanceChange } from '../services/discord'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -29,6 +30,12 @@ router.post('/:partyId', requireAuth, async (req, res) => {
     },
     include: { user: { select: { id: true, displayName: true } } },
   })
+
+  if (status === 'confirmed' || status === 'maybe') {
+    const party = await prisma.party.findUnique({ where: { id: partyId }, select: { name: true } })
+    notifyAttendanceChange(attendance.user.displayName, party?.name ?? '', status)
+  }
+
   res.json(attendance)
 })
 

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
+import { notifyNewRegistration } from '../services/discord'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -62,6 +63,7 @@ router.post('/self-register', async (req, res) => {
   await prisma.user.create({
     data: { username, displayName, passwordHash: hash, role: 'member', approved: false },
   })
+  notifyNewRegistration(username, displayName)
   res.json({ ok: true })
 })
 
