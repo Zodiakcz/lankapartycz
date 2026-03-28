@@ -34,13 +34,14 @@ model Party {
   advancePerNight Int          @default(0) // doporučená záloha za noc
   createdAt       DateTime     @default(now())
 
-  attendance      Attendance[]
-  partyGames      PartyGame[]
-  schedule        Schedule[]
-  expenses        Expense[]
-  packingItems    PackingItem[]
-  foodEstimates   FoodEstimate[]
-  shoppingItems   ShoppingItem[]
+  attendance         Attendance[]
+  partyGames         PartyGame[]
+  schedule           Schedule[]
+  expenses           Expense[]
+  packingItems       PackingItem[]
+  foodEstimates      FoodEstimate[]
+  shoppingItems      ShoppingItem[]
+  sentNotifications  SentNotification[]
 }
 
 model Attendance {
@@ -142,6 +143,17 @@ model PackingItem {
   category String  @default("general") // "general" | "hardware" | "food" | "other"
 
   party    Party?  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+}
+
+model SentNotification {
+  id        Int      @id @default(autoincrement())
+  partyId   Int
+  type      String   // "advance_reminder" | "get_ready" | "day_of"
+  sentAt    DateTime @default(now())
+
+  party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@unique([partyId, type])
 }
 
 model FaqItem {

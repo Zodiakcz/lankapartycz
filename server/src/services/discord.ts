@@ -10,7 +10,7 @@ const STATUS_LABELS: Record<string, string> = {
   declined: 'Neúčastní se ❌',
 }
 
-async function sendWebhook(payload: object): Promise<void> {
+export async function sendWebhook(payload: object): Promise<void> {
   const url = process.env.DISCORD_WEBHOOK_URL
   if (!url) return
 

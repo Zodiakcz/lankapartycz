@@ -13,6 +13,7 @@ import expenseRoutes from './routes/expenses'
 import packingRoutes from './routes/packing'
 import shoppingRoutes from './routes/shopping'
 import faqRoutes from './routes/faq'
+import { startScheduler } from './services/scheduler'
 
 const prisma = new PrismaClient()
 const app = express()
@@ -88,5 +89,6 @@ async function seed() {
 seed().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server běží na portu ${PORT}`)
+    startScheduler()
   })
 })
