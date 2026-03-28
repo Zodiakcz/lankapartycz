@@ -92,7 +92,7 @@ model Schedule {
   id          Int    @id @default(autoincrement())
   partyId     Int
   day         Int    // day number (1, 2, 3...)
-  time        String // "HH:MM" format, e.g. "14:00"
+  time        String @default("00:00") // "HH:MM" format, e.g. "14:00"
   title       String
   description String @default("")
   gameId      Int?
