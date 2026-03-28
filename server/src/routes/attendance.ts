@@ -73,6 +73,24 @@ router.put('/:partyId/user/:userId', requireAdmin, async (req, res) => {
   res.json(attendance)
 })
 
+// Toggle advance paid status (admin only)
+router.patch('/:partyId/advance-paid/:userId', requireAdmin, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const userId = Number(req.params.userId)
+
+  const current = await prisma.attendance.findUnique({
+    where: { userId_partyId: { userId, partyId } },
+  })
+  if (!current) return res.status(404).json({ error: 'Attendance not found' })
+
+  const attendance = await prisma.attendance.update({
+    where: { userId_partyId: { userId, partyId } },
+    data: { advancePaid: !current.advancePaid },
+    include: { user: { select: { id: true, displayName: true } } },
+  })
+  res.json(attendance)
+})
+
 // Get attendance for a party
 router.get('/:partyId', requireAuth, async (req, res) => {
   const attendance = await prisma.attendance.findMany({

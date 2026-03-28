@@ -366,7 +366,19 @@ export function PartyDetail() {
                         const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
                         return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
                       })() : '–'}</td>
-                      <td className="px-4 py-2">{a.advance ? <span className="text-emerald-400">{a.advance} Kč</span> : '–'}</td>
+                      <td className="px-4 py-2">
+                        {a.advance ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {isAdmin && (
+                              <input type="checkbox" checked={a.advancePaid} onChange={async () => {
+                                await api.setAdvancePaid(partyId, a.userId)
+                                load()
+                              }} className="accent-emerald-500 cursor-pointer" title={a.advancePaid ? 'Označit jako nezaplaceno' : 'Potvrdit zaplacení'} />
+                            )}
+                            <span className={a.advancePaid ? 'text-emerald-400' : 'text-yellow-400'}>{a.advance} Kč</span>
+                          </span>
+                        ) : '–'}
+                      </td>
                       {isAdmin && (
                         <td className="px-4 py-2">
                           <button onClick={() => startEditAtt(a)} className="text-indigo-400 hover:text-indigo-300 text-xs">Upravit</button>

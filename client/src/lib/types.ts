@@ -14,6 +14,7 @@ export interface Attendance {
   arrival: string | null
   departure: string | null
   advance: number
+  advancePaid: boolean
   settled: boolean
   user: User
 }

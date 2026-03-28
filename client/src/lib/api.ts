@@ -74,6 +74,8 @@ export const api = {
     request<Expense>(`/expenses/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
   deleteExpense: (id: number) => request<Ok>(`/expenses/${id}`, { method: 'DELETE' }),
   getExpenseSplit: (partyId: number) => request<ExpenseSplit>(`/expenses/${partyId}/split`),
+  setAdvancePaid: (partyId: number, userId: number) =>
+    request<Attendance>(`/attendance/${partyId}/advance-paid/${userId}`, { method: 'PATCH' }),
   setSettled: (partyId: number, userId: number, settled: boolean) =>
     request<Ok>(`/expenses/${partyId}/settled/${userId}`, { method: 'PATCH', body: JSON.stringify({ settled }) }),
 
