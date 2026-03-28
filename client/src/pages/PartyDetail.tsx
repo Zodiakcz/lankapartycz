@@ -59,6 +59,8 @@ export function PartyDetail() {
 
   // Schedule form
   const [schedForm, setSchedForm] = useState({ day: 1, time: '14:00', title: '', description: '' })
+  const [editingSched, setEditingSched] = useState<number | null>(null)
+  const [editSchedForm, setEditSchedForm] = useState({ day: 1, time: '14:00', title: '', description: '' })
 
   // Place edit
   const [placeEdit, setPlaceEdit] = useState(false)
@@ -133,6 +135,14 @@ export function PartyDetail() {
     e.preventDefault()
     await api.createScheduleItem(partyId, schedForm)
     setSchedForm({ day: 1, time: '14:00', title: '', description: '' })
+    load()
+  }
+
+  const handleSchedEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingSched) return
+    await api.updateScheduleItem(editingSched, editSchedForm)
+    setEditingSched(null)
     load()
   }
 
@@ -534,15 +544,47 @@ export function PartyDetail() {
                 {dayItems.length > 0 ? (
                   <div className="space-y-2">
                     {dayItems.map((item: ScheduleItem) => (
-                      <div key={item.id} className="flex items-start justify-between bg-zinc-800/60 rounded p-2">
-                        <div>
-                          <span className="text-xs text-zinc-500">{item.time}</span>
-                          <span className="ml-2 font-medium">{item.title}</span>
-                          {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
-                        </div>
-                        {isAdmin && (
-                          <button onClick={async () => { if (!confirm('Opravdu smazat tuto položku programu?')) return; await api.deleteScheduleItem(item.id); load() }}
-                            className="text-red-500 hover:text-red-400 text-xs ml-2">Smazat</button>
+                      <div key={item.id} className="bg-zinc-800/60 rounded p-2">
+                        {editingSched === item.id ? (
+                          <form onSubmit={handleSchedEdit} className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-end">
+                            <div>
+                              <label className="form-label">Den</label>
+                              <select value={editSchedForm.day} onChange={e => setEditSchedForm({ ...editSchedForm, day: Number(e.target.value) })}
+                                className="form-input">
+                                {Array.from({ length: partyDays }, (_, i) => <option key={i + 1} value={i + 1}>Den {i + 1}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="form-label">Čas</label>
+                              <input type="text" pattern="[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" maxLength={5} value={editSchedForm.time} onChange={e => setEditSchedForm({ ...editSchedForm, time: e.target.value })}
+                                className="form-input" required />
+                            </div>
+                            <div className="flex-1 min-w-0 col-span-2">
+                              <label className="form-label">Název</label>
+                              <input value={editSchedForm.title} onChange={e => setEditSchedForm({ ...editSchedForm, title: e.target.value })} required
+                                className="form-input" />
+                            </div>
+                            <div className="flex gap-2 col-span-2 sm:col-span-1">
+                              <button type="submit" className="btn-primary">Uložit</button>
+                              <button type="button" onClick={() => setEditingSched(null)} className="btn-ghost">Zrušit</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="text-xs text-zinc-500">{item.time}</span>
+                              <span className="ml-2 font-medium">{item.title}</span>
+                              {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-2 ml-2">
+                                <button onClick={() => { setEditingSched(item.id); setEditSchedForm({ day: item.day, time: item.time, title: item.title, description: item.description || '' }) }}
+                                  className="text-zinc-400 hover:text-indigo-400 text-xs">Upravit</button>
+                                <button onClick={async () => { if (!confirm('Opravdu smazat tuto položku programu?')) return; await api.deleteScheduleItem(item.id); load() }}
+                                  className="text-red-500 hover:text-red-400 text-xs">Smazat</button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -567,7 +609,7 @@ export function PartyDetail() {
                 </div>
                 <div>
                   <label className="form-label">Čas</label>
-                  <input type="time" value={schedForm.time} onChange={e => setSchedForm({ ...schedForm, time: e.target.value })}
+                  <input type="text" pattern="[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" maxLength={5} value={schedForm.time} onChange={e => setSchedForm({ ...schedForm, time: e.target.value })}
                     className="form-input" required />
                 </div>
                 <div className="flex-1 min-w-0 col-span-2">
