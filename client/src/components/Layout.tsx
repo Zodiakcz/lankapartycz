@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/auth'
+import { useSubHeader } from '../lib/subheader'
 import { APP_VERSION } from '../version'
 import { api } from '../lib/api'
 
@@ -46,6 +47,7 @@ const navItems = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAdmin } = useAuth()
+  const { subHeader } = useSubHeader()
   const location = useLocation()
   const [pendingCount, setPendingCount] = useState(0)
 
@@ -106,6 +108,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
+        {subHeader && (
+          <div className="border-t border-white/5">
+            <div className="max-w-6xl mx-auto px-4">
+              {subHeader}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main content — extra bottom padding on mobile for the nav bar */}

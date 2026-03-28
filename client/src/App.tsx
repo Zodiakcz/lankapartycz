@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/auth'
+import { SubHeaderProvider } from './lib/subheader'
 import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
 import { Parties } from './pages/Parties'
@@ -20,6 +21,7 @@ function AppRoutes() {
   if (!user) return <Login />
 
   return (
+    <SubHeaderProvider>
     <Layout>
       <Routes>
         <Route path="/" element={<Parties />} />
@@ -32,6 +34,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>
+    </SubHeaderProvider>
   )
 }
 

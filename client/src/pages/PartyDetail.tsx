@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { useSubHeader } from '../lib/subheader'
 import { TIME_SLOTS } from '../lib/constants'
 import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
@@ -97,7 +98,23 @@ export function PartyDetail() {
     }
   }
 
-  const loadSplit = () => api.getExpenseSplit(partyId).then(setSplit)
+  const loadSplit = useCallback(() => api.getExpenseSplit(partyId).then(setSplit), [partyId])
+
+  const { setSubHeader } = useSubHeader()
+  useEffect(() => {
+    const tabLabels = { info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', notes: 'Poznámky' } as const
+    setSubHeader(
+      <div className="tab-bar">
+        {(['info', 'schedule', 'expenses', 'shopping', 'notes'] as const).map(t => (
+          <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
+            className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
+            {tabLabels[t]}
+          </button>
+        ))}
+      </div>
+    )
+    return () => setSubHeader(null)
+  }, [tab, setSubHeader, loadSplit])
 
   const handleAttendance = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -232,15 +249,6 @@ export function PartyDetail() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="tab-bar mb-6">
-        {(['info', 'schedule', 'expenses', 'shopping', 'notes'] as const).map(t => (
-          <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
-            className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
-            {{ info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', notes: 'Poznámky' }[t]}
-          </button>
-        ))}
-      </div>
 
       {/* Info Tab */}
       {tab === 'info' && (
