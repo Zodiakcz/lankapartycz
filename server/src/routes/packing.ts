@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
+import { prisma } from '../lib/prisma'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 // Get global packing items + party-specific items
 router.get('/:partyId?', requireAuth, async (req, res) => {

@@ -1,8 +1,6 @@
 import cron from 'node-cron'
-import { PrismaClient } from '@prisma/client'
 import { sendWebhook } from './discord'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 const APP_URL = 'https://lankapp.cloud'
 const QR_CODE_URL = 'https://lankapp.cloud/assets/qr_code-CGx-tYHH.jpg'

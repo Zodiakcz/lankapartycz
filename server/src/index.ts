@@ -2,8 +2,10 @@ import 'dotenv/config'
 import express from 'express'
 import session from 'express-session'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import bcrypt from 'bcryptjs'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './lib/prisma'
 import authRoutes from './routes/auth'
 import partyRoutes from './routes/parties'
 import attendanceRoutes from './routes/attendance'
@@ -15,26 +17,54 @@ import shoppingRoutes from './routes/shopping'
 import faqRoutes from './routes/faq'
 import { startScheduler } from './services/scheduler'
 
-const prisma = new PrismaClient()
 const app = express()
 const PORT = Number(process.env.PORT) || 3000
+const isProd = process.env.NODE_ENV === 'production'
+
+// Trust the reverse proxy (Caddy) so secure cookies and rate limiting work
+app.set('trust proxy', 1)
+
+// Security headers
+app.use(helmet())
+
+// Rate limiting — general: 100 req/min, auth endpoints: stricter
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+app.use(generalLimiter)
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // 15 attempts per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Příliš mnoho pokusů, zkuste to později' },
+})
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173',
+  origin: isProd ? false : 'http://localhost:5173',
   credentials: true,
 }))
-app.use(express.json())
+app.use(express.json({ limit: '100kb' }))
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // set to true when you add HTTPS
+    secure: isProd,
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
 }))
+
+// Apply stricter rate limit to auth endpoints
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/self-register', authLimiter)
 
 // API routes
 app.use('/api/auth', authRoutes)
@@ -50,6 +80,12 @@ app.use('/api/faq', faqRoutes)
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+// Global error handler — catch unhandled errors in routes
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[Error]', err.message)
+  res.status(500).json({ error: 'Interní chyba serveru' })
 })
 
 async function seed() {

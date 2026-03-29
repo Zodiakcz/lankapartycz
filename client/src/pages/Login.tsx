@@ -26,8 +26,8 @@ export function Login() {
     e.preventDefault()
     setError('')
     setSuccess('')
-    if (password.length < 4) {
-      setError('Heslo musí mít alespoň 4 znaky')
+    if (password.length < 6) {
+      setError('Heslo musí mít alespoň 6 znaků')
       return
     }
     try {

@@ -1,11 +1,10 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
-import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { notifyNewRegistration } from '../services/discord'
+import { prisma } from '../lib/prisma'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 // Login
 router.post('/login', async (req, res) => {
@@ -50,8 +49,8 @@ router.post('/self-register', async (req, res) => {
   if (!username || !displayName || !password) {
     return res.status(400).json({ error: 'Vyplňte všechna pole' })
   }
-  if (password.length < 4) {
-    return res.status(400).json({ error: 'Heslo musí mít alespoň 4 znaky' })
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Heslo musí mít alespoň 6 znaků' })
   }
 
   const existing = await prisma.user.findUnique({ where: { username } })
@@ -107,8 +106,8 @@ router.post('/approve/:id', requireAdmin, async (req, res) => {
 router.patch('/users/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id)
   const { role, displayName } = req.body
-  const data: any = {}
-  if (role !== undefined) data.role = role
+  const data: Record<string, string> = {}
+  if (role !== undefined && ['admin', 'member'].includes(role)) data.role = role
   if (displayName !== undefined) data.displayName = displayName
   const user = await prisma.user.update({ where: { id }, data, select: { id: true, username: true, displayName: true, role: true } })
   res.json(user)
@@ -125,7 +124,7 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
 router.post('/change-password', requireAuth, async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body
   if (!newPassword || newPassword.length < 4) {
-    return res.status(400).json({ error: 'Nové heslo musí mít alespoň 4 znaky' })
+    return res.status(400).json({ error: 'Nové heslo musí mít alespoň 6 znaků' })
   }
 
   const targetUserId = userId && req.session.role === 'admin' ? userId : req.session.userId!

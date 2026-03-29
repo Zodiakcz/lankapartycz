@@ -56,8 +56,8 @@ export function Admin() {
   }
 
   const handleSetPassword = async (u: User) => {
-    if (!editPw || editPw.length < 4) {
-      setEditMsg({ id: u.id, text: 'Heslo musí mít alespoň 4 znaky', ok: false })
+    if (!editPw || editPw.length < 6) {
+      setEditMsg({ id: u.id, text: 'Heslo musí mít alespoň 6 znaků', ok: false })
       return
     }
     try {

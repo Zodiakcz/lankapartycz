@@ -1,10 +1,9 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { countNights } from '../utils'
+import { prisma } from '../lib/prisma'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 const FOOD_CATEGORIES = [
   { key: 'hotova_jidla', label: 'Hotová jídla', defaultUnit: 'ks' },

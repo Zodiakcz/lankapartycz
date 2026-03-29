@@ -8,17 +8,19 @@ Web app for organizing twice-yearly LAN parties for a Czech friend group (~8-12 
 - **Attendance** — sign up, set arrival/departure times, track who's coming
 - **Games** — maintain a game library with sources (Steam, Epic, copied, free)
 - **Schedule** — day-by-day program for the event
-- **Finances** — log shared expenses, advance payments (zálohy), auto-split costs by nights stayed
+- **Finances** — log shared expenses, advance payments, auto-split costs by nights stayed
 - **Shopping** — food calculation based on person-nights + free-form shopping checklist
 - **Packing list** — shared checklist of what to bring
+- **FAQ** — markdown-formatted Q&A for party logistics
 - **Admin** — user management, edit attendance on behalf of others
+- **Discord notifications** — automated reminders for advance payments, upcoming parties, and schedule items
 
 ## Stack
 
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS
 - **Backend:** Node.js + Express + TypeScript
 - **Database:** SQLite via Prisma ORM
-- **Deployment:** Docker Compose
+- **Deployment:** Docker Compose + Caddy (automatic HTTPS)
 - **CI/CD:** GitHub Actions → GHCR → Watchtower auto-pull
 
 ## Quick Start
@@ -60,18 +62,22 @@ Push to `master` → GitHub Actions builds images → Watchtower auto-updates.
 
 ```
 ├── client/                  # React frontend (Vite)
-│   ├── src/pages/           # Login, Parties, PartyDetail, Games, Admin, ChangePassword
-│   ├── src/components/      # Layout (nav bar)
-│   ├── src/lib/             # api.ts (fetch wrapper), auth.tsx (AuthContext)
+│   ├── src/pages/           # Login, Parties, PartyDetail, Games, Packing, Faq, Admin, ChangePassword
+│   ├── src/components/      # Layout, PackingList, ShoppingTab
+│   ├── src/lib/             # api.ts (fetch wrapper), auth.tsx (AuthContext), types.ts, constants.ts
+│   ├── nginx.conf           # Production nginx (SPA + /api proxy + security headers)
 │   └── Dockerfile
 ├── server/                  # Express backend
-│   ├── src/routes/          # auth, parties, attendance, games, schedule, expenses, shopping, packing
+│   ├── src/routes/          # auth, parties, attendance, games, schedule, expenses, packing, shopping, faq
 │   ├── src/middleware/       # auth.ts (requireAuth, requireAdmin)
+│   ├── src/services/        # discord.ts (webhooks), scheduler.ts (cron notifications)
+│   ├── src/lib/             # prisma.ts (shared PrismaClient singleton)
 │   ├── src/index.ts         # Entry point + auto-seed
 │   ├── prisma/schema.prisma # Database schema
 │   └── Dockerfile
+├── Caddyfile                # Production reverse proxy (HTTPS)
 ├── docker-compose.yml       # Local dev (builds from source)
-├── docker-compose.prod.yml  # Production (pulls from GHCR)
+├── docker-compose.prod.yml  # Production (pulls from GHCR, includes Caddy)
 └── .github/workflows/       # CI: build + push images
 ```
 
