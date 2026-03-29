@@ -5,6 +5,7 @@ services:
       - DATABASE_URL=file:/data/lankaparty.db
       - SESSION_SECRET=${SESSION_SECRET:-change-this-in-production}
       - NODE_ENV=production
+      - COOKIE_SECURE=true
       - PORT=3000
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
       - TZ=Europe/Prague

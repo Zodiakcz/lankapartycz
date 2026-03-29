@@ -20,6 +20,7 @@ import { startScheduler } from './services/scheduler'
 const app = express()
 const PORT = Number(process.env.PORT) || 3000
 const isProd = process.env.NODE_ENV === 'production'
+const secureCookies = process.env.COOKIE_SECURE === 'true'
 
 // Trust the reverse proxy (Caddy) so secure cookies and rate limiting work
 app.set('trust proxy', 1)
@@ -55,7 +56,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProd,
+    secure: secureCookies,
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
