@@ -1,6 +1,6 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
-  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem,
+  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem, LeaderboardData,
 } from './types'
 
 const BASE = '/api'
@@ -116,4 +116,7 @@ export const api = {
   reorderFaq: (orderedIds: number[]) =>
     request<FaqItem[]>('/faq/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) }),
   deleteFaqItem: (id: number) => request<Ok>(`/faq/${id}`, { method: 'DELETE' }),
+
+  // Leaderboard
+  leaderboard: () => request<LeaderboardData>('/leaderboard'),
 }

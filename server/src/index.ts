@@ -15,6 +15,7 @@ import expenseRoutes from './routes/expenses'
 import packingRoutes from './routes/packing'
 import shoppingRoutes from './routes/shopping'
 import faqRoutes from './routes/faq'
+import leaderboardRoutes from './routes/leaderboard'
 import { startScheduler } from './services/scheduler'
 
 const app = express()
@@ -77,6 +78,7 @@ app.use('/api/expenses', expenseRoutes)
 app.use('/api/packing', packingRoutes)
 app.use('/api/shopping', shoppingRoutes)
 app.use('/api/faq', faqRoutes)
+app.use('/api/leaderboard', leaderboardRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {
