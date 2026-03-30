@@ -120,6 +120,46 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true })
 })
 
+// Update own profile (display name and/or username)
+router.patch('/profile', requireAuth, async (req, res) => {
+  const { username, displayName } = req.body
+  const userId = req.session.userId!
+
+  if (!username && !displayName) {
+    return res.status(400).json({ error: 'Zadejte alespoň jedno pole ke změně' })
+  }
+
+  const data: Record<string, string> = {}
+
+  if (displayName !== undefined) {
+    if (!displayName.trim()) {
+      return res.status(400).json({ error: 'Zobrazované jméno nesmí být prázdné' })
+    }
+    data.displayName = displayName.trim()
+  }
+
+  if (username !== undefined) {
+    if (!username.trim()) {
+      return res.status(400).json({ error: 'Přihlašovací jméno nesmí být prázdné' })
+    }
+    if (username.trim().length < 3) {
+      return res.status(400).json({ error: 'Přihlašovací jméno musí mít alespoň 3 znaky' })
+    }
+    const existing = await prisma.user.findUnique({ where: { username: username.trim() } })
+    if (existing && existing.id !== userId) {
+      return res.status(400).json({ error: 'Toto přihlašovací jméno je již obsazené' })
+    }
+    data.username = username.trim()
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: { id: true, username: true, displayName: true, role: true },
+  })
+  res.json(user)
+})
+
 // Change password (any logged-in user for themselves, admin for anyone)
 router.post('/change-password', requireAuth, async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body

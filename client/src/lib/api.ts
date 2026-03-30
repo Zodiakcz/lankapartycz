@@ -38,6 +38,8 @@ export const api = {
   deleteUser: (id: number) => request<Ok>(`/auth/users/${id}`, { method: 'DELETE' }),
   changePassword: (data: { userId?: number; currentPassword?: string; newPassword: string }) =>
     request<Ok>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+  updateProfile: (data: { username?: string; displayName?: string }) =>
+    request<User>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Parties
   parties: () => request<Party[]>('/parties'),
