@@ -1,11 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
+interface PartyStats {
+  id: number
+  name: string
+  startDate: string
+  status: string
+  nights: number
+}
+
 export function ChangePassword() {
   const { user, updateUser } = useAuth()
   const navigate = useNavigate()
+
+  // Stats
+  const [stats, setStats] = useState<{ parties: PartyStats[]; totalNights: number } | null>(null)
+
+  useEffect(() => {
+    api.profileStats().then(setStats).catch(() => {})
+  }, [])
 
   // Profile fields
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
@@ -76,6 +91,36 @@ export function ChangePassword() {
       <p className="text-zinc-500 text-sm mb-6">
         Přihlášen jako <span className="text-zinc-300 font-medium">{user?.displayName}</span>
       </p>
+
+      {/* Stats section */}
+      {stats && (
+        <div className="card p-5 mb-8">
+          <h2 className="text-lg font-semibold text-zinc-200 mb-3">Moje účast</h2>
+          <div className="flex gap-6 mb-4">
+            <div>
+              <span className="text-2xl font-bold text-indigo-400">{stats.parties.length}</span>
+              <span className="text-zinc-500 text-sm ml-1.5">{stats.parties.length === 1 ? 'akce' : stats.parties.length >= 2 && stats.parties.length <= 4 ? 'akce' : 'akcí'}</span>
+            </div>
+            <div>
+              <span className="text-2xl font-bold text-indigo-400">{stats.totalNights}</span>
+              <span className="text-zinc-500 text-sm ml-1.5">{stats.totalNights === 1 ? 'noc' : stats.totalNights >= 2 && stats.totalNights <= 4 ? 'noci' : 'nocí'}</span>
+            </div>
+          </div>
+          {stats.parties.length > 0 && (
+            <ul className="space-y-1.5">
+              {stats.parties.map(p => (
+                <li key={p.id} className="flex items-center justify-between text-sm">
+                  <span className="text-zinc-300">{p.name}</span>
+                  <span className="text-zinc-500">
+                    {p.nights} {p.nights === 1 ? 'noc' : p.nights >= 2 && p.nights <= 4 ? 'noci' : 'nocí'}
+                    {p.status === 'maybe' && <span className="ml-1.5 text-yellow-500">(možná)</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Profile section */}
       <h2 className="text-lg font-semibold text-zinc-200 mb-3">Změna jména</h2>

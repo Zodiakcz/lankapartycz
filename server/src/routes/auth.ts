@@ -120,6 +120,36 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true })
 })
 
+// Get own attendance stats
+router.get('/profile/stats', requireAuth, async (req, res) => {
+  const userId = req.session.userId!
+  const attendances = await prisma.attendance.findMany({
+    where: { userId, status: { in: ['confirmed', 'maybe'] } },
+    include: { party: { select: { id: true, name: true, startDate: true, endDate: true } } },
+    orderBy: { party: { startDate: 'desc' } },
+  })
+
+  let totalNights = 0
+  const parties = attendances.map(a => {
+    let nights = 0
+    if (a.arrival && a.departure) {
+      nights = Math.max(0, Math.round((a.departure.getTime() - a.arrival.getTime()) / (1000 * 60 * 60 * 24)))
+    } else if (a.party.startDate && a.party.endDate) {
+      nights = Math.max(0, Math.round((a.party.endDate.getTime() - a.party.startDate.getTime()) / (1000 * 60 * 60 * 24)))
+    }
+    totalNights += nights
+    return {
+      id: a.party.id,
+      name: a.party.name,
+      startDate: a.party.startDate,
+      status: a.status,
+      nights,
+    }
+  })
+
+  res.json({ parties, totalNights })
+})
+
 // Update own profile (display name and/or username)
 router.patch('/profile', requireAuth, async (req, res) => {
   const { username, displayName } = req.body
