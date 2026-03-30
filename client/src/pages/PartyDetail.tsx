@@ -331,7 +331,10 @@ export function PartyDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {party.attendance?.map((a: Attendance) => (
+                  {[...(party.attendance ?? [])].sort((a: Attendance, b: Attendance) => {
+                    const order: Record<string, number> = { confirmed: 0, maybe: 1, declined: 2 }
+                    return (order[a.status] ?? 3) - (order[b.status] ?? 3) || a.user.displayName.localeCompare(b.user.displayName)
+                  }).map((a: Attendance) => (
                     editAttId === a.userId ? (
                       <tr key={a.id} className="border-t border-white/8 bg-zinc-800/60">
                         <td className="px-4 py-2 font-medium">{a.user.displayName}</td>
