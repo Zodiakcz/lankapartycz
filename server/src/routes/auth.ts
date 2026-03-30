@@ -120,6 +120,76 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true })
 })
 
+// Get own attendance stats
+router.get('/profile/stats', requireAuth, async (req, res) => {
+  const userId = req.session.userId!
+  const attendances = await prisma.attendance.findMany({
+    where: { userId, status: { in: ['confirmed', 'maybe'] } },
+    include: { party: { select: { id: true, name: true, startDate: true, endDate: true } } },
+    orderBy: { party: { startDate: 'desc' } },
+  })
+
+  let totalNights = 0
+  const parties = attendances.map(a => {
+    let nights = 0
+    if (a.arrival && a.departure) {
+      nights = Math.max(0, Math.round((a.departure.getTime() - a.arrival.getTime()) / (1000 * 60 * 60 * 24)))
+    } else if (a.party.startDate && a.party.endDate) {
+      nights = Math.max(0, Math.round((a.party.endDate.getTime() - a.party.startDate.getTime()) / (1000 * 60 * 60 * 24)))
+    }
+    totalNights += nights
+    return {
+      id: a.party.id,
+      name: a.party.name,
+      startDate: a.party.startDate,
+      status: a.status,
+      nights,
+    }
+  })
+
+  res.json({ parties, totalNights })
+})
+
+// Update own profile (display name and/or username)
+router.patch('/profile', requireAuth, async (req, res) => {
+  const { username, displayName } = req.body
+  const userId = req.session.userId!
+
+  if (!username && !displayName) {
+    return res.status(400).json({ error: 'Zadejte alespoň jedno pole ke změně' })
+  }
+
+  const data: Record<string, string> = {}
+
+  if (displayName !== undefined) {
+    if (!displayName.trim()) {
+      return res.status(400).json({ error: 'Zobrazované jméno nesmí být prázdné' })
+    }
+    data.displayName = displayName.trim()
+  }
+
+  if (username !== undefined) {
+    if (!username.trim()) {
+      return res.status(400).json({ error: 'Přihlašovací jméno nesmí být prázdné' })
+    }
+    if (username.trim().length < 3) {
+      return res.status(400).json({ error: 'Přihlašovací jméno musí mít alespoň 3 znaky' })
+    }
+    const existing = await prisma.user.findUnique({ where: { username: username.trim() } })
+    if (existing && existing.id !== userId) {
+      return res.status(400).json({ error: 'Toto přihlašovací jméno je již obsazené' })
+    }
+    data.username = username.trim()
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: { id: true, username: true, displayName: true, role: true },
+  })
+  res.json(user)
+})
+
 // Change password (any logged-in user for themselves, admin for anyone)
 router.post('/change-password', requireAuth, async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body
