@@ -11,6 +11,11 @@ router.post('/:partyId', requireAuth, async (req, res) => {
   const userId = req.session.userId!
   const { status, arrival, departure, advance } = req.body
 
+  const existing = await prisma.attendance.findUnique({
+    where: { userId_partyId: { userId, partyId } },
+    select: { status: true },
+  })
+
   const attendance = await prisma.attendance.upsert({
     where: { userId_partyId: { userId, partyId } },
     update: {
@@ -30,7 +35,8 @@ router.post('/:partyId', requireAuth, async (req, res) => {
     include: { user: { select: { id: true, displayName: true } } },
   })
 
-  if (status === 'confirmed' || status === 'maybe') {
+  const statusChanged = existing?.status !== status
+  if (statusChanged && (status === 'confirmed' || status === 'maybe' || status === 'declined')) {
     const party = await prisma.party.findUnique({ where: { id: partyId }, select: { name: true } })
     notifyAttendanceChange(attendance.user.displayName, party?.name ?? '', status)
   }
