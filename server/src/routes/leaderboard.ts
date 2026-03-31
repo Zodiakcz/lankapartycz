@@ -45,10 +45,11 @@ router.get('/', requireAuth, async (_req, res) => {
     }
   })
 
-  // Sort by events attended desc, then nights desc
-  stats.sort((a, b) => b.eventsAttended - a.eventsAttended || b.totalNights - a.totalNights)
+  // Exclude users with no participations, sort by events attended desc, then nights desc
+  const active = stats.filter(s => s.eventsAttended > 0)
+  active.sort((a, b) => b.eventsAttended - a.eventsAttended || b.totalNights - a.totalNights)
 
-  res.json({ stats, totalParties: parties })
+  res.json({ stats: active, totalParties: parties })
 })
 
 export default router
