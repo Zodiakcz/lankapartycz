@@ -6,19 +6,22 @@ import { prisma } from '../lib/prisma'
 const router = Router()
 
 router.get('/', requireAuth, async (_req, res) => {
-  const [users, attendance, expenses, parties] = await Promise.all([
+  const now = new Date()
+
+  const [users, attendance, expenses, pastPartyCount] = await Promise.all([
     prisma.user.findMany({
       where: { approved: true },
       select: { id: true, displayName: true },
     }),
     prisma.attendance.findMany({
-      where: { status: 'confirmed' },
+      where: { status: 'confirmed', party: { endDate: { lt: now } } },
       include: { party: { select: { id: true } } },
     }),
     prisma.expense.findMany({
+      where: { party: { endDate: { lt: now } } },
       select: { paidByUserId: true, amount: true, partyId: true },
     }),
-    prisma.party.count(),
+    prisma.party.count({ where: { endDate: { lt: now } } }),
   ])
 
   const stats = users.map(user => {
@@ -49,7 +52,7 @@ router.get('/', requireAuth, async (_req, res) => {
   const active = stats.filter(s => s.eventsAttended > 0)
   active.sort((a, b) => b.eventsAttended - a.eventsAttended || b.totalNights - a.totalNights)
 
-  res.json({ stats: active, totalParties: parties })
+  res.json({ stats: active, totalParties: pastPartyCount })
 })
 
 export default router
