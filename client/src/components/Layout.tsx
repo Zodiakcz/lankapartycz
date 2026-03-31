@@ -38,10 +38,17 @@ const FaqIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
+const TrophyIcon = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75} className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22M18 2H6v7a6 6 0 1012 0V2z" />
+  </svg>
+)
+
 const navItems = [
   { path: '/', label: 'Párty', Icon: CalendarIcon },
   { path: '/games', label: 'Hry', Icon: GamepadIcon },
   { path: '/packing', label: 'Balení', Icon: BagIcon },
+  { path: '/leaderboard', label: 'Žebříček', Icon: TrophyIcon },
   { path: '/faq', label: 'FAQ', Icon: FaqIcon },
 ]
 

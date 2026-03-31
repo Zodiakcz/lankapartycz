@@ -135,3 +135,16 @@ export interface FaqItem {
   order: number
   createdAt: string
 }
+
+export interface LeaderboardEntry {
+  user: { id: number; displayName: string }
+  eventsAttended: number
+  totalNights: number
+  totalSpent: number
+  eventsSupplied: number
+}
+
+export interface LeaderboardData {
+  stats: LeaderboardEntry[]
+  totalParties: number
+}
