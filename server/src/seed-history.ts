@@ -5,7 +5,6 @@
  * Uses Prisma directly — no notifications are triggered.
  */
 import { prisma } from './lib/prisma'
-import bcrypt from 'bcryptjs'
 
 interface HistoricalParty {
   name: string
@@ -97,34 +96,28 @@ const attendance: HistoricalAttendance[] = [
 ]
 
 async function main() {
-  const defaultHash = await bcrypt.hash('changeme123', 10)
-
-  // Collect unique participant names
+  // Collect unique participant names and match to existing users by displayName
   const participantNames = [...new Set(attendance.map(a => a.participant))]
 
-  // Create or find users
   const userMap: Record<string, number> = {}
+  const missing: string[] = []
   for (const name of participantNames) {
-    const username = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     const existing = await prisma.user.findFirst({
       where: { displayName: name },
     })
     if (existing) {
       userMap[name] = existing.id
-      console.log(`  Existuje: ${name} (id=${existing.id})`)
+      console.log(`  Nalezen: ${name} (id=${existing.id})`)
     } else {
-      const user = await prisma.user.create({
-        data: {
-          username,
-          displayName: name,
-          passwordHash: defaultHash,
-          role: 'member',
-          approved: true,
-        },
-      })
-      userMap[name] = user.id
-      console.log(`  Vytvořen: ${name} → ${username} (id=${user.id})`)
+      missing.push(name)
     }
+  }
+
+  if (missing.length > 0) {
+    console.error(`\nChyba: Následující uživatelé nebyli nalezeni (podle displayName):`)
+    console.error(`  ${missing.join(', ')}`)
+    console.error(`Vytvořte je nejdřív nebo opravte jména v seed-history.ts.`)
+    process.exit(1)
   }
 
   // Create parties
