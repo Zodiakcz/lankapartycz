@@ -317,6 +317,27 @@ export function PartyDetail() {
           {/* Who's coming */}
           <section>
             <h2 className="section-heading">Kdo jede</h2>
+            {(() => {
+              const att = party.attendance ?? []
+              const confirmed = att.filter(a => a.status === 'confirmed').length
+              const maybe = att.filter(a => a.status === 'maybe').length
+              const declined = att.filter(a => a.status === 'declined').length
+              const confirmedNights = att
+                .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
+                .reduce((sum, a) => {
+                  const startDay = new Date(new Date(a.arrival!).toDateString())
+                  const endDay = new Date(new Date(a.departure!).toDateString())
+                  return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
+                }, 0)
+              return (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="badge badge-green">Potvrzeno: {confirmed}</span>
+                  <span className="badge badge-yellow">Možná: {maybe}</span>
+                  <span className="badge badge-red">Neúčast: {declined}</span>
+                  <span className="badge badge-blue">Potvrzených nocí: {confirmedNights}</span>
+                </div>
+              )
+            })()}
             <div className="card overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-zinc-800/60">
