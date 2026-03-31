@@ -57,7 +57,7 @@ export function Parties() {
     return <span className="badge badge-yellow">Nevyřízeno</span>
   }
 
-  const PartyCard = ({ party }: { party: Party }) => {
+  const PartyCard = ({ party, isPast }: { party: Party; isPast?: boolean }) => {
     const confirmed = party.attendance?.filter(a => a.status === 'confirmed').length || 0
     const placeStatus = party.placeStatus || 'pending'
     return (
@@ -69,7 +69,7 @@ export function Parties() {
           <h3 className="text-base font-semibold text-white group-hover:text-indigo-300 transition-colors">
             {party.name}
           </h3>
-          {placeStatusBadge(placeStatus)}
+          {isPast ? <span className="badge badge-gray">Proběhlo</span> : placeStatusBadge(placeStatus)}
         </div>
 
         <div className="space-y-1">
@@ -205,7 +205,7 @@ export function Parties() {
         <section>
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Historie</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-70">
-            {past.map(p => <PartyCard key={p.id} party={p} />)}
+            {past.map(p => <PartyCard key={p.id} party={p} isPast />)}
           </div>
         </section>
       )}
