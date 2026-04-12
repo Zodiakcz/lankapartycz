@@ -163,3 +163,8 @@ model FaqItem {
   order     Int      @default(0)
   createdAt DateTime @default(now())
 }
+
+model Setting {
+  key   String @id
+  value String
+}

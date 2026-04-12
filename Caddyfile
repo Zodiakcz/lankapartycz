@@ -1,3 +1,7 @@
 lankapp.cloud {
     reverse_proxy client:80
 }
+
+twocoins.lankapp.cloud {
+    reverse_proxy 172.17.0.1:3001
+}

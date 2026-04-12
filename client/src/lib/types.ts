@@ -148,3 +148,11 @@ export interface LeaderboardData {
   stats: LeaderboardEntry[]
   totalParties: number
 }
+
+export interface AchievementThresholds {
+  threshold_veteran: number
+  threshold_nocni_valecnik: number
+  threshold_sponzor: number
+  threshold_velky_sponzor: number
+  threshold_nakupovac: number
+}

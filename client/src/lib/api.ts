@@ -1,6 +1,6 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
-  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem, LeaderboardData,
+  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem, LeaderboardData, AchievementThresholds,
 } from './types'
 
 const BASE = '/api'
@@ -119,4 +119,9 @@ export const api = {
 
   // Leaderboard
   leaderboard: () => request<LeaderboardData>('/leaderboard'),
+
+  // Settings
+  getSettings: () => request<AchievementThresholds>('/settings'),
+  updateSettings: (data: Partial<AchievementThresholds>) =>
+    request<AchievementThresholds>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
 }
