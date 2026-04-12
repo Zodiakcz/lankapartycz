@@ -475,7 +475,12 @@ export function PartyDetail() {
               </table>
             </div>
             {isAdmin && !addingAtt && (
-              <button onClick={() => { setAddingAtt(true); setEditAttId(null) }}
+              <button onClick={() => {
+                setAddingAtt(true); setEditAttId(null)
+                const startNoon = party?.startDate ? party.startDate.slice(0, 10) + 'T12:00' : ''
+                const endNoon = party?.endDate ? party.endDate.slice(0, 10) + 'T12:00' : ''
+                setAddAttForm(prev => ({ ...prev, arrival: startNoon, departure: endNoon }))
+              }}
                 className="mt-3 btn-primary">
                 + Přidat účastníka
               </button>
