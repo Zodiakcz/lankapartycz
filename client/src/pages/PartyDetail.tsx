@@ -189,6 +189,36 @@ export function PartyDetail() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
   const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
 
+  const downloadICS = () => {
+    const toICSDate = (dateStr: string) => dateStr.slice(0, 10).replace(/-/g, '')
+    // ICS DTEND for all-day events is exclusive, so add 1 day
+    const endExclusive = new Date(party.endDate)
+    endExclusive.setDate(endExclusive.getDate() + 1)
+    const endStr = endExclusive.toISOString().slice(0, 10).replace(/-/g, '')
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//LAN Party//LAN Party App//CS',
+      'BEGIN:VEVENT',
+      `UID:lanparty-${party.id}@lankapartycz`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+      `DTSTART;VALUE=DATE:${toICSDate(party.startDate)}`,
+      `DTEND;VALUE=DATE:${endStr}`,
+      `SUMMARY:${party.name}`,
+      `LOCATION:${party.location}`,
+      ...(party.description ? [`DESCRIPTION:${party.description.replace(/\n/g, '\\n')}`] : []),
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ]
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${party.name.replace(/\s+/g, '_')}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const partyDays = Math.ceil((new Date(party.endDate).getTime() - new Date(party.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
 
   return (
@@ -201,6 +231,7 @@ export function PartyDetail() {
           <p className="text-zinc-400 mt-0.5">{party.location}</p>
           <p className="text-sm text-zinc-500 mt-0.5">{formatDate(party.startDate)} – {formatDate(party.endDate)} ({partyDays} dní)</p>
           {party.description && <p className="text-zinc-400 mt-2 text-sm">{party.description}</p>}
+          <button onClick={downloadICS} className="btn-ghost text-xs mt-2 -ml-3">&#128197; Přidat do kalendáře</button>
         </div>
         {isAdmin && (
           <div className="flex gap-1 items-center">
