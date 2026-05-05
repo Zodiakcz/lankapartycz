@@ -25,6 +25,9 @@ export function PartyDetail() {
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
+  // Stay cost form (price per person-night)
+  const [stayForm, setStayForm] = useState({ paidByUserId: '', pricePerNight: '' })
+
   // Admin edit/add attendance
   const [editAttId, setEditAttId] = useState<number | null>(null)
   const [editAttForm, setEditAttForm] = useState<{ status: AttStatus; arrival: string; departure: string; advance: string }>({ status: 'maybe', arrival: '', departure: '', advance: '0' })
@@ -127,6 +130,32 @@ export function PartyDetail() {
     e.preventDefault()
     await api.createExpense(partyId, { amount: Number(expForm.amount), description: expForm.description, paidByUserId: expForm.paidByUserId ? Number(expForm.paidByUserId) : undefined })
     setExpForm({ amount: '', description: '', paidByUserId: expForm.paidByUserId })
+    load()
+    loadSplit()
+  }
+
+  const sumConfirmedNights = (p: Party | null) =>
+    (p?.attendance ?? [])
+      .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
+      .reduce((sum, a) => {
+        const arr = new Date(a.arrival!); const dep = new Date(a.departure!)
+        const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
+        const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
+        return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
+      }, 0)
+
+  const handleStayCost = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const price = Number(stayForm.pricePerNight)
+    const nights = sumConfirmedNights(party)
+    const amount = price * nights
+    if (!stayForm.paidByUserId || !price || amount <= 0) return
+    await api.createExpense(partyId, {
+      amount: Math.round(amount * 100) / 100,
+      description: `Ubytování (${price} Kč × ${nights} nocí)`,
+      paidByUserId: Number(stayForm.paidByUserId),
+    })
+    setStayForm({ paidByUserId: '', pricePerNight: '' })
     load()
     loadSplit()
   }
@@ -685,8 +714,52 @@ export function PartyDetail() {
       )}
 
       {/* Expenses Tab */}
-      {tab === 'expenses' && (
+      {tab === 'expenses' && (() => {
+        const confirmedTotalNights = sumConfirmedNights(party)
+        const stayPrice = Number(stayForm.pricePerNight) || 0
+        const stayAmount = Math.round(stayPrice * confirmedTotalNights * 100) / 100
+        return (
         <div className="space-y-6">
+          {/* Stay cost calculator */}
+          <form onSubmit={handleStayCost} className="card p-4">
+            <h3 className="font-semibold mb-3">Náklady na ubytování</h3>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
+              <div>
+                <label className="form-label">Kdo platil</label>
+                <select value={stayForm.paidByUserId} onChange={e => setStayForm({ ...stayForm, paidByUserId: e.target.value })} required
+                  className="form-input">
+                  <option value="">Vyber...</option>
+                  {party.attendance?.filter(a => a.status === 'confirmed' || a.status === 'maybe').map((a: Attendance) => (
+                    <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Cena za noc (Kč)</label>
+                <input type="number" step="0.01" min="0" value={stayForm.pricePerNight}
+                  onChange={e => setStayForm({ ...stayForm, pricePerNight: e.target.value })} required
+                  className="form-input w-32" placeholder="např. 200" />
+              </div>
+              <button type="submit" className="btn-primary"
+                disabled={!stayForm.paidByUserId || !stayPrice || confirmedTotalNights === 0}>
+                Přidat výdaj
+              </button>
+            </div>
+            <p className="text-sm mt-3">
+              {confirmedTotalNights === 0 ? (
+                <span className="text-zinc-500">Zatím žádné potvrzené noci – nejdřív potvrď účast.</span>
+              ) : stayPrice > 0 ? (
+                <>
+                  <span className="text-zinc-400">Celkem: </span>
+                  <strong className="text-white">{stayAmount} Kč</strong>
+                  <span className="text-xs text-zinc-500 ml-2">({stayPrice} Kč × {confirmedTotalNights} potvrzených nocí)</span>
+                </>
+              ) : (
+                <span className="text-zinc-500">Zadej cenu za noc – výdaj bude {confirmedTotalNights} potvrzených nocí × cena.</span>
+              )}
+            </p>
+          </form>
+
           {/* Add expense */}
           <form onSubmit={handleExpense} className="card p-4">
             <h3 className="font-semibold mb-3">Přidat výdaj</h3>
@@ -795,7 +868,8 @@ export function PartyDetail() {
             </section>
           )}
         </div>
-      )}
+        )
+      })()}
 
       {/* Shopping Tab */}
       {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
