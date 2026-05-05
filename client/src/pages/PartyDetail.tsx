@@ -549,6 +549,37 @@ export function PartyDetail() {
             )}
           </section>
 
+          {/* Stay cost */}
+          {(party.stayPricePerNight > 0 || isAdmin) && (() => {
+            const confirmedNights = (party.attendance ?? [])
+              .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
+              .reduce((sum, a) => {
+                const arr = new Date(a.arrival!); const dep = new Date(a.departure!)
+                const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
+                const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
+                return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
+              }, 0)
+            const stayCost = Math.round(party.stayPricePerNight * confirmedNights * 100) / 100
+            const payer = party.attendance?.find(a => a.userId === party.stayPaidByUserId)
+            return (
+              <section>
+                <h2 className="section-heading">Ubytování</h2>
+                <div className="card p-4">
+                  {party.stayPricePerNight > 0 ? (
+                    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+                      <span className="text-zinc-400">Cena za osobonoc: <strong className="text-white">{party.stayPricePerNight} Kč</strong></span>
+                      <span className="text-zinc-400">Potvrzených nocí: <strong className="text-white">{confirmedNights}</strong></span>
+                      <span className="text-zinc-400">Celkem: <strong className="text-indigo-400">{stayCost} Kč</strong></span>
+                      <span className="text-zinc-400">Zaplatil: <strong className="text-white">{payer?.user.displayName ?? <span className="text-zinc-500 italic">nezadáno</span>}</strong></span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500 italic">Cena ubytování zatím nezadána. Nastav v "Upravit událost".</p>
+                  )}
+                </div>
+              </section>
+            )
+          })()}
+
           {/* Place */}
           <section>
             <div className="flex items-center justify-between mb-3">
@@ -718,23 +749,6 @@ export function PartyDetail() {
       {/* Expenses Tab */}
       {tab === 'expenses' && (
         <div className="space-y-6">
-          {/* Stay cost summary */}
-          {(split && (split.stayPricePerNight > 0 || split.stayCost > 0)) && (() => {
-            const payer = party.attendance?.find(a => a.userId === split.stayPaidByUserId)
-            return (
-              <div className="card p-4">
-                <h3 className="font-semibold mb-2">Ubytování</h3>
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
-                  <span className="text-zinc-400">Cena za noc: <strong className="text-white">{split.stayPricePerNight} Kč</strong></span>
-                  <span className="text-zinc-400">Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
-                  <span className="text-zinc-400">Celkem: <strong className="text-indigo-400">{split.stayCost} Kč</strong></span>
-                  <span className="text-zinc-400">Zaplatil: <strong className="text-white">{payer?.user.displayName ?? <span className="text-zinc-500 italic">nezadáno</span>}</strong></span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-2">Cenu a plátce nastaví admin v "Upravit událost". Hodnota se přepočítává podle aktuálních potvrzených nocí.</p>
-              </div>
-            )
-          })()}
-
           {/* Add expense */}
           <form onSubmit={handleExpense} className="card p-4">
             <h3 className="font-semibold mb-3">Přidat výdaj</h3>
@@ -795,7 +809,9 @@ export function PartyDetail() {
                   <span>Náklady celkem: <strong className="text-white">{split.sharedTotal} Kč</strong></span>
                   <span>Zálohy celkem: <strong className="text-white">{split.totalAdvances} Kč</strong></span>
                   <span>Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
-                  {split.totalNights > 0 && <span>Cena za noc: <strong className="text-white">{Math.round(split.sharedTotal / split.totalNights)} Kč</strong></span>}
+                  {split.totalNights > 0 && <span>Průměr / osobonoc: <strong className="text-white">{Math.round(split.sharedTotal / split.totalNights)} Kč</strong></span>}
+                  {split.stayPricePerNight > 0 && <span>Ubytování / noc: <strong className="text-white">{split.stayPricePerNight} Kč</strong></span>}
+                  {split.stayCost > 0 && <span>Ubytování celkem: <strong className="text-white">{split.stayCost} Kč</strong></span>}
                 </div>
                 <div className="card overflow-x-auto">
                   <table className="w-full text-sm min-w-[500px]">
