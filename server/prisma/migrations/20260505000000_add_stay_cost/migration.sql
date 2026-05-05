@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Party" ADD COLUMN "stayPricePerNight" REAL NOT NULL DEFAULT 0;
+ALTER TABLE "Party" ADD COLUMN "stayPaidByUserId" INTEGER;

@@ -25,9 +25,6 @@ export function PartyDetail() {
   // Expense form
   const [expForm, setExpForm] = useState({ amount: '', description: '', paidByUserId: '' })
 
-  // Stay cost form (price per person-night)
-  const [stayForm, setStayForm] = useState({ paidByUserId: '', pricePerNight: '' })
-
   // Admin edit/add attendance
   const [editAttId, setEditAttId] = useState<number | null>(null)
   const [editAttForm, setEditAttForm] = useState<{ status: AttStatus; arrival: string; departure: string; advance: string }>({ status: 'maybe', arrival: '', departure: '', advance: '0' })
@@ -76,7 +73,7 @@ export function PartyDetail() {
 
   // Party detail edit
   const [partyEdit, setPartyEdit] = useState(false)
-  const [partyEditForm, setPartyEditForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '', advancePerNight: '' })
+  const [partyEditForm, setPartyEditForm] = useState({ name: '', location: '', startDate: '', endDate: '', description: '', advancePerNight: '', stayPricePerNight: '', stayPaidByUserId: '' })
 
   useEffect(() => { load(); if (isAdmin) api.users().then(setAllUsers) }, [partyId])
 
@@ -134,32 +131,6 @@ export function PartyDetail() {
     loadSplit()
   }
 
-  const sumConfirmedNights = (p: Party | null) =>
-    (p?.attendance ?? [])
-      .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
-      .reduce((sum, a) => {
-        const arr = new Date(a.arrival!); const dep = new Date(a.departure!)
-        const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
-        const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
-        return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
-      }, 0)
-
-  const handleStayCost = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const price = Number(stayForm.pricePerNight)
-    const nights = sumConfirmedNights(party)
-    const amount = price * nights
-    if (!stayForm.paidByUserId || !price || amount <= 0) return
-    await api.createExpense(partyId, {
-      amount: Math.round(amount * 100) / 100,
-      description: `Ubytování (${price} Kč × ${nights} nocí)`,
-      paidByUserId: Number(stayForm.paidByUserId),
-    })
-    setStayForm({ paidByUserId: '', pricePerNight: '' })
-    load()
-    loadSplit()
-  }
-
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault()
     await api.createScheduleItem(partyId, schedForm)
@@ -184,14 +155,22 @@ export function PartyDetail() {
       endDate: party.endDate.slice(0, 10),
       description: party.description || '',
       advancePerNight: String(party.advancePerNight || 0),
+      stayPricePerNight: String(party.stayPricePerNight || 0),
+      stayPaidByUserId: party.stayPaidByUserId ? String(party.stayPaidByUserId) : '',
     })
     setPartyEdit(true)
   }
 
   const handleSavePartyDetails = async () => {
-    await api.updateParty(partyId, { ...partyEditForm, advancePerNight: Number(partyEditForm.advancePerNight) || 0 })
+    await api.updateParty(partyId, {
+      ...partyEditForm,
+      advancePerNight: Number(partyEditForm.advancePerNight) || 0,
+      stayPricePerNight: Number(partyEditForm.stayPricePerNight) || 0,
+      stayPaidByUserId: partyEditForm.stayPaidByUserId ? Number(partyEditForm.stayPaidByUserId) : null,
+    })
     setPartyEdit(false)
     load()
+    loadSplit()
   }
 
   const handleSavePlace = async () => {
@@ -308,6 +287,29 @@ export function PartyDetail() {
                 <input type="number" step="1" min="0" value={partyEditForm.advancePerNight}
                   onChange={e => setPartyEditForm({ ...partyEditForm, advancePerNight: e.target.value })}
                   className="form-input" />
+              </div>
+              <div className="border-t border-white/8 pt-3">
+                <h3 className="text-sm font-semibold mb-2 text-zinc-300">Ubytování</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="form-label">Cena za osobonoc (Kč)</label>
+                    <input type="number" step="0.01" min="0" value={partyEditForm.stayPricePerNight}
+                      onChange={e => setPartyEditForm({ ...partyEditForm, stayPricePerNight: e.target.value })}
+                      className="form-input" placeholder="např. 200" />
+                  </div>
+                  <div>
+                    <label className="form-label">Zaplatil</label>
+                    <select value={partyEditForm.stayPaidByUserId}
+                      onChange={e => setPartyEditForm({ ...partyEditForm, stayPaidByUserId: e.target.value })}
+                      className="form-input">
+                      <option value="">Nezadáno</option>
+                      {(party?.attendance ?? []).map((a: Attendance) => (
+                        <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Celková cena = cena × součet potvrzených nocí. Přepočítá se automaticky podle účasti.</p>
               </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
@@ -714,51 +716,24 @@ export function PartyDetail() {
       )}
 
       {/* Expenses Tab */}
-      {tab === 'expenses' && (() => {
-        const confirmedTotalNights = sumConfirmedNights(party)
-        const stayPrice = Number(stayForm.pricePerNight) || 0
-        const stayAmount = Math.round(stayPrice * confirmedTotalNights * 100) / 100
-        return (
+      {tab === 'expenses' && (
         <div className="space-y-6">
-          {/* Stay cost calculator */}
-          <form onSubmit={handleStayCost} className="card p-4">
-            <h3 className="font-semibold mb-3">Náklady na ubytování</h3>
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
-              <div>
-                <label className="form-label">Kdo platil</label>
-                <select value={stayForm.paidByUserId} onChange={e => setStayForm({ ...stayForm, paidByUserId: e.target.value })} required
-                  className="form-input">
-                  <option value="">Vyber...</option>
-                  {party.attendance?.filter(a => a.status === 'confirmed' || a.status === 'maybe').map((a: Attendance) => (
-                    <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
-                  ))}
-                </select>
+          {/* Stay cost summary */}
+          {(split && (split.stayPricePerNight > 0 || split.stayCost > 0)) && (() => {
+            const payer = party.attendance?.find(a => a.userId === split.stayPaidByUserId)
+            return (
+              <div className="card p-4">
+                <h3 className="font-semibold mb-2">Ubytování</h3>
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+                  <span className="text-zinc-400">Cena za noc: <strong className="text-white">{split.stayPricePerNight} Kč</strong></span>
+                  <span className="text-zinc-400">Celkem nocí: <strong className="text-white">{split.totalNights}</strong></span>
+                  <span className="text-zinc-400">Celkem: <strong className="text-indigo-400">{split.stayCost} Kč</strong></span>
+                  <span className="text-zinc-400">Zaplatil: <strong className="text-white">{payer?.user.displayName ?? <span className="text-zinc-500 italic">nezadáno</span>}</strong></span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Cenu a plátce nastaví admin v "Upravit událost". Hodnota se přepočítává podle aktuálních potvrzených nocí.</p>
               </div>
-              <div>
-                <label className="form-label">Cena za noc (Kč)</label>
-                <input type="number" step="0.01" min="0" value={stayForm.pricePerNight}
-                  onChange={e => setStayForm({ ...stayForm, pricePerNight: e.target.value })} required
-                  className="form-input w-32" placeholder="např. 200" />
-              </div>
-              <button type="submit" className="btn-primary"
-                disabled={!stayForm.paidByUserId || !stayPrice || confirmedTotalNights === 0}>
-                Přidat výdaj
-              </button>
-            </div>
-            <p className="text-sm mt-3">
-              {confirmedTotalNights === 0 ? (
-                <span className="text-zinc-500">Zatím žádné potvrzené noci – nejdřív potvrď účast.</span>
-              ) : stayPrice > 0 ? (
-                <>
-                  <span className="text-zinc-400">Celkem: </span>
-                  <strong className="text-white">{stayAmount} Kč</strong>
-                  <span className="text-xs text-zinc-500 ml-2">({stayPrice} Kč × {confirmedTotalNights} potvrzených nocí)</span>
-                </>
-              ) : (
-                <span className="text-zinc-500">Zadej cenu za noc – výdaj bude {confirmedTotalNights} potvrzených nocí × cena.</span>
-              )}
-            </p>
-          </form>
+            )
+          })()}
 
           {/* Add expense */}
           <form onSubmit={handleExpense} className="card p-4">
@@ -868,8 +843,7 @@ export function PartyDetail() {
             </section>
           )}
         </div>
-        )
-      })()}
+      )}
 
       {/* Shopping Tab */}
       {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}

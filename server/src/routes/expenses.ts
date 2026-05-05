@@ -73,10 +73,12 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
   }
 
   const totalNights = Object.values(personData).reduce((sum, p) => sum + p.nights, 0)
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const stayCost = party.stayPricePerNight * totalNights
+  const total = expensesTotal + stayCost
   const totalAdvances = Object.values(personData).reduce((sum, p) => sum + p.advance, 0)
 
-  // Per person: share - (advance + expenses paid) = what they still owe
+  // Per person: share - (advance + expenses paid + stay paid) = what they still owe
   const perPerson: Record<number, {
     user: { id: number; displayName: string }
     nights: number
@@ -91,7 +93,9 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     const userId = Number(userIdStr)
     const share = totalNights > 0 ? (data.nights / totalNights) * total : 0
     const expensesPaid = expenses.filter(e => e.paidByUserId === userId).reduce((sum, e) => sum + e.amount, 0)
-    const totalCredit = data.advance + expensesPaid
+    const stayPaid = party.stayPaidByUserId === userId ? stayCost : 0
+    const totalPaid = expensesPaid + stayPaid
+    const totalCredit = data.advance + totalPaid
     // positive balance = overpaid (gets money back), negative = still owes
     const balance = totalCredit - share
 
@@ -100,7 +104,7 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
       nights: data.nights,
       advance: Math.round(data.advance * 100) / 100,
       owes: Math.round(share * 100) / 100,
-      paid: Math.round(expensesPaid * 100) / 100,
+      paid: Math.round(totalPaid * 100) / 100,
       balance: Math.round(balance * 100) / 100,
       settled: data.settled,
     }
@@ -108,6 +112,10 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
 
   res.json({
     sharedTotal: Math.round(total * 100) / 100,
+    expensesTotal: Math.round(expensesTotal * 100) / 100,
+    stayCost: Math.round(stayCost * 100) / 100,
+    stayPricePerNight: party.stayPricePerNight,
+    stayPaidByUserId: party.stayPaidByUserId,
     totalAdvances: Math.round(totalAdvances * 100) / 100,
     totalNights,
     perPerson: Object.values(perPerson),

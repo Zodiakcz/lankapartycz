@@ -61,6 +61,8 @@ export interface Party {
   placeAddress: string | null
   placeStatus: string
   advancePerNight: number
+  stayPricePerNight: number
+  stayPaidByUserId: number | null
   notes: string | null
   attendance: Attendance[]
   schedule: ScheduleItem[]
@@ -123,6 +125,10 @@ export interface ExpenseSplitPerson {
 
 export interface ExpenseSplit {
   sharedTotal: number
+  expensesTotal: number
+  stayCost: number
+  stayPricePerNight: number
+  stayPaidByUserId: number | null
   totalAdvances: number
   totalNights: number
   perPerson: ExpenseSplitPerson[]

@@ -32,6 +32,8 @@ model Party {
   placeAddress  String       @default("")
   placeStatus     String       @default("pending") // "pending" | "booked" | "confirmed"
   advancePerNight Int          @default(0) // doporučená záloha za noc
+  stayPricePerNight Float      @default(0) // cena ubytování za osobonoc
+  stayPaidByUserId  Int?       // kdo zaplatil ubytování
   createdAt       DateTime     @default(now())
 
   attendance         Attendance[]
