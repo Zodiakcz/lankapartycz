@@ -162,11 +162,14 @@ export function PartyDetail() {
   }
 
   const handleSavePartyDetails = async () => {
+    const { advancePerNight, stayPricePerNight, stayPaidByUserId, ...rest } = partyEditForm
     await api.updateParty(partyId, {
-      ...partyEditForm,
-      advancePerNight: Number(partyEditForm.advancePerNight) || 0,
-      stayPricePerNight: Number(partyEditForm.stayPricePerNight) || 0,
-      stayPaidByUserId: partyEditForm.stayPaidByUserId ? Number(partyEditForm.stayPaidByUserId) : null,
+      ...rest,
+      ...(party && !party.financesLocked && {
+        advancePerNight: Number(advancePerNight) || 0,
+        stayPricePerNight: Number(stayPricePerNight) || 0,
+        stayPaidByUserId: stayPaidByUserId ? Number(stayPaidByUserId) : null,
+      }),
     })
     setPartyEdit(false)
     load()
@@ -192,8 +195,18 @@ export function PartyDetail() {
     }
   }
 
+  const handleToggleLock = async () => {
+    if (!party) return
+    const next = !party.financesLocked
+    if (next && !confirm('Opravdu uzavřít finance? Žádné výdaje, zálohy ani účast už nepůjdou měnit (kromě zaškrtávátka „vyrovnáno“). Otevřít zpět můžeš kdykoliv.')) return
+    await api.setFinancesLocked(partyId, next)
+    load()
+    loadSplit()
+  }
+
   if (!party) return <div className="text-zinc-500">Načítání...</div>
 
+  const locked = party.financesLocked
   const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ')
   const formatDateTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { timeZone: 'UTC' })
 
@@ -286,7 +299,8 @@ export function PartyDetail() {
                 <label className="form-label">Záloha za noc (Kč)</label>
                 <input type="number" step="1" min="0" value={partyEditForm.advancePerNight}
                   onChange={e => setPartyEditForm({ ...partyEditForm, advancePerNight: e.target.value })}
-                  className="form-input" />
+                  disabled={locked}
+                  className="form-input disabled:opacity-50 disabled:cursor-not-allowed" />
               </div>
               <div className="border-t border-white/8 pt-3">
                 <h3 className="text-sm font-semibold mb-2 text-zinc-300">Ubytování</h3>
@@ -295,13 +309,15 @@ export function PartyDetail() {
                     <label className="form-label">Cena za osobonoc (Kč)</label>
                     <input type="number" step="0.01" min="0" value={partyEditForm.stayPricePerNight}
                       onChange={e => setPartyEditForm({ ...partyEditForm, stayPricePerNight: e.target.value })}
-                      className="form-input" placeholder="např. 200" />
+                      disabled={locked}
+                      className="form-input disabled:opacity-50 disabled:cursor-not-allowed" placeholder="např. 200" />
                   </div>
                   <div>
                     <label className="form-label">Zaplatil</label>
                     <select value={partyEditForm.stayPaidByUserId}
                       onChange={e => setPartyEditForm({ ...partyEditForm, stayPaidByUserId: e.target.value })}
-                      className="form-input">
+                      disabled={locked}
+                      className="form-input disabled:opacity-50 disabled:cursor-not-allowed">
                       <option value="">Nezadáno</option>
                       {(party?.attendance ?? []).map((a: Attendance) => (
                         <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
@@ -309,7 +325,11 @@ export function PartyDetail() {
                     </select>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 mt-2">Celková cena = cena × součet potvrzených nocí. Přepočítá se automaticky podle účasti.</p>
+                <p className="text-xs text-zinc-500 mt-2">
+                  {locked
+                    ? 'Finance jsou uzavřeny — pole pro zálohu a ubytování jsou zamčená. Otevři finance ve záložce Finance.'
+                    : 'Celková cena = cena × součet potvrzených nocí. Přepočítá se automaticky podle účasti.'}
+                </p>
               </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
@@ -332,7 +352,8 @@ export function PartyDetail() {
                 <div>
                   <label className="form-label">Status</label>
                   <select value={attForm.status} onChange={e => setAttForm({ ...attForm, status: e.target.value as AttStatus })}
-                    className="form-input">
+                    disabled={locked}
+                    className="form-input disabled:opacity-50 disabled:cursor-not-allowed">
                     <option value="confirmed">Potvrzeno</option>
                     <option value="maybe">Možná</option>
                     <option value="declined">Neúčast</option>
@@ -341,20 +362,27 @@ export function PartyDetail() {
                 <div>
                   <label className="form-label">Příjezd</label>
                   <input type="datetime-local" value={attForm.arrival} onChange={e => setAttForm({ ...attForm, arrival: e.target.value })}
-                    className="form-input" />
+                    disabled={locked}
+                    className="form-input disabled:opacity-50 disabled:cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="form-label">Odjezd</label>
                   <input type="datetime-local" value={attForm.departure} onChange={e => setAttForm({ ...attForm, departure: e.target.value })}
-                    className="form-input" />
+                    disabled={locked}
+                    className="form-input disabled:opacity-50 disabled:cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="form-label">Záloha (Kč)</label>
                   <input type="number" step="1" min="0" value={attForm.advance} onChange={e => setAttForm({ ...attForm, advance: e.target.value })}
-                    className="form-input" />
+                    disabled={locked}
+                    className="form-input disabled:opacity-50 disabled:cursor-not-allowed" />
                 </div>
-                <button type="submit" className="btn-primary col-span-2 sm:col-span-1">Uložit</button>
+                <button type="submit" disabled={locked}
+                  className="btn-primary col-span-2 sm:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed">Uložit</button>
               </div>
+              {locked && (
+                <p className="text-xs text-yellow-400 mt-2">Finance jsou uzavřeny — účast a záloha už nejdou měnit.</p>
+              )}
               <div className="mt-4 flex items-start gap-4">
                 <img src={qrCode} alt="QR platba" className="w-24 h-24 sm:w-32 sm:h-32 rounded border border-zinc-600 flex-shrink-0" />
                 <div>
@@ -473,10 +501,10 @@ export function PartyDetail() {
                         {a.advance ? (
                           <span className="inline-flex items-center gap-1.5">
                             {isAdmin && (
-                              <input type="checkbox" checked={a.advancePaid} onChange={async () => {
+                              <input type="checkbox" checked={a.advancePaid} disabled={locked} onChange={async () => {
                                 await api.setAdvancePaid(partyId, a.userId)
                                 load()
-                              }} className="accent-emerald-500 cursor-pointer" title={a.advancePaid ? 'Označit jako nezaplaceno' : 'Potvrdit zaplacení'} />
+                              }} className="accent-emerald-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" title={locked ? 'Finance uzavřeny' : (a.advancePaid ? 'Označit jako nezaplaceno' : 'Potvrdit zaplacení')} />
                             )}
                             <span className={a.advancePaid ? 'text-emerald-400' : 'text-yellow-400'}>{a.advance} Kč</span>
                           </span>
@@ -484,7 +512,9 @@ export function PartyDetail() {
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-2">
-                          <button onClick={() => startEditAtt(a)} className="text-indigo-400 hover:text-indigo-300 text-xs">Upravit</button>
+                          {!locked && (
+                            <button onClick={() => startEditAtt(a)} className="text-indigo-400 hover:text-indigo-300 text-xs">Upravit</button>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -536,7 +566,7 @@ export function PartyDetail() {
                 </tbody>
               </table>
             </div>
-            {isAdmin && !addingAtt && (
+            {isAdmin && !addingAtt && !locked && (
               <button onClick={() => {
                 setAddingAtt(true); setEditAttId(null)
                 const startNoon = party?.startDate ? party.startDate.slice(0, 10) + 'T12:00' : ''
@@ -749,33 +779,52 @@ export function PartyDetail() {
       {/* Expenses Tab */}
       {tab === 'expenses' && (
         <div className="space-y-6">
-          {/* Add expense */}
-          <form onSubmit={handleExpense} className="card p-4">
-            <h3 className="font-semibold mb-3">Přidat výdaj</h3>
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
-              <div>
-                <label className="form-label">Kdo platil</label>
-                <select value={expForm.paidByUserId} onChange={e => setExpForm({ ...expForm, paidByUserId: e.target.value })} required
-                  className="form-input">
-                  <option value="">Vyber...</option>
-                  {party.attendance?.filter(a => a.status === 'confirmed' || a.status === 'maybe').map((a: Attendance) => (
-                    <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="form-label">Částka (Kč)</label>
-                <input type="number" step="0.01" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required
-                  className="form-input w-28" />
-              </div>
-              <div className="flex-1 min-w-0 col-span-2">
-                <label className="form-label">Popis</label>
-                <input value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} required
-                  className="form-input" placeholder="Nákup, elektřina..." />
-              </div>
-              <button type="submit" className="btn-primary">Přidat</button>
+          {/* Lock banner + admin lock button */}
+          <div className={`card p-4 flex items-center justify-between gap-3 ${locked ? 'border border-amber-500/40 bg-amber-500/5' : ''}`}>
+            <div>
+              <div className="font-semibold">{locked ? '🔒 Finance jsou uzavřené' : 'Finance otevřené'}</div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {locked
+                  ? 'Výdaje, zálohy a účast jsou zamčené. Lze pouze potvrzovat „vyrovnáno“.'
+                  : 'Po vyrovnání můžeš finance uzavřít — zafixují se hodnoty pro rozúčtování.'}
+              </p>
             </div>
-          </form>
+            {isAdmin && (
+              <button onClick={handleToggleLock} className={locked ? 'btn-secondary' : 'btn-primary'}>
+                {locked ? 'Otevřít finance' : 'Uzavřít finance'}
+              </button>
+            )}
+          </div>
+
+          {/* Add expense */}
+          {!locked && (
+            <form onSubmit={handleExpense} className="card p-4">
+              <h3 className="font-semibold mb-3">Přidat výdaj</h3>
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
+                <div>
+                  <label className="form-label">Kdo platil</label>
+                  <select value={expForm.paidByUserId} onChange={e => setExpForm({ ...expForm, paidByUserId: e.target.value })} required
+                    className="form-input">
+                    <option value="">Vyber...</option>
+                    {party.attendance?.filter(a => a.status === 'confirmed' || a.status === 'maybe').map((a: Attendance) => (
+                      <option key={a.userId} value={a.userId}>{a.user.displayName}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Částka (Kč)</label>
+                  <input type="number" step="0.01" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required
+                    className="form-input w-28" />
+                </div>
+                <div className="flex-1 min-w-0 col-span-2">
+                  <label className="form-label">Popis</label>
+                  <input value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} required
+                    className="form-input" placeholder="Nákup, elektřina..." />
+                </div>
+                <button type="submit" className="btn-primary">Přidat</button>
+              </div>
+            </form>
+          )}
 
           {/* Expense list */}
           <section>
@@ -788,7 +837,7 @@ export function PartyDetail() {
                     <span className="text-indigo-400 ml-2 font-semibold">{e.amount} Kč</span>
                     <span className="text-xs text-zinc-500 ml-2">– {e.paidBy.displayName}</span>
                   </div>
-                  {(isAdmin || e.paidByUserId === user?.id) && (
+                  {!locked && (isAdmin || e.paidByUserId === user?.id) && (
                     <button onClick={async () => { if (!confirm('Opravdu smazat tento výdaj?')) return; await api.deleteExpense(e.id); load(); loadSplit() }}
                       className="text-red-500 hover:text-red-400 text-sm">Smazat</button>
                   )}

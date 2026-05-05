@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { countNights } from '../utils'
 import { prisma } from '../lib/prisma'
+import { blockIfLocked } from '../lib/financeLock'
 
 const router = Router()
 
@@ -17,6 +18,9 @@ router.get('/:partyId', requireAuth, async (req, res) => {
 
 // Add expense
 router.post('/:partyId', requireAuth, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  if (await blockIfLocked(partyId, res)) return
+
   const { amount, description, paidByUserId } = req.body
   if (!amount || !description) {
     return res.status(400).json({ error: 'Vyplňte částku a popis' })
@@ -24,7 +28,7 @@ router.post('/:partyId', requireAuth, async (req, res) => {
 
   const expense = await prisma.expense.create({
     data: {
-      partyId: Number(req.params.partyId),
+      partyId,
       paidByUserId: paidByUserId || req.session.userId!,
       amount,
       description,
@@ -43,6 +47,8 @@ router.delete('/:id', requireAuth, async (req, res) => {
   if (req.session.role !== 'admin' && expense.paidByUserId !== req.session.userId) {
     return res.status(403).json({ error: 'Nemáte oprávnění' })
   }
+
+  if (await blockIfLocked(expense.partyId, res)) return
 
   await prisma.expense.delete({ where: { id: Number(req.params.id) } })
   res.json({ ok: true })

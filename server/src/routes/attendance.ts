@@ -2,12 +2,15 @@ import { Router } from 'express'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { notifyAttendanceChange } from '../services/discord'
 import { prisma } from '../lib/prisma'
+import { blockIfLocked } from '../lib/financeLock'
 
 const router = Router()
 
 // Set/update attendance for current user
 router.post('/:partyId', requireAuth, async (req, res) => {
   const partyId = Number(req.params.partyId)
+  if (await blockIfLocked(partyId, res)) return
+
   const userId = req.session.userId!
   const { status, arrival, departure, advance } = req.body
 
@@ -47,6 +50,8 @@ router.post('/:partyId', requireAuth, async (req, res) => {
 // Set advance for any user (admin only)
 router.post('/:partyId/advance/:userId', requireAdmin, async (req, res) => {
   const partyId = Number(req.params.partyId)
+  if (await blockIfLocked(partyId, res)) return
+
   const userId = Number(req.params.userId)
   const { advance } = req.body
 
@@ -61,6 +66,8 @@ router.post('/:partyId/advance/:userId', requireAdmin, async (req, res) => {
 // Admin: edit any user's attendance
 router.put('/:partyId/user/:userId', requireAdmin, async (req, res) => {
   const partyId = Number(req.params.partyId)
+  if (await blockIfLocked(partyId, res)) return
+
   const userId = Number(req.params.userId)
   const { status, arrival, departure, advance } = req.body
 
@@ -88,6 +95,8 @@ router.put('/:partyId/user/:userId', requireAdmin, async (req, res) => {
 // Toggle advance paid status (admin only)
 router.patch('/:partyId/advance-paid/:userId', requireAdmin, async (req, res) => {
   const partyId = Number(req.params.partyId)
+  if (await blockIfLocked(partyId, res)) return
+
   const userId = Number(req.params.userId)
 
   const current = await prisma.attendance.findUnique({

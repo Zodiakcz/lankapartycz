@@ -34,6 +34,7 @@ model Party {
   advancePerNight Int          @default(0) // doporučená záloha za noc
   stayPricePerNight Float      @default(0) // cena ubytování za osobonoc
   stayPaidByUserId  Int?       // kdo zaplatil ubytování
+  financesLocked    Boolean    @default(false) // uzavřené finance - blokuje úpravy
   createdAt       DateTime     @default(now())
 
   attendance         Attendance[]

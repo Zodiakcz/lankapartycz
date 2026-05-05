@@ -63,6 +63,7 @@ export interface Party {
   advancePerNight: number
   stayPricePerNight: number
   stayPaidByUserId: number | null
+  financesLocked: boolean
   notes: string | null
   attendance: Attendance[]
   schedule: ScheduleItem[]

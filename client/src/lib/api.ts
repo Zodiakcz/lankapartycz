@@ -49,6 +49,8 @@ export const api = {
   createParty: (data: Partial<Party>) => request<Party>('/parties', { method: 'POST', body: JSON.stringify(data) }),
   updateParty: (id: number, data: Partial<Party>) => request<Party>(`/parties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteParty: (id: number) => request<Ok>(`/parties/${id}`, { method: 'DELETE' }),
+  setFinancesLocked: (id: number, locked: boolean) =>
+    request<{ financesLocked: boolean }>(`/parties/${id}/finances-lock`, { method: 'PATCH', body: JSON.stringify({ locked }) }),
 
   // Attendance
   setAttendance: (partyId: number, data: Partial<Attendance>) =>

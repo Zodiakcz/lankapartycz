@@ -49,9 +49,19 @@ router.post('/', requireAdmin, async (req, res) => {
 
 // Update party (admin)
 router.put('/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id)
   const { name, location, startDate, endDate, description, notes, placeAddress, placeStatus, advancePerNight, stayPricePerNight, stayPaidByUserId } = req.body
+
+  const touchesFinance = advancePerNight !== undefined || stayPricePerNight !== undefined || stayPaidByUserId !== undefined
+  if (touchesFinance) {
+    const existing = await prisma.party.findUnique({ where: { id }, select: { financesLocked: true } })
+    if (existing?.financesLocked) {
+      return res.status(423).json({ error: 'Finance jsou uzavřeny' })
+    }
+  }
+
   const party = await prisma.party.update({
-    where: { id: Number(req.params.id) },
+    where: { id },
     data: {
       ...(name !== undefined && { name }),
       ...(location !== undefined && { location }),
@@ -67,6 +77,16 @@ router.put('/:id', requireAdmin, async (req, res) => {
     },
   })
   res.json(party)
+})
+
+// Lock/unlock finances (admin)
+router.patch('/:id/finances-lock', requireAdmin, async (req, res) => {
+  const { locked } = req.body
+  const party = await prisma.party.update({
+    where: { id: Number(req.params.id) },
+    data: { financesLocked: Boolean(locked) },
+  })
+  res.json({ financesLocked: party.financesLocked })
 })
 
 // Delete party (admin)
