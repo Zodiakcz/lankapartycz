@@ -19,6 +19,8 @@ model User {
   attendance      Attendance[]
   expenses        Expense[]
   submittedGames  Game[]
+  entrantsAsUser1 TournamentEntrant[] @relation("EntrantUser1")
+  entrantsAsUser2 TournamentEntrant[] @relation("EntrantUser2")
 }
 
 model Party {
@@ -45,6 +47,7 @@ model Party {
   foodEstimates      FoodEstimate[]
   shoppingItems      ShoppingItem[]
   sentNotifications  SentNotification[]
+  tournaments        Tournament[]
 }
 
 model Attendance {
@@ -170,4 +173,43 @@ model FaqItem {
 model Setting {
   key   String @id
   value String
+}
+
+model Tournament {
+  id        Int      @id @default(autoincrement())
+  partyId   Int
+  name      String
+  format    String   @default("1v1") // "1v1" | "2v2"
+  status    String   @default("active") // "active" | "complete"
+  createdAt DateTime @default(now())
+
+  party     Party               @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  entrants  TournamentEntrant[]
+  matches   TournamentMatch[]
+}
+
+model TournamentEntrant {
+  id           Int     @id @default(autoincrement())
+  tournamentId Int
+  user1Id      Int
+  user2Id      Int?
+  sittingOut   Boolean @default(false) // 2v2 odd-count: this entrant is a leftover player who sits out
+
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user1        User       @relation("EntrantUser1", fields: [user1Id], references: [id])
+  user2        User?      @relation("EntrantUser2", fields: [user2Id], references: [id])
+}
+
+model TournamentMatch {
+  id               Int  @id @default(autoincrement())
+  tournamentId     Int
+  round            Int
+  indexInRound     Int
+  side1EntrantId   Int?
+  side1FromMatchId Int?
+  side2EntrantId   Int?
+  side2FromMatchId Int?
+  winnerEntrantId  Int?
+
+  tournament       Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 }

@@ -1,6 +1,7 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
   PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem, LeaderboardData, AchievementThresholds,
+  Tournament,
 } from './types'
 
 const BASE = '/api'
@@ -126,4 +127,16 @@ export const api = {
   getSettings: () => request<AchievementThresholds>('/settings'),
   updateSettings: (data: Partial<AchievementThresholds>) =>
     request<AchievementThresholds>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Tournaments
+  getTournaments: (partyId: number) => request<Tournament[]>(`/tournaments/party/${partyId}`),
+  createTournament: (partyId: number, data: { name: string; format: '1v1' | '2v2'; participantUserIds: number[] }) =>
+    request<Tournament>(`/tournaments/party/${partyId}`, { method: 'POST', body: JSON.stringify(data) }),
+  regenerateTournament: (id: number) =>
+    request<Tournament>(`/tournaments/${id}/regenerate`, { method: 'POST' }),
+  setMatchWinner: (tournamentId: number, matchId: number, winnerEntrantId: number | null) =>
+    request<Tournament>(`/tournaments/${tournamentId}/match/${matchId}`, {
+      method: 'PATCH', body: JSON.stringify({ winnerEntrantId }),
+    }),
+  deleteTournament: (id: number) => request<Ok>(`/tournaments/${id}`, { method: 'DELETE' }),
 }

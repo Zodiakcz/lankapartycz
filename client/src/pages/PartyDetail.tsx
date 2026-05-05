@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { useSubHeader } from '../lib/subheader'
 import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
+import { TournamentsTab } from '../components/TournamentsTab'
 import qrCode from '../img/qr_code.jpg'
 
 export function PartyDetail() {
@@ -15,7 +16,7 @@ export function PartyDetail() {
 
   const [party, setParty] = useState<Party | null>(null)
   const [split, setSplit] = useState<ExpenseSplit | null>(null)
-  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'notes'>('info')
+  const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'tournaments' | 'notes'>('info')
 
   type AttStatus = 'confirmed' | 'maybe' | 'declined'
 
@@ -103,10 +104,10 @@ export function PartyDetail() {
 
   const { setSubHeader } = useSubHeader()
   useEffect(() => {
-    const tabLabels = { info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', notes: 'Poznámky' } as const
+    const tabLabels = { info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', tournaments: 'Turnaje', notes: 'Poznámky' } as const
     setSubHeader(
       <div className="tab-bar">
-        {(['info', 'schedule', 'expenses', 'shopping', 'notes'] as const).map(t => (
+        {(['info', 'schedule', 'expenses', 'shopping', 'tournaments', 'notes'] as const).map(t => (
           <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
             className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
             {tabLabels[t]}
@@ -912,6 +913,11 @@ export function PartyDetail() {
 
       {/* Shopping Tab */}
       {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
+
+      {/* Tournaments Tab */}
+      {tab === 'tournaments' && (
+        <TournamentsTab partyId={partyId} isAdmin={isAdmin} attendance={party.attendance ?? []} />
+      )}
 
       {/* Notes Tab */}
       {tab === 'notes' && (

@@ -17,6 +17,7 @@ import shoppingRoutes from './routes/shopping'
 import faqRoutes from './routes/faq'
 import leaderboardRoutes from './routes/leaderboard'
 import settingsRoutes from './routes/settings'
+import tournamentRoutes from './routes/tournaments'
 import { startScheduler } from './services/scheduler'
 
 const app = express()
@@ -81,6 +82,7 @@ app.use('/api/shopping', shoppingRoutes)
 app.use('/api/faq', faqRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/tournaments', tournamentRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {
