@@ -9,3 +9,7 @@ twocoins.lankapp.cloud {
 taskhim.lankapp.cloud {
     reverse_proxy 172.17.0.1:8083
 }
+
+ha.lankapp.cloud {
+    reverse_proxy 192.168.88.203:8123
+}
