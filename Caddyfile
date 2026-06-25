@@ -13,3 +13,7 @@ taskhim.lankapp.cloud {
 ha.lankapp.cloud {
     reverse_proxy 192.168.88.203:8123
 }
+
+citygym.lankapp.cloud {
+    reverse_proxy 172.17.0.1:3002
+}
