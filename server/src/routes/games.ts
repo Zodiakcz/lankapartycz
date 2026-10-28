@@ -9,7 +9,7 @@ const router = Router()
 const VOTES_TO_PROMOTE = 5
 
 const TIERS = ['gold', 'silver', 'bronze']
-const SOURCES = ['steam', 'epic', 'copied', 'free', 'other']
+const SOURCES = ['steam', 'epic', 'copied', 'web']
 
 const userSelect = { id: true, displayName: true } as const
 
@@ -87,7 +87,7 @@ router.post('/', requireAuth, async (req, res) => {
   })
 
   if (game.tier === 'bronze') {
-    notifyGameProposed(game.name, game.price, game.storeUrl, game.submittedBy?.displayName ?? '?', VOTES_TO_PROMOTE)
+    notifyGameProposed(game.name, game.price ?? 0, game.storeUrl, game.submittedBy?.displayName ?? '?', VOTES_TO_PROMOTE)
   }
   res.json(game)
 })
@@ -138,7 +138,7 @@ router.post('/:id/vote', requireAuth, async (req, res) => {
     if (votes >= VOTES_TO_PROMOTE) {
       // updateMany guards against two simultaneous votes both announcing the promotion
       const promoted = await prisma.game.updateMany({ where: { id: gameId, tier: 'bronze' }, data: { tier: 'silver' } })
-      if (promoted.count === 1) notifyGamePromoted(game.name, game.price, votes)
+      if (promoted.count === 1) notifyGamePromoted(game.name, game.price ?? 0, votes)
     }
   }
 

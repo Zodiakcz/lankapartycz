@@ -28,7 +28,7 @@ export interface Game {
   maxPlayers: number | null
   storeUrl: string
   tier: GameTier
-  price: number
+  price: number | null
   submittedById: number | null
   submittedBy: { id: number; displayName: string } | null
   votes: { userId: number; user: { id: number; displayName: string } }[]

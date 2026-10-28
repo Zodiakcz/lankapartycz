@@ -1,9 +1,8 @@
 export const SOURCE_OPTIONS = [
   { value: 'steam', label: 'Steam' },
   { value: 'epic', label: 'Epic Games' },
-  { value: 'copied', label: 'Kopie' },
-  { value: 'free', label: 'Free' },
-  { value: 'other', label: 'Jiné' },
+  { value: 'copied', label: 'Lokální kopie' },
+  { value: 'web', label: 'Webová hra' },
 ] as const
 
 export type GameSource = typeof SOURCE_OPTIONS[number]['value']
@@ -16,7 +15,7 @@ export function sourceBadgeClass(source: string): string {
   return source === 'steam' ? 'badge badge-blue' :
     source === 'epic' ? 'badge badge-orange' :
     source === 'copied' ? 'badge badge-yellow' :
-    source === 'free' ? 'badge badge-green' :
+    source === 'web' ? 'badge badge-purple' :
     'badge badge-gray'
 }
 
@@ -28,6 +27,10 @@ export const GAME_TIERS = [
 
 export function priceLabel(price: number): string {
   return price > 0 ? `${price} Kč` : 'Zdarma'
+}
+
+export function priceBadgeClass(price: number): string {
+  return price > 0 ? 'badge badge-yellow' : 'badge badge-green'
 }
 
 // Steam store links carry the app id, which is enough to build the header image URL

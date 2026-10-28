@@ -71,14 +71,14 @@ model Attendance {
 model Game {
   id            Int         @id @default(autoincrement())
   name          String
-  source        String      @default("steam") // "steam" | "epic" | "copied" | "free" | "other"
+  source        String      @default("steam") // "steam" | "epic" | "copied" | "web"
   sourceNote    String      @default("")
   minPlayers    Int         @default(1)
   maxPlayers    Int?
   imageUrl      String      @default("")
   storeUrl      String      @default("")
   tier          String      @default("silver") // "gold" | "silver" | "bronze" - nové návrhy začínají v bronze
-  price         Int         @default(0) // cena v Kč, vyplňuje navrhovatel
+  price         Int?        // cena v Kč, vyplňuje navrhovatel; null = neuvedena (hry z doby před hlasováním)
   submittedById Int?
 
   submittedBy   User?       @relation(fields: [submittedById], references: [id])

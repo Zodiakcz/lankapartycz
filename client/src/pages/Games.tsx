@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { SOURCE_OPTIONS, sourceBadgeClass, GAME_TIERS, priceLabel, steamHeaderImage } from '../lib/constants'
+import { SOURCE_OPTIONS, SOURCE_LABELS, sourceBadgeClass, GAME_TIERS, priceLabel, priceBadgeClass, steamHeaderImage } from '../lib/constants'
 import type { Game, GameTier } from '../lib/types'
 
 function playerCountLabel(min: number, max: number | null) {
@@ -22,7 +22,8 @@ export function Games() {
   const { user, isAdmin } = useAuth()
   const [games, setGames] = useState<Game[]>([])
   const [votesToPromote, setVotesToPromote] = useState(5)
-  const [showForm, setShowForm] = useState(false)
+  // Where the new-game form opens: under the page header or in the bronze section
+  const [showForm, setShowForm] = useState<false | 'top' | 'bronze'>(false)
   const [form, setForm] = useState<GameForm>({ ...emptyForm })
   const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState('')
@@ -45,7 +46,7 @@ export function Games() {
       minPlayers: game.minPlayers,
       maxPlayers: game.maxPlayers ? String(game.maxPlayers) : '',
       storeUrl: game.storeUrl || '',
-      price: String(game.price),
+      price: game.price === null ? '' : String(game.price),
       tier: game.tier,
     })
     setShowForm(false)
@@ -58,8 +59,8 @@ export function Games() {
   }
 
   const setSource = (source: string) => {
-    // Copies and free games cost nothing, save people typing the zero
-    const price = (source === 'copied' || source === 'free') && form.price === '' ? '0' : form.price
+    // Local copies and web games cost nothing, save people typing the zero
+    const price = (source === 'copied' || source === 'web') && form.price === '' ? '0' : form.price
     setForm({ ...form, source, price })
   }
 
@@ -184,9 +185,8 @@ export function Games() {
 
   const badges = (game: Game) => (
     <>
-      <span className={sourceBadgeClass(game.source)}>
-        {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
-      </span>
+      {game.price !== null && <span className={priceBadgeClass(game.price)}>{priceLabel(game.price)}</span>}
+      <span className={sourceBadgeClass(game.source)}>{SOURCE_LABELS[game.source] ?? game.source}</span>
       <span className="badge badge-gray">
         {playerCountLabel(game.minPlayers, game.maxPlayers)}
       </span>
@@ -232,7 +232,7 @@ export function Games() {
     const src = steamHeaderImage(game.storeUrl)
     return src && (
       // Newer Steam apps keep their header under a hashed path, so a miss is expected; inline style beats sm:block
-      <img src={src} alt="" loading="lazy" className={`${className} self-start object-cover rounded-lg bg-zinc-800`}
+      <img src={src} alt="" loading="lazy" className={`${className} object-cover rounded-lg bg-zinc-800`}
         onError={e => { e.currentTarget.style.display = 'none' }} />
     )
   }
@@ -243,17 +243,18 @@ export function Games() {
       <div key={game.id}>{formJsx}</div>
     ) : (
       <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-        {thumb(game, 'hidden sm:block w-24 aspect-[460/215] flex-shrink-0')}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center flex-wrap gap-2">
-            <span className="font-medium text-zinc-100">{game.name}</span>
-            {badges(game)}
-            {game.price > 0 && <span className="text-xs text-zinc-500">{priceLabel(game.price)}</span>}
-            {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
+        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+          {thumb(game, 'w-20 sm:w-24 aspect-[460/215] flex-shrink-0')}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="font-medium text-zinc-100">{game.name}</span>
+              {badges(game)}
+              {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
+            </div>
+            {game.tier === 'silver' && game.votes.length > 0 && (
+              <p className="text-xs text-zinc-500 mt-1">Mají / kupují: {voterNames(game)}</p>
+            )}
           </div>
-          {game.tier === 'silver' && game.votes.length > 0 && (
-            <p className="text-xs text-zinc-500 mt-1">Mají / kupují: {voterNames(game)}</p>
-          )}
         </div>
         <div className="flex gap-1 flex-shrink-0 items-center flex-wrap">
           {game.tier === 'silver' && voteButton(game, 'Mám / koupím', 'btn-ghost')}
@@ -269,14 +270,13 @@ export function Games() {
     const progress = Math.min(100, (game.votes.length / votesToPromote) * 100)
     return (
       <div key={game.id} className="card p-4 flex flex-col sm:flex-row gap-4">
-        {thumb(game, 'w-full sm:w-48 aspect-[460/215] flex-shrink-0')}
+        {thumb(game, 'w-full sm:w-48 aspect-[460/215] flex-shrink-0 self-start')}
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="font-semibold text-zinc-100">{game.name}</div>
               {game.submittedBy && <div className="text-xs text-zinc-500">navrhl/a {game.submittedBy.displayName}</div>}
             </div>
-            <span className="text-sm font-semibold text-amber-400 whitespace-nowrap">{priceLabel(game.price)}</span>
           </div>
           <div className="flex items-center flex-wrap gap-2">
             {badges(game)}
@@ -303,12 +303,23 @@ export function Games() {
   const byTier = (tier: GameTier) => games.filter(g => g.tier === tier)
   const bronze = byTier('bronze').sort((a, b) => b.votes.length - a.votes.length || b.id - a.id)
 
+  const openForm = (at: 'top' | 'bronze') => {
+    cancelEdit()
+    setShowForm(showForm === at ? false : at)
+  }
+
   const section = (tier: GameTier, list: Game[], render: (g: Game) => React.ReactNode) => {
     const meta = GAME_TIERS.find(t => t.value === tier)!
     return (
       <section key={tier} className="mb-8">
-        <h2 className="section-heading mb-1">{meta.icon} {meta.label} hry <span className="text-zinc-500 font-normal">({list.length})</span></h2>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <h2 className="section-heading mb-0">{meta.icon} {meta.label} hry <span className="text-zinc-500 font-normal">({list.length})</span></h2>
+          {tier === 'bronze' && !editingId && (
+            <button onClick={() => openForm('bronze')} className="btn-secondary text-xs py-1.5">+ Navrhnout</button>
+          )}
+        </div>
         <p className="text-xs text-zinc-500 mb-3">{meta.hint}</p>
+        {tier === 'bronze' && showForm === 'bronze' && !editingId && formJsx}
         <div className="space-y-2">
           {list.map(render)}
           {list.length === 0 && <p className="text-zinc-600 text-sm">Zatím žádné</p>}
@@ -322,13 +333,13 @@ export function Games() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="page-heading">Hry</h1>
         {!editingId && (
-          <button onClick={() => { setShowForm(!showForm); cancelEdit() }} className="btn-primary">
+          <button onClick={() => openForm('top')} className="btn-primary">
             + Navrhnout hru
           </button>
         )}
       </div>
 
-      {showForm && !editingId && formJsx}
+      {showForm === 'top' && !editingId && formJsx}
 
       {section('gold', byTier('gold'), gameRow)}
       {section('silver', byTier('silver'), gameRow)}
