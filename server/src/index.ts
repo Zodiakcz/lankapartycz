@@ -25,8 +25,9 @@ const PORT = Number(process.env.PORT) || 3000
 const isProd = process.env.NODE_ENV === 'production'
 const secureCookies = process.env.COOKIE_SECURE === 'true'
 
-// Trust the reverse proxy (Caddy) so secure cookies and rate limiting work
-app.set('trust proxy', 1)
+// Two proxy hops in prod: Caddy -> client nginx -> server. Trusting both gives the real
+// client IP for rate limiting and the https proto Caddy saw, which secure cookies need
+app.set('trust proxy', 2)
 
 // Security headers
 app.use(helmet())
