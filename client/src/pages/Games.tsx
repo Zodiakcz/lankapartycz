@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { SOURCE_OPTIONS, sourceBadgeClass } from '../lib/constants'
-import type { Game } from '../lib/types'
+import { SOURCE_OPTIONS, sourceBadgeClass, GAME_TIERS, priceLabel, steamHeaderImage } from '../lib/constants'
+import type { Game, GameTier } from '../lib/types'
 
 function playerCountLabel(min: number, max: number | null) {
   if (!max) return `${min}+ hráčů`
@@ -10,21 +10,34 @@ function playerCountLabel(min: number, max: number | null) {
   return `${min}–${max} hráčů`
 }
 
-type GameForm = { name: string; source: string; sourceNote: string; minPlayers: number; maxPlayers: string; storeUrl: string }
-const emptyForm: GameForm = { name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '', storeUrl: '' }
+type GameForm = {
+  name: string; source: string; sourceNote: string; minPlayers: number; maxPlayers: string
+  storeUrl: string; price: string; tier: GameTier
+}
+const emptyForm: GameForm = {
+  name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '', storeUrl: '', price: '', tier: 'bronze',
+}
 
 export function Games() {
-  const { isAdmin } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [games, setGames] = useState<Game[]>([])
+  const [votesToPromote, setVotesToPromote] = useState(5)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<GameForm>({ ...emptyForm })
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [error, setError] = useState('')
+  const [votingId, setVotingId] = useState<number | null>(null)
 
   useEffect(() => { load() }, [])
-  const load = () => api.games().then(setGames)
+  const load = () => api.games().then(r => { setGames(r.games); setVotesToPromote(r.votesToPromote) })
+
+  const replaceGame = (game: Game) => setGames(gs => gs.map(g => g.id === game.id ? game : g))
+
+  const canEdit = (game: Game) => isAdmin || (game.submittedById === user?.id && game.tier === 'bronze')
 
   const startEdit = (game: Game) => {
     setEditingId(game.id)
+    setError('')
     setForm({
       name: game.name,
       source: game.source,
@@ -32,27 +45,45 @@ export function Games() {
       minPlayers: game.minPlayers,
       maxPlayers: game.maxPlayers ? String(game.maxPlayers) : '',
       storeUrl: game.storeUrl || '',
+      price: String(game.price),
+      tier: game.tier,
     })
     setShowForm(false)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
+    setError('')
     setForm({ ...emptyForm })
+  }
+
+  const setSource = (source: string) => {
+    // Copies and free games cost nothing, save people typing the zero
+    const price = (source === 'copied' || source === 'free') && form.price === '' ? '0' : form.price
+    setForm({ ...form, source, price })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const data = { ...form, maxPlayers: form.maxPlayers ? Number(form.maxPlayers) : null }
-    if (editingId) {
-      await api.updateGame(editingId, data)
-      setEditingId(null)
-    } else {
-      await api.createGame(data)
-      setShowForm(false)
+    setError('')
+    const data = {
+      ...form,
+      price: Number(form.price),
+      maxPlayers: form.maxPlayers ? Number(form.maxPlayers) : null,
     }
-    setForm({ ...emptyForm })
-    load()
+    try {
+      if (editingId) {
+        await api.updateGame(editingId, data)
+        setEditingId(null)
+      } else {
+        await api.createGame(data)
+        setShowForm(false)
+      }
+      setForm({ ...emptyForm })
+      load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Uložení se nepovedlo')
+    }
   }
 
   const handleDelete = async (id: number) => {
@@ -63,9 +94,17 @@ export function Games() {
     }
   }
 
-  const handleApprove = async (id: number) => {
-    await api.approveGame(id)
-    load()
+  const handleVote = async (id: number) => {
+    setVotingId(id)
+    try {
+      replaceGame(await api.toggleGameVote(id))
+    } finally {
+      setVotingId(null)
+    }
+  }
+
+  const handleTierChange = async (id: number, tier: GameTier) => {
+    replaceGame(await api.updateGame(id, { tier }))
   }
 
   const formJsx = (
@@ -79,21 +118,27 @@ export function Games() {
         </div>
         <div>
           <label className="form-label">Zdroj</label>
-          <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}
+          <select value={form.source} onChange={e => setSource(e.target.value)}
             className="form-select">
             {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="form-label">Poznámka ke zdroji</label>
-          <input placeholder="Volitelné" value={form.sourceNote}
-            onChange={e => setForm({ ...form, sourceNote: e.target.value })}
+          <label className="form-label">Cena (Kč, 0 = zdarma)</label>
+          <input type="number" placeholder="349" value={form.price}
+            onChange={e => setForm({ ...form, price: e.target.value })} required
+            className="form-input" min="0" />
+        </div>
+        <div>
+          <label className="form-label">Odkaz na hru</label>
+          <input type="url" placeholder="https://store.steampowered.com/app/..." value={form.storeUrl}
+            onChange={e => setForm({ ...form, storeUrl: e.target.value })}
             className="form-input" />
         </div>
         <div>
-          <label className="form-label">Odkaz na obchod</label>
-          <input placeholder="https://store.steampowered.com/app/..." value={form.storeUrl}
-            onChange={e => setForm({ ...form, storeUrl: e.target.value })}
+          <label className="form-label">Poznámka</label>
+          <input placeholder="Volitelné, např. sleva do neděle" value={form.sourceNote}
+            onChange={e => setForm({ ...form, sourceNote: e.target.value })}
             className="form-input" />
         </div>
         <div className="flex gap-2">
@@ -110,7 +155,23 @@ export function Games() {
               className="form-input" min="1" />
           </div>
         </div>
+        {isAdmin && (
+          <div>
+            <label className="form-label">Kategorie</label>
+            <select value={form.tier} onChange={e => setForm({ ...form, tier: e.target.value as GameTier })}
+              className="form-select">
+              {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+            </select>
+          </div>
+        )}
       </div>
+      {!editingId && !isAdmin && (
+        <p className="text-xs text-zinc-500 mt-3">
+          Návrh se objeví mezi bronzovými hrami a tvůj hlas se započítá rovnou.
+          Při {votesToPromote} hlasech hra postoupí mezi stříbrné.
+        </p>
+      )}
+      {error && <p className="text-sm text-red-400 mt-3">{error}</p>}
       <div className="flex gap-2 mt-4">
         <button type="submit" className="btn-primary">
           {editingId ? 'Uložit' : 'Navrhnout'}
@@ -121,47 +182,140 @@ export function Games() {
     </form>
   )
 
-  const approvedGames = games.filter(g => g.approved)
-  const pendingGames = games.filter(g => !g.approved)
+  const badges = (game: Game) => (
+    <>
+      <span className={sourceBadgeClass(game.source)}>
+        {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
+      </span>
+      <span className="badge badge-gray">
+        {playerCountLabel(game.minPlayers, game.maxPlayers)}
+      </span>
+      {game.storeUrl && (
+        <a href={game.storeUrl} target="_blank" rel="noopener noreferrer"
+          className="badge badge-blue hover:opacity-80 transition-opacity">
+          Odkaz ↗
+        </a>
+      )}
+    </>
+  )
 
-  const gameCard = (game: Game) => (
+  const actions = (game: Game) => (
+    <div className="flex gap-1 flex-shrink-0 items-center">
+      {isAdmin && (
+        <select value={game.tier} onChange={e => handleTierChange(game.id, e.target.value as GameTier)}
+          className="form-select w-auto py-1 text-xs" aria-label="Kategorie">
+          {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+        </select>
+      )}
+      {canEdit(game) && (
+        <>
+          <button onClick={() => startEdit(game)} className="btn-ghost text-xs py-1">Upravit</button>
+          <button onClick={() => handleDelete(game.id)} className="btn-danger text-xs py-1">Smazat</button>
+        </>
+      )}
+    </div>
+  )
+
+  const voteButton = (game: Game, label: string, idleClass: string) => {
+    const voted = game.votes.some(v => v.userId === user?.id)
+    return (
+      <button onClick={() => handleVote(game.id)} disabled={votingId === game.id}
+        className={`${voted ? 'btn-secondary' : idleClass} text-xs py-1.5 disabled:opacity-50`}>
+        {voted ? '✓ Hlasuješ (zrušit)' : label}
+      </button>
+    )
+  }
+
+  const voterNames = (game: Game) => game.votes.map(v => v.user.displayName).join(', ')
+
+  const thumb = (game: Game, className: string) => {
+    const src = steamHeaderImage(game.storeUrl)
+    return src && (
+      // Newer Steam apps keep their header under a hashed path, so a miss is expected; inline style beats sm:block
+      <img src={src} alt="" loading="lazy" className={`${className} self-start object-cover rounded-lg bg-zinc-800`}
+        onError={e => { e.currentTarget.style.display = 'none' }} />
+    )
+  }
+
+  // Gold and silver: compact rows
+  const gameRow = (game: Game) => (
     editingId === game.id ? (
       <div key={game.id}>{formJsx}</div>
     ) : (
-      <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="flex items-center flex-wrap gap-2">
-          <span className="font-medium text-zinc-100">{game.name}</span>
-          <span className={sourceBadgeClass(game.source)}>
-            {SOURCE_OPTIONS.find(o => o.value === game.source)?.label || game.source}
-          </span>
-          <span className="badge badge-gray">
-            {playerCountLabel(game.minPlayers, game.maxPlayers)}
-          </span>
-          {game.storeUrl && (
-            <a href={game.storeUrl} target="_blank" rel="noopener noreferrer"
-              className="badge badge-blue hover:opacity-80 transition-opacity">
-              Obchod ↗
-            </a>
-          )}
-          {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
-          {!game.approved && game.submittedBy && (
-            <span className="text-xs text-zinc-500">od {game.submittedBy.displayName}</span>
+      <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        {thumb(game, 'hidden sm:block w-24 aspect-[460/215] flex-shrink-0')}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="font-medium text-zinc-100">{game.name}</span>
+            {badges(game)}
+            {game.price > 0 && <span className="text-xs text-zinc-500">{priceLabel(game.price)}</span>}
+            {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
+          </div>
+          {game.tier === 'silver' && game.votes.length > 0 && (
+            <p className="text-xs text-zinc-500 mt-1">Mají / kupují: {voterNames(game)}</p>
           )}
         </div>
-        <div className="flex gap-1 flex-shrink-0">
-          {isAdmin && !game.approved && (
-            <button onClick={() => handleApprove(game.id)} className="btn-success text-xs py-1">Schválit</button>
-          )}
-          {isAdmin && (
-            <>
-              <button onClick={() => startEdit(game)} className="btn-ghost text-xs py-1">Upravit</button>
-              <button onClick={() => handleDelete(game.id)} className="btn-danger text-xs py-1">Smazat</button>
-            </>
-          )}
+        <div className="flex gap-1 flex-shrink-0 items-center flex-wrap">
+          {game.tier === 'silver' && voteButton(game, 'Mám / koupím', 'btn-ghost')}
+          {actions(game)}
         </div>
       </div>
     )
   )
+
+  // Bronze: bigger cards that sell the game and show vote progress
+  const proposalCard = (game: Game) => {
+    if (editingId === game.id) return <div key={game.id}>{formJsx}</div>
+    const progress = Math.min(100, (game.votes.length / votesToPromote) * 100)
+    return (
+      <div key={game.id} className="card p-4 flex flex-col sm:flex-row gap-4">
+        {thumb(game, 'w-full sm:w-48 aspect-[460/215] flex-shrink-0')}
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-semibold text-zinc-100">{game.name}</div>
+              {game.submittedBy && <div className="text-xs text-zinc-500">navrhl/a {game.submittedBy.displayName}</div>}
+            </div>
+            <span className="text-sm font-semibold text-amber-400 whitespace-nowrap">{priceLabel(game.price)}</span>
+          </div>
+          <div className="flex items-center flex-wrap gap-2">
+            {badges(game)}
+            {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
+          </div>
+          <div>
+            <div className="flex justify-between text-xs text-zinc-400 mb-1">
+              <span>{voterNames(game) || 'Zatím nikdo'}</span>
+              <span className="whitespace-nowrap">{game.votes.length} / {votesToPromote}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div className="h-full bg-amber-500 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+            {voteButton(game, '👍 Chci hrát, koupím', 'btn-primary')}
+            {actions(game)}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const byTier = (tier: GameTier) => games.filter(g => g.tier === tier)
+  const bronze = byTier('bronze').sort((a, b) => b.votes.length - a.votes.length || b.id - a.id)
+
+  const section = (tier: GameTier, list: Game[], render: (g: Game) => React.ReactNode) => {
+    const meta = GAME_TIERS.find(t => t.value === tier)!
+    return (
+      <section key={tier} className="mb-8">
+        <h2 className="section-heading mb-1">{meta.icon} {meta.label} hry <span className="text-zinc-500 font-normal">({list.length})</span></h2>
+        <p className="text-xs text-zinc-500 mb-3">{meta.hint}</p>
+        <div className="space-y-2">
+          {list.map(render)}
+          {list.length === 0 && <p className="text-zinc-600 text-sm">Zatím žádné</p>}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <div>
@@ -176,31 +330,9 @@ export function Games() {
 
       {showForm && !editingId && formJsx}
 
-      {isAdmin && pendingGames.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-            Ke schválení ({pendingGames.length})
-          </h2>
-          <div className="space-y-2">
-            {pendingGames.map(gameCard)}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        {isAdmin && pendingGames.length > 0 && approvedGames.length > 0 && (
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-            Schválené hry
-          </h2>
-        )}
-        {approvedGames.map(gameCard)}
-        {approvedGames.length === 0 && pendingGames.length === 0 && (
-          <p className="text-zinc-600 text-center mt-8 text-sm">Zatím žádné hry</p>
-        )}
-        {approvedGames.length === 0 && !isAdmin && (
-          <p className="text-zinc-600 text-center mt-8 text-sm">Zatím žádné schválené hry</p>
-        )}
-      </div>
+      {section('gold', byTier('gold'), gameRow)}
+      {section('silver', byTier('silver'), gameRow)}
+      {section('bronze', bronze, proposalCard)}
     </div>
   )
 }

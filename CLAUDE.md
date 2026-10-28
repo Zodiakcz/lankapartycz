@@ -27,7 +27,7 @@ Web app for organizing twice-yearly LAN parties for a Czech friend group (~8-12 
 │   ├── src/index.ts         # Entry point, seed, security middleware (helmet, rate limiting)
 │   ├── prisma/schema.prisma # Database schema
 │   └── Dockerfile
-├── Caddyfile                # Production reverse proxy (HTTPS termination)
+├── Caddyfile                # Copy of the live /opt/lankaparty/Caddyfile, shared by every lankapp.cloud service; the live file is the truth
 ├── docker-compose.yml       # Local dev (builds from source)
 ├── docker-compose.prod.yml  # Production (pulls from GHCR, includes Caddy)
 └── .github/workflows/       # CI: build + push to ghcr.io/zodiakcz/lankapartycz
@@ -47,7 +47,9 @@ Web app for organizing twice-yearly LAN parties for a Czech friend group (~8-12 
 - **Design system** — reusable CSS component utilities defined in `client/src/index.css` (`card`, `btn-primary`, `btn-secondary`, `btn-ghost`, `btn-danger`, `btn-success`, `form-input`, `form-select`, `form-label`, `badge`, `badge-*`, `tab-bar`, `tab-item`, `tab-active`, `tab-inactive`). Use these instead of repeating raw Tailwind color classes.
 - **Color palette** — `zinc-950` body bg, `zinc-900` cards, `zinc-800` inputs; `indigo` as primary accent (not `blue`)
 - **Mobile nav** — bottom tab bar (fixed, `sm:hidden`) in Layout.tsx; desktop nav in top header
-- **Discord notifications** — webhook for attendance changes, new registrations, and party reminders (scheduler service)
+- **Discord notifications** — webhook for attendance changes, new registrations, game proposals/promotions, and party reminders (scheduler service)
+- **Game tiers** — gold (always played), silver (voted in), bronze (proposals). Anyone proposes into bronze with a price; a vote means "I'll play it and buy it", the proposer's vote counts. 5 votes (`VOTES_TO_PROMOTE` in `routes/games.ts`) promote bronze → silver automatically; admin moves tiers by hand
+- **Schema changes reach prod via `prisma db push --accept-data-loss`** at container start (server Dockerfile), not via `migrations/`. Dropping or renaming a column silently deletes its data; test against a copy of the prod DB first. `migrations/` is kept as history only
 
 ## Local Development
 

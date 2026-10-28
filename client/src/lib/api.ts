@@ -61,9 +61,9 @@ export const api = {
     request<Attendance>(`/attendance/${partyId}/user/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Games
-  games: () => request<Game[]>('/games'),
+  games: () => request<{ games: Game[]; votesToPromote: number }>('/games'),
   createGame: (data: Partial<Game>) => request<Game>('/games', { method: 'POST', body: JSON.stringify(data) }),
-  approveGame: (id: number) => request<Game>(`/games/${id}/approve`, { method: 'POST' }),
+  toggleGameVote: (id: number) => request<Game>(`/games/${id}/vote`, { method: 'POST' }),
   updateGame: (id: number, data: Partial<Game>) => request<Game>(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGame: (id: number) => request<Ok>(`/games/${id}`, { method: 'DELETE' }),
 

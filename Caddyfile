@@ -2,18 +2,40 @@ lankapp.cloud {
     reverse_proxy client:80
 }
 
-twocoins.lankapp.cloud {
-    reverse_proxy 172.17.0.1:3001
-}
-
 taskhim.lankapp.cloud {
-    reverse_proxy 172.17.0.1:8083
+    reverse_proxy 192.168.88.213:8083
 }
 
 ha.lankapp.cloud {
-    reverse_proxy 192.168.88.203:8123
+	# 1. Serve the missing Protected Resource Metadata document
+	handle /.well-known/oauth-protected-resource {
+		header Content-Type application/json
+		respond `{"resource":"https://ha.lankapp.cloud","authorization_servers":["https://ha.lankapp.cloud"]}` 200
+	}
+
+	# 2. Serve a synthetic Authorization Server Metadata doc with absolute URLs
+	handle /.well-known/oauth-authorization-server {
+		header Content-Type application/json
+		respond `{"issuer":"https://ha.lankapp.cloud","authorization_endpoint":"https://ha.lankapp.cloud/auth/authorize","token_endpoint":"https://ha.lankapp.cloud/auth/token","revocation_endpoint":"https://ha.lankapp.cloud/auth/revoke","response_types_supported":["code"],"grant_types_supported":["authorization_code"],"code_challenge_methods_supported":["S256"],"token_endpoint_auth_methods_supported":["none"],"client_id_metadata_document_supported":true}` 200
+	}
+
+	# 3. Everything else proxies straight to HA
+	handle {
+		reverse_proxy 192.168.88.203:8123 {
+			flush_interval -1
+		}
+	}
 }
 
-citygym.lankapp.cloud {
-    reverse_proxy 172.17.0.1:3002
+
+
+
+daataccounts.lankapp.cloud {
+	encode gzip
+	reverse_proxy 172.17.0.1:8094
+}
+
+lukovany.lankapp.cloud {
+	encode gzip
+	reverse_proxy 172.17.0.1:8095
 }

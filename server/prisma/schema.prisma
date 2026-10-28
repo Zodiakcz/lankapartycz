@@ -19,6 +19,7 @@ model User {
   attendance      Attendance[]
   expenses        Expense[]
   submittedGames  Game[]
+  gameVotes       GameVote[]
   entrantsAsUser1 TournamentEntrant[] @relation("EntrantUser1")
   entrantsAsUser2 TournamentEntrant[] @relation("EntrantUser2")
 }
@@ -70,17 +71,32 @@ model Attendance {
 model Game {
   id            Int         @id @default(autoincrement())
   name          String
-  source        String      @default("steam") // "steam" | "copied" | "free" | "other"
+  source        String      @default("steam") // "steam" | "epic" | "copied" | "free" | "other"
   sourceNote    String      @default("")
   minPlayers    Int         @default(1)
   maxPlayers    Int?
   imageUrl      String      @default("")
   storeUrl      String      @default("")
-  approved      Boolean     @default(true)
+  tier          String      @default("silver") // "gold" | "silver" | "bronze" - nové návrhy začínají v bronze
+  price         Int         @default(0) // cena v Kč, vyplňuje navrhovatel
   submittedById Int?
 
   submittedBy   User?       @relation(fields: [submittedById], references: [id])
   partyGames    PartyGame[]
+  votes         GameVote[]
+}
+
+// Hlas = "chci to hrát a koupím si to"
+model GameVote {
+  id        Int      @id @default(autoincrement())
+  gameId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
 }
 
 model PartyGame {

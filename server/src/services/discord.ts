@@ -56,3 +56,38 @@ export function notifyAttendanceChange(displayName: string, partyName: string, s
     }],
   }).catch(() => {})
 }
+
+function priceLabel(price: number): string {
+  return price > 0 ? `${price} Kč` : 'zdarma'
+}
+
+export function notifyGameProposed(name: string, price: number, storeUrl: string, proposedBy: string, votesNeeded: number): void {
+  sendWebhook({
+    embeds: [{
+      title: `🥉 Nový návrh hry: ${name}`,
+      ...(storeUrl && { url: storeUrl }),
+      color: 0xb45309, // bronze
+      description: `Při ${votesNeeded} hlasech postupuje mezi stříbrné hry. Hlas = chci to hrát a koupím si to.`,
+      fields: [
+        { name: 'Navrhl/a', value: proposedBy, inline: true },
+        { name: 'Cena', value: priceLabel(price), inline: true },
+        { name: 'Hlasovat', value: '[Otevřít hry](https://lankapp.cloud/games)', inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+    }],
+  }).catch(() => {})
+}
+
+export function notifyGamePromoted(name: string, price: number, votes: number): void {
+  sendWebhook({
+    embeds: [{
+      title: `🥈 ${name} postupuje mezi stříbrné hry`,
+      color: 0x94a3b8, // silver
+      description: `${votes} hlasů. Kdo hlasoval, kupuje (klidně na poslední chvíli).`,
+      fields: [
+        { name: 'Cena', value: priceLabel(price), inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+    }],
+  }).catch(() => {})
+}
