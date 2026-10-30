@@ -27,6 +27,7 @@ export interface Game {
   minPlayers: number
   maxPlayers: number | null
   storeUrl: string
+  imageUrl: string
   tier: GameTier
   price: number | null
   submittedById: number | null

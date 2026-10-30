@@ -49,6 +49,7 @@ Web app for organizing twice-yearly LAN parties for a Czech friend group (~8-12 
 - **Mobile nav** — bottom tab bar (fixed, `sm:hidden`) in Layout.tsx; desktop nav in top header
 - **Discord notifications** — webhook for attendance changes, new registrations, game proposals/promotions, and party reminders (scheduler service)
 - **Game tiers** — gold (always played), silver (voted in), bronze (proposals). Anyone proposes into bronze with a price; a vote means "I'll play it and buy it", the proposer's vote counts. 5 votes (`VOTES_TO_PROMOTE` in `routes/games.ts`) promote bronze → silver automatically; admin moves tiers by hand
+- **Game pictures** — the server resolves `Game.imageUrl` when a game is saved (Steam `appdetails` API for Steam links, since newer apps keep the header under a hashed path; `og:image` for other pages; public hostnames only) and backfills empty ones at startup (`services/gameImage.ts`). A manual URL in the form wins. No picture → initials tile. Epic blocks the lookup, so Epic games need the manual field
 - **Schema changes reach prod via `prisma db push --accept-data-loss`** at container start (server Dockerfile), not via `migrations/`. Dropping or renaming a column silently deletes its data; test against a copy of the prod DB first. `migrations/` is kept as history only
 
 ## Local Development

@@ -19,6 +19,7 @@ import leaderboardRoutes from './routes/leaderboard'
 import settingsRoutes from './routes/settings'
 import tournamentRoutes from './routes/tournaments'
 import { startScheduler } from './services/scheduler'
+import { backfillGameImages } from './services/gameImage'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3000
@@ -134,5 +135,6 @@ seed().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server běží na portu ${PORT}`)
     startScheduler()
+    backfillGameImages().catch(err => console.error('[Obrázky her]', err))
   })
 })

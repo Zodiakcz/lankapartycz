@@ -61,11 +61,12 @@ function priceLabel(price: number): string {
   return price > 0 ? `${price} Kč` : 'zdarma'
 }
 
-export function notifyGameProposed(name: string, price: number, storeUrl: string, proposedBy: string, votesNeeded: number): void {
+export function notifyGameProposed(name: string, price: number, storeUrl: string, imageUrl: string, proposedBy: string, votesNeeded: number): void {
   sendWebhook({
     embeds: [{
       title: `🥉 Nový návrh hry: ${name}`,
       ...(storeUrl && { url: storeUrl }),
+      ...(imageUrl && { image: { url: imageUrl } }),
       color: 0xb45309, // bronze
       description: `Při ${votesNeeded} hlasech postupuje mezi stříbrné hry. Hlas = chci to hrát a koupím si to.`,
       fields: [

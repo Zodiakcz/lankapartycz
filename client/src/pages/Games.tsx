@@ -1,8 +1,24 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { SOURCE_OPTIONS, SOURCE_LABELS, sourceBadgeClass, GAME_TIERS, priceLabel, priceBadgeClass, steamHeaderImage } from '../lib/constants'
+import { SOURCE_OPTIONS, SOURCE_LABELS, sourceBadgeClass, GAME_TIERS, priceLabel, priceBadgeClass } from '../lib/constants'
 import type { Game, GameTier } from '../lib/types'
+
+// Game picture, or the game's initials when there is none or it fails to load
+function GameThumb({ game, className }: { game: Game; className: string }) {
+  const [failed, setFailed] = useState(false)
+  useEffect(() => setFailed(false), [game.imageUrl])
+  const box = `${className} aspect-[460/215] rounded-lg bg-zinc-800`
+  if (game.imageUrl && !failed) {
+    return <img src={game.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className={`${box} object-cover`} onError={() => setFailed(true)} />
+  }
+  const initials = game.name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  return (
+    <div className={`${box} flex items-center justify-center text-zinc-500 font-bold tracking-wider select-none`} aria-hidden>
+      {initials}
+    </div>
+  )
+}
 
 function playerCountLabel(min: number, max: number | null) {
   if (!max) return `${min}+ hráčů`
@@ -12,10 +28,10 @@ function playerCountLabel(min: number, max: number | null) {
 
 type GameForm = {
   name: string; source: string; sourceNote: string; minPlayers: number; maxPlayers: string
-  storeUrl: string; price: string; tier: GameTier
+  storeUrl: string; imageUrl: string; price: string; tier: GameTier
 }
 const emptyForm: GameForm = {
-  name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '', storeUrl: '', price: '', tier: 'bronze',
+  name: '', source: 'steam', sourceNote: '', minPlayers: 1, maxPlayers: '', storeUrl: '', imageUrl: '', price: '', tier: 'bronze',
 }
 
 export function Games() {
@@ -46,6 +62,7 @@ export function Games() {
       minPlayers: game.minPlayers,
       maxPlayers: game.maxPlayers ? String(game.maxPlayers) : '',
       storeUrl: game.storeUrl || '',
+      imageUrl: game.imageUrl || '',
       price: game.price === null ? '' : String(game.price),
       tier: game.tier,
     })
@@ -134,6 +151,12 @@ export function Games() {
           <label className="form-label">Odkaz na hru</label>
           <input type="url" placeholder="https://store.steampowered.com/app/..." value={form.storeUrl}
             onChange={e => setForm({ ...form, storeUrl: e.target.value })}
+            className="form-input" />
+        </div>
+        <div>
+          <label className="form-label">Obrázek (nepovinné)</label>
+          <input type="url" placeholder="Doplní se sám z odkazu na hru" value={form.imageUrl}
+            onChange={e => setForm({ ...form, imageUrl: e.target.value })}
             className="form-input" />
         </div>
         <div>
@@ -228,15 +251,6 @@ export function Games() {
 
   const voterNames = (game: Game) => game.votes.map(v => v.user.displayName).join(', ')
 
-  const thumb = (game: Game, className: string) => {
-    const src = steamHeaderImage(game.storeUrl)
-    return src && (
-      // Newer Steam apps keep their header under a hashed path, so a miss is expected; inline style beats sm:block
-      <img src={src} alt="" loading="lazy" className={`${className} object-cover rounded-lg bg-zinc-800`}
-        onError={e => { e.currentTarget.style.display = 'none' }} />
-    )
-  }
-
   // Gold and silver: compact rows
   const gameRow = (game: Game) => (
     editingId === game.id ? (
@@ -244,7 +258,7 @@ export function Games() {
     ) : (
       <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-          {thumb(game, 'w-20 sm:w-24 aspect-[460/215] flex-shrink-0')}
+          <GameThumb game={game} className="w-20 sm:w-24 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center flex-wrap gap-2">
               <span className="font-medium text-zinc-100">{game.name}</span>
@@ -270,7 +284,7 @@ export function Games() {
     const progress = Math.min(100, (game.votes.length / votesToPromote) * 100)
     return (
       <div key={game.id} className="card p-4 flex flex-col sm:flex-row gap-4">
-        {thumb(game, 'w-full sm:w-48 aspect-[460/215] flex-shrink-0 self-start')}
+        <GameThumb game={game} className="w-full sm:w-48 flex-shrink-0 self-start" />
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>

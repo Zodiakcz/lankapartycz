@@ -33,12 +33,6 @@ export function priceBadgeClass(price: number): string {
   return price > 0 ? 'badge badge-yellow' : 'badge badge-green'
 }
 
-// Steam store links carry the app id, which is enough to build the header image URL
-export function steamHeaderImage(storeUrl: string): string | null {
-  const match = storeUrl.match(/store\.steampowered\.com\/app\/(\d+)/)
-  return match ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${match[1]}/header.jpg` : null
-}
-
 export const PACKING_CATEGORIES: Record<string, string> = {
   hardware: 'Hardware',
   general: 'Obecné',

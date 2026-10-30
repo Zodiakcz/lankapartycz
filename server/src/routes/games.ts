@@ -2,6 +2,7 @@ import { Router, Request } from 'express'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { prisma } from '../lib/prisma'
 import { notifyGameProposed, notifyGamePromoted } from '../services/discord'
+import { resolveGameImage } from '../services/gameImage'
 
 const router = Router()
 
@@ -21,8 +22,8 @@ const gameInclude = {
   },
 }
 
-// Only http(s) links, so a stored URL can't become a javascript: href
-function parseStoreUrl(value: unknown): string | null {
+// Only http(s) links, so a stored URL can't become a javascript: href or img src
+function parseLink(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return ''
   if (typeof value !== 'string') return null
   try {
@@ -63,8 +64,10 @@ router.post('/', requireAuth, async (req, res) => {
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Název je povinný' })
   const price = parsePrice(req.body.price)
   if (price === null) return res.status(400).json({ error: 'Vyplň cenu (0 = zdarma)' })
-  const storeUrl = parseStoreUrl(req.body.storeUrl)
+  const storeUrl = parseLink(req.body.storeUrl)
   if (storeUrl === null) return res.status(400).json({ error: 'Odkaz musí začínat http:// nebo https://' })
+  const imageUrl = parseLink(req.body.imageUrl)
+  if (imageUrl === null) return res.status(400).json({ error: 'Obrázek musí začínat http:// nebo https://' })
 
   const userId = req.session.userId!
   const finalTier = req.session.role === 'admin' && TIERS.includes(tier) ? tier : 'bronze'
@@ -77,6 +80,7 @@ router.post('/', requireAuth, async (req, res) => {
       minPlayers: minPlayers || 1,
       maxPlayers: maxPlayers || null,
       storeUrl,
+      imageUrl: imageUrl || await resolveGameImage(storeUrl),
       price,
       tier: finalTier,
       submittedById: userId,
@@ -87,7 +91,7 @@ router.post('/', requireAuth, async (req, res) => {
   })
 
   if (game.tier === 'bronze') {
-    notifyGameProposed(game.name, game.price ?? 0, game.storeUrl, game.submittedBy?.displayName ?? '?', VOTES_TO_PROMOTE)
+    notifyGameProposed(game.name, game.price ?? 0, game.storeUrl, game.imageUrl, game.submittedBy?.displayName ?? '?', VOTES_TO_PROMOTE)
   }
   res.json(game)
 })
@@ -100,9 +104,17 @@ router.put('/:id', requireAuth, async (req, res) => {
   const { name, source, sourceNote, minPlayers, maxPlayers, tier } = req.body
   const price = req.body.price !== undefined ? parsePrice(req.body.price) : undefined
   if (price === null) return res.status(400).json({ error: 'Vyplň cenu (0 = zdarma)' })
-  const storeUrl = req.body.storeUrl !== undefined ? parseStoreUrl(req.body.storeUrl) : undefined
+  const storeUrl = req.body.storeUrl !== undefined ? parseLink(req.body.storeUrl) : undefined
   if (storeUrl === null) return res.status(400).json({ error: 'Odkaz musí začínat http:// nebo https://' })
+  const imageUrl = req.body.imageUrl !== undefined ? parseLink(req.body.imageUrl) : undefined
+  if (imageUrl === null) return res.status(400).json({ error: 'Obrázek musí začínat http:// nebo https://' })
   if (name !== undefined && !String(name).trim()) return res.status(400).json({ error: 'Název je povinný' })
+
+  // Look the picture up again when it was cleared, or when the link changed and the picture was left as it was
+  const linkChanged = storeUrl !== undefined && storeUrl !== result.game.storeUrl
+  const nextImage = imageUrl === '' || (linkChanged && (imageUrl === undefined || imageUrl === result.game.imageUrl))
+    ? await resolveGameImage(storeUrl ?? result.game.storeUrl)
+    : imageUrl
 
   const game = await prisma.game.update({
     where: { id: result.game.id },
@@ -113,6 +125,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       ...(minPlayers !== undefined && { minPlayers }),
       ...(maxPlayers !== undefined && { maxPlayers }),
       ...(storeUrl !== undefined && { storeUrl }),
+      ...(nextImage !== undefined && { imageUrl: nextImage }),
       ...(price !== undefined && { price }),
       ...(result.isAdmin && TIERS.includes(tier) && { tier }),
     },
