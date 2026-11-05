@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
@@ -6,6 +6,8 @@ import { useSubHeader } from '../lib/subheader'
 import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } from '../lib/types'
 import { ShoppingTab } from '../components/ShoppingTab'
 import { TournamentsTab } from '../components/TournamentsTab'
+import { PresenceTimeline } from '../components/PresenceTimeline'
+import { partyWindow, stays, tally, presentOnDay, presentAt, movesOnDay, scheduleTime, fmtTime, fmtDayTime, people, DAY, type Move } from '../lib/presence'
 import qrCode from '../img/qr_code.jpg'
 
 export function PartyDetail() {
@@ -62,6 +64,8 @@ export function PartyDetail() {
   const [schedForm, setSchedForm] = useState({ day: 1, time: '14:00', title: '', description: '' })
   const [editingSched, setEditingSched] = useState<number | null>(null)
   const [editSchedForm, setEditSchedForm] = useState({ day: 1, time: '14:00', title: '', description: '' })
+  const [showMoves, setShowMoves] = useState(() => { try { return localStorage.getItem('program.showMoves') !== '0' } catch { return true } })
+  const toggleMoves = (v: boolean) => { setShowMoves(v); try { localStorage.setItem('program.showMoves', v ? '1' : '0') } catch { /* ignore */ } }
 
   // Place edit
   const [placeEdit, setPlaceEdit] = useState(false)
@@ -242,6 +246,10 @@ export function PartyDetail() {
   }
 
   const partyDays = Math.ceil((new Date(party.endDate).getTime() - new Date(party.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+  const pWindow = partyWindow(party)
+  const presence = stays(party.attendance ?? [], pWindow)
+  const dayTotals = Array.from({ length: partyDays }, (_, i) => presentOnDay(presence, pWindow, i).length)
+  const peakDay = dayTotals.indexOf(Math.max(...dayTotals))
 
   return (
     <div>
@@ -429,6 +437,7 @@ export function PartyDetail() {
                 </div>
               )
             })()}
+            <PresenceTimeline party={party} currentUserId={user?.id} />
             <div className="card overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-zinc-800/60">
@@ -686,18 +695,72 @@ export function PartyDetail() {
       {/* Schedule Tab */}
       {tab === 'schedule' && (
         <div className="space-y-6">
+          {Array.from({ length: partyDays }, (_, i) => movesOnDay(presence, pWindow, i)).some(m => m.length > 0) && (
+            <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer w-fit">
+              <input type="checkbox" checked={showMoves} onChange={e => toggleMoves(e.target.checked)} className="accent-indigo-500" />
+              Ukázat příjezdy a odjezdy v programu
+            </label>
+          )}
           {Array.from({ length: partyDays }, (_, i) => i + 1).map(day => {
             const dayDate = new Date(party.startDate)
             dayDate.setDate(dayDate.getDate() + day - 1)
             const dayItems = party.schedule?.filter(s => s.day === day) || []
+            const here = presentOnDay(presence, pWindow, day - 1)
+            const dayTally = tally(here)
+            const allMoves = movesOnDay(presence, pWindow, day - 1)
+            const dayMoves = showMoves ? allMoves : []
+            const itemTimes = dayItems.map(it => scheduleTime(pWindow, it.day, it.time))
+            const movesBefore = itemTimes.map((t, i) => dayMoves.filter(m => m.t <= t && (i === 0 || m.t > itemTimes[i - 1])))
+            const movesAfter = dayMoves.filter(m => itemTimes.length === 0 || m.t > itemTimes[itemTimes.length - 1])
+            // One row per time + direction: "14:00 ↑ odjíždí Admin, Kuba, Vojta"
+            const moveRows = (ms: Move[]) => {
+              const groups: Move[][] = []
+              for (const m of ms) {
+                const g = groups[groups.length - 1]
+                if (g && g[0].t === m.t && g[0].kind === m.kind) g.push(m)
+                else groups.push([m])
+              }
+              return groups.map(g => (
+                <div key={`${g[0].kind}-${g[0].t}`} className="rounded border border-dashed border-white/10 px-2 py-1 text-xs text-zinc-500">
+                  <span className="mr-2 tabular-nums">{fmtTime(g[0].t)}</span>
+                  {g[0].kind === 'in' ? <><span className="text-emerald-400">↓</span> přijíždí</> : <>↑ odjíždí</>} {g.map(m => m.stay.att.user.displayName).join(', ')}
+                </div>
+              ))
+            }
 
             return (
               <div key={day} className="card p-4">
-                <h3 className="font-semibold text-indigo-400 mb-3">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
-                {dayItems.length > 0 ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <h3 className="font-semibold text-indigo-400">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+                  {presence.length > 0 && (
+                    <span className={`badge ${day - 1 === peakDay ? 'badge-blue' : 'badge-gray'}`}>
+                      {dayTally.sure} {people(dayTally.sure)}{dayTally.maybe > 0 && ` +${dayTally.maybe} možná`}
+                    </span>
+                  )}
+                </div>
+                {here.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {here.map(s => {
+                      const arrives = allMoves.find(m => m.stay === s && m.kind === 'in')
+                      const leaves = allMoves.find(m => m.stay === s && m.kind === 'out')
+                      const tone = arrives ? 'text-emerald-400' : leaves ? 'text-zinc-500' : 'text-zinc-400'
+                      return (
+                        <span key={s.att.userId} className={`text-[11.5px] px-2 py-0.5 rounded-full bg-zinc-800/60 border whitespace-nowrap ${s.maybe ? 'border-dashed border-indigo-400/50' : 'border-white/5'} ${tone}`}
+                          title={s.maybe ? 'možná' : undefined}>
+                          {s.att.user.displayName}
+                          {arrives && ` ↓${fmtTime(arrives.t)}`}
+                          {leaves && ` ↑${fmtTime(leaves.t)}`}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+                {dayItems.length > 0 || dayMoves.length > 0 ? (
                   <div className="space-y-2">
-                    {dayItems.map((item: ScheduleItem) => (
-                      <div key={item.id} className="bg-zinc-800/60 rounded p-2">
+                    {dayItems.map((item: ScheduleItem, idx) => (
+                      <Fragment key={item.id}>
+                      {moveRows(movesBefore[idx])}
+                      <div className="bg-zinc-800/60 rounded p-2">
                         {editingSched === item.id ? (
                           <form onSubmit={handleSchedEdit} className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-end">
                             <div>
@@ -728,7 +791,25 @@ export function PartyDetail() {
                               <span className="text-xs text-zinc-500">{item.time}</span>
                               <span className="ml-2 font-medium">{item.title}</span>
                               {item.description && <p className="text-sm text-zinc-400 mt-1">{item.description}</p>}
+                              {(() => {
+                                const t = itemTimes[idx]
+                                const pres = presentAt(presence, t)
+                                const missing = presence.filter(s => !pres.includes(s))
+                                return missing.length > 0 && pres.length > 0 && (
+                                  <p className="text-xs text-zinc-500 mt-1">chybí: {missing.map(s =>
+                                    s.att.arrival && s.from > t
+                                      ? `${s.att.user.displayName} ↓${s.from - t < DAY && new Date(s.from).getUTCDay() === new Date(t).getUTCDay() ? fmtTime(s.from) : fmtDayTime(s.from)}`
+                                      : s.att.user.displayName).join(', ')}</p>
+                                )
+                              })()}
                             </div>
+                            {presence.length > 0 && (() => {
+                              const n = presentAt(presence, itemTimes[idx]).length
+                              return (
+                                <span className={`text-xs font-semibold tabular-nums ml-auto pl-2 shrink-0 ${n === presence.length ? 'text-emerald-400' : 'text-zinc-400'}`}
+                                  title="Kolik lidí tu v tu dobu bude">{n}/{presence.length}</span>
+                              )
+                            })()}
                             {isAdmin && (
                               <div className="flex gap-2 ml-2">
                                 <button onClick={() => { setEditingSched(item.id); setEditSchedForm({ day: item.day, time: item.time, title: item.title, description: item.description || '' }) }}
@@ -740,7 +821,10 @@ export function PartyDetail() {
                           </div>
                         )}
                       </div>
+                      </Fragment>
                     ))}
+                    {moveRows(movesAfter)}
+                    {dayItems.length === 0 && <p className="text-zinc-500 text-sm">Zatím nic naplánováno</p>}
                   </div>
                 ) : (
                   <p className="text-zinc-500 text-sm">Zatím nic naplánováno</p>
