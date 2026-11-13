@@ -1060,7 +1060,10 @@ export function PartyDetail() {
       )}
 
       {/* Shopping Tab */}
-      {tab === 'shopping' && <ShoppingTab partyId={partyId} isAdmin={isAdmin} />}
+      {tab === 'shopping' && (
+        <ShoppingTab partyId={partyId} isAdmin={isAdmin}
+          people={attendance.filter(a => a.status !== 'declined').map(a => a.user)} />
+      )}
 
       {/* Tournaments Tab */}
       {tab === 'tournaments' && (

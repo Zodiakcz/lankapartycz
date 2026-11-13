@@ -6,10 +6,13 @@ import type { Party, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, 
 // Ready meals are counted per piece, so brought portions offset them one for one
 const READY_MEALS = 'hotova_jidla'
 
-export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
+export function ShoppingTab({ partyId, isAdmin, people }: {
+  partyId: number; isAdmin: boolean; people: { id: number; displayName: string }[]
+}) {
   const { user } = useAuth()
   const [external, setExternal] = useState<ExternalFood[]>([])
   const [extName, setExtName] = useState('')
+  const [extUserId, setExtUserId] = useState('')  // '' = me
   const [extPortions, setExtPortions] = useState('')
   const [categories, setCategories] = useState<FoodCategory[]>([])
   const [estimates, setEstimates] = useState<FoodEstimate[]>([])
@@ -49,9 +52,10 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
     const portions = Number(extPortions)
     if (!extName.trim() || !(portions >= 1)) return
     try {
-      await api.addExternalFood(partyId, extName.trim(), portions)
+      await api.addExternalFood(partyId, extName.trim(), portions, extUserId ? Number(extUserId) : undefined)
       setExtName('')
       setExtPortions('')
+      setExtUserId('')
       load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Nepodařilo se uložit')
@@ -104,30 +108,6 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
 
   return (
     <div className="space-y-8">
-      {/* Copy from another party */}
-      {isAdmin && otherParties.length > 0 && (
-        <div className="card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <span className="text-sm text-zinc-400">Kopírovat z jiné párty:</span>
-          <select
-            value={copyFrom}
-            onChange={e => setCopyFrom(e.target.value)}
-            className="form-select flex-1 w-full sm:w-auto"
-          >
-            <option value="">— Vyberte párty —</option>
-            {otherParties.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <button
-            onClick={handleCopy}
-            disabled={!copyFrom || copying}
-            className="btn-secondary text-sm"
-          >
-            {copying ? 'Kopíruji…' : 'Kopírovat'}
-          </button>
-        </div>
-      )}
-
       {/* Food calculation */}
       <section>
         <h2 className="section-heading">Kalkulace jídla</h2>
@@ -152,13 +132,13 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
         )}
 
         <div className="card overflow-x-auto">
-          <table className="w-full text-sm min-w-[400px]">
+          <table className="w-full text-sm min-w-[460px]">
             <thead>
               <tr className="text-zinc-400 text-left border-b border-white/8">
                 <th className="px-3 py-2 w-8"></th>
                 <th className="px-3 py-2">Kategorie</th>
                 <th className="px-3 py-2 w-24">Na os./noc</th>
-                <th className="px-3 py-2 w-20">Jednotka</th>
+                <th className="px-3 py-2 w-32">Jednotka</th>
                 <th className="px-3 py-2 w-24">Koupit</th>
               </tr>
             </thead>
@@ -207,7 +187,7 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
                         <select
                           value={unit}
                           onChange={e => handleEstimateChange(cat.key, perNight, e.target.value)}
-                          className="form-select"
+                          className="form-select w-28"
                         >
                           <option value="ks">ks</option>
                           <option value="l">l</option>
@@ -260,6 +240,14 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
             placeholder="Porcí"
             className="form-input w-24"
           />
+          <select value={extUserId} onChange={e => setExtUserId(e.target.value)}
+            className="form-select w-auto min-w-[9rem]" aria-label="Kdo přiveze">
+            <option value="">Přivezu já</option>
+            {people
+              .filter(p => p.id !== user?.id)
+              .sort((a, b) => a.displayName.localeCompare(b.displayName))
+              .map(p => <option key={p.id} value={p.id}>Přiveze {p.displayName}</option>)}
+          </select>
           <button type="submit" className="btn-primary">Přidat</button>
         </form>
 
@@ -313,6 +301,30 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
           {items.length === 0 && <p className="text-zinc-500 text-sm">Seznam je prázdný</p>}
         </div>
       </section>
+
+      {/* Copy from another party */}
+      {isAdmin && otherParties.length > 0 && (
+        <section className="card-inner p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span className="text-sm text-zinc-400">Zkopírovat kalkulaci a seznam z jiné párty:</span>
+          <select
+            value={copyFrom}
+            onChange={e => setCopyFrom(e.target.value)}
+            className="form-select flex-1 w-full sm:w-auto"
+          >
+            <option value="">— Vyberte párty —</option>
+            {otherParties.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleCopy}
+            disabled={!copyFrom || copying}
+            className="btn-secondary text-sm"
+          >
+            {copying ? 'Kopíruji…' : 'Kopírovat'}
+          </button>
+        </section>
+      )}
     </div>
   )
 }

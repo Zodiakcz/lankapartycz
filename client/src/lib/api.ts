@@ -102,8 +102,8 @@ export const api = {
   deleteShoppingItem: (partyId: number, id: number) =>
     request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
   getExternalFood: (partyId: number) => request<ExternalFood[]>(`/shopping/${partyId}/external`),
-  addExternalFood: (partyId: number, name: string, portions: number) =>
-    request<ExternalFood>(`/shopping/${partyId}/external`, { method: 'POST', body: JSON.stringify({ name, portions }) }),
+  addExternalFood: (partyId: number, name: string, portions: number, userId?: number) =>
+    request<ExternalFood>(`/shopping/${partyId}/external`, { method: 'POST', body: JSON.stringify({ name, portions, userId }) }),
   deleteExternalFood: (partyId: number, id: number) =>
     request<Ok>(`/shopping/${partyId}/external/${id}`, { method: 'DELETE' }),
   copyShoppingFrom: (partyId: number, sourcePartyId: number) =>

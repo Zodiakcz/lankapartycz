@@ -182,18 +182,24 @@ router.get('/:partyId/external', requireAuth, async (req, res) => {
   res.json(entries)
 })
 
-// Add external food (any user, recorded under the logged-in user)
+// Add external food (any user; who brings it defaults to the logged-in user and may be
+// anyone attending this party)
 router.post('/:partyId/external', requireAuth, async (req, res) => {
   const partyId = Number(req.params.partyId)
+  const userId = req.body.userId ? Number(req.body.userId) : req.session.userId!
   const name = String(req.body.name ?? '').trim()
   const portions = Math.floor(Number(req.body.portions))
   if (!name) return res.status(400).json({ error: 'Zadejte, co přivezete' })
   if (!Number.isFinite(portions) || portions < 1 || portions > 1000) {
     return res.status(400).json({ error: 'Zadejte počet porcí' })
   }
+  if (userId !== req.session.userId) {
+    const attends = await prisma.attendance.findFirst({ where: { partyId, userId, status: { not: 'declined' } } })
+    if (!attends) return res.status(400).json({ error: 'Tento člověk na párty nejede' })
+  }
 
   const entry = await prisma.externalFood.create({
-    data: { partyId, userId: req.session.userId!, name: name.slice(0, 200), portions },
+    data: { partyId, userId, name: name.slice(0, 200), portions },
     include: { user: { select: { id: true, displayName: true } } },
   })
   res.json(entry)
