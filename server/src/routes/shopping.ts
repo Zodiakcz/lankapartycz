@@ -172,4 +172,42 @@ router.delete('/:partyId/items/:id', requireAuth, async (req, res) => {
   res.json({ ok: true })
 })
 
+// External food: portions someone cooks and brings, on top of the shopping list
+router.get('/:partyId/external', requireAuth, async (req, res) => {
+  const entries = await prisma.externalFood.findMany({
+    where: { partyId: Number(req.params.partyId) },
+    include: { user: { select: { id: true, displayName: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+  res.json(entries)
+})
+
+// Add external food (any user, recorded under the logged-in user)
+router.post('/:partyId/external', requireAuth, async (req, res) => {
+  const partyId = Number(req.params.partyId)
+  const name = String(req.body.name ?? '').trim()
+  const portions = Math.floor(Number(req.body.portions))
+  if (!name) return res.status(400).json({ error: 'Zadejte, co přivezete' })
+  if (!Number.isFinite(portions) || portions < 1 || portions > 1000) {
+    return res.status(400).json({ error: 'Zadejte počet porcí' })
+  }
+
+  const entry = await prisma.externalFood.create({
+    data: { partyId, userId: req.session.userId!, name: name.slice(0, 200), portions },
+    include: { user: { select: { id: true, displayName: true } } },
+  })
+  res.json(entry)
+})
+
+// Delete external food (author or admin)
+router.delete('/:partyId/external/:id', requireAuth, async (req, res) => {
+  const entry = await prisma.externalFood.findUnique({ where: { id: Number(req.params.id) } })
+  if (!entry) return res.status(404).json({ error: 'Položka nenalezena' })
+  if (entry.userId !== req.session.userId && req.session.role !== 'admin') {
+    return res.status(403).json({ error: 'Nemáte oprávnění' })
+  }
+  await prisma.externalFood.delete({ where: { id: entry.id } })
+  res.json({ ok: true })
+})
+
 export default router

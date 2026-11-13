@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
-import type { Party, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem } from '../lib/types'
+import { useAuth } from '../lib/auth'
+import type { Party, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, ExternalFood } from '../lib/types'
+
+// Ready meals are counted per piece, so brought portions offset them one for one
+const READY_MEALS = 'hotova_jidla'
 
 export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: boolean }) {
+  const { user } = useAuth()
+  const [external, setExternal] = useState<ExternalFood[]>([])
+  const [extName, setExtName] = useState('')
+  const [extPortions, setExtPortions] = useState('')
   const [categories, setCategories] = useState<FoodCategory[]>([])
   const [estimates, setEstimates] = useState<FoodEstimate[]>([])
   const [calculation, setCalculation] = useState<FoodCalculation | null>(null)
@@ -20,16 +28,40 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
   }, [partyId, isAdmin])
 
   const load = async () => {
-    const [cats, est, calc, itms] = await Promise.all([
+    const [cats, est, calc, itms, ext] = await Promise.all([
       api.foodCategories(),
       api.getFoodEstimates(partyId),
       api.calculateFood(partyId),
       api.getShoppingItems(partyId),
+      api.getExternalFood(partyId),
     ])
     setCategories(cats)
     setEstimates(est)
     setCalculation(calc)
     setItems(itms)
+    setExternal(ext)
+  }
+
+  const externalPortions = external.reduce((sum, e) => sum + e.portions, 0)
+
+  const handleAddExternal = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const portions = Number(extPortions)
+    if (!extName.trim() || !(portions >= 1)) return
+    try {
+      await api.addExternalFood(partyId, extName.trim(), portions)
+      setExtName('')
+      setExtPortions('')
+      load()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Nepodařilo se uložit')
+    }
+  }
+
+  const handleDeleteExternal = async (id: number) => {
+    if (!confirm('Opravdu smazat?')) return
+    await api.deleteExternalFood(partyId, id)
+    load()
   }
 
   const handleCopy = async () => {
@@ -105,6 +137,9 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
             <div className="flex gap-6 text-sm text-zinc-400">
               <span>Potvrzených: <strong className="text-white">{calculation.confirmedPeople}</strong></span>
               <span>Celkem nocí: <strong className="text-white">{calculation.totalNights}</strong></span>
+              {externalPortions > 0 && (
+                <span>Donesou: <strong className="text-white">{externalPortions} porcí</strong></span>
+              )}
             </div>
             {calculation.perPerson?.length > 0 && (
               <div className="mt-2 text-xs text-zinc-500">
@@ -133,6 +168,8 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
                 const perNight = est?.perNight || 0
                 const unit = est?.unit || cat.defaultUnit
                 const calcRow = calculation?.amounts?.find(a => a.category === cat.key)
+                const offset = cat.key === READY_MEALS && unit === 'ks' && calcRow ? externalPortions : 0
+                const toBuy = calcRow ? Math.max(0, Math.round((calcRow.totalNeeded - offset) * 10) / 10) : 0
 
                 return (
                   <tr key={cat.key} className={`border-t border-white/8 ${est?.purchased ? 'opacity-50' : ''}`}>
@@ -183,14 +220,64 @@ export function ShoppingTab({ partyId, isAdmin }: { partyId: number; isAdmin: bo
                     </td>
                     <td className="px-4 py-2">
                       <span className="font-semibold text-indigo-400">
-                        {calcRow ? `${calcRow.totalNeeded} ${unit}` : '–'}
+                        {calcRow ? `${toBuy} ${unit}` : '–'}
                       </span>
+                      {offset > 0 && (
+                        <div className="text-xs text-zinc-500 whitespace-nowrap">
+                          {calcRow!.totalNeeded} − {offset} donesených
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* Food cooked and brought by attendees */}
+      <section>
+        <h2 className="section-heading">Donesené jídlo</h2>
+        <p className="text-sm text-zinc-500 mb-3">
+          Uvaříte něco pro ostatní? Napište co a pro kolik porcí, ať to nekupujeme navíc.
+        </p>
+
+        <form onSubmit={handleAddExternal} className="flex flex-wrap gap-2 mb-4">
+          <input
+            value={extName}
+            onChange={e => setExtName(e.target.value)}
+            placeholder="Co přivezete (např. guláš)"
+            maxLength={200}
+            className="form-input flex-1 min-w-[10rem] w-auto"
+          />
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={extPortions}
+            onChange={e => setExtPortions(e.target.value)}
+            placeholder="Porcí"
+            className="form-input w-24"
+          />
+          <button type="submit" className="btn-primary">Přidat</button>
+        </form>
+
+        <div className="space-y-1">
+          {external.map(entry => (
+            <div key={entry.id} className="card flex items-center gap-3 p-3">
+              <span className="font-semibold text-indigo-400 w-20 flex-shrink-0">{entry.portions} porcí</span>
+              <span className="flex-1 min-w-0 break-words">{entry.name}</span>
+              <span className="text-sm text-zinc-500 flex-shrink-0">{entry.user.displayName}</span>
+              {(isAdmin || entry.user.id === user?.id) && (
+                <button onClick={() => handleDeleteExternal(entry.id)} className="btn-danger text-xs py-0.5 px-2">Smazat</button>
+              )}
+            </div>
+          ))}
+          {external.length === 0 && <p className="text-zinc-500 text-sm">Zatím nikdo nic nehlásil</p>}
+          {external.length > 1 && (
+            <p className="text-sm text-zinc-400 pt-1">Celkem: <strong className="text-white">{externalPortions} porcí</strong></p>
+          )}
         </div>
       </section>
 

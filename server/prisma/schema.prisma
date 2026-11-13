@@ -22,6 +22,7 @@ model User {
   gameVotes       GameVote[]
   entrantsAsUser1 TournamentEntrant[] @relation("EntrantUser1")
   entrantsAsUser2 TournamentEntrant[] @relation("EntrantUser2")
+  externalFood    ExternalFood[]
 }
 
 model Party {
@@ -47,6 +48,7 @@ model Party {
   packingItems       PackingItem[]
   foodEstimates      FoodEstimate[]
   shoppingItems      ShoppingItem[]
+  externalFood       ExternalFood[]
   sentNotifications  SentNotification[]
   tournaments        Tournament[]
 }
@@ -156,6 +158,19 @@ model ShoppingItem {
   createdAt DateTime @default(now())
 
   party     Party   @relation(fields: [partyId], references: [id], onDelete: Cascade)
+}
+
+// Jídlo, které někdo uvaří a přiveze pro ostatní (navíc k nákupnímu seznamu)
+model ExternalFood {
+  id        Int      @id @default(autoincrement())
+  partyId   Int
+  userId    Int      // kdo přiveze
+  name      String   // co přiveze, např. "guláš"
+  portions  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PackingItem {

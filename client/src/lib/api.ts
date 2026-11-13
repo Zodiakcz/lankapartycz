@@ -1,6 +1,6 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
-  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, FaqItem, LeaderboardData, AchievementThresholds,
+  PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, ExternalFood, FaqItem, LeaderboardData, AchievementThresholds,
   Tournament,
 } from './types'
 
@@ -101,6 +101,11 @@ export const api = {
     request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'PATCH' }),
   deleteShoppingItem: (partyId: number, id: number) =>
     request<Ok>(`/shopping/${partyId}/items/${id}`, { method: 'DELETE' }),
+  getExternalFood: (partyId: number) => request<ExternalFood[]>(`/shopping/${partyId}/external`),
+  addExternalFood: (partyId: number, name: string, portions: number) =>
+    request<ExternalFood>(`/shopping/${partyId}/external`, { method: 'POST', body: JSON.stringify({ name, portions }) }),
+  deleteExternalFood: (partyId: number, id: number) =>
+    request<Ok>(`/shopping/${partyId}/external/${id}`, { method: 'DELETE' }),
   copyShoppingFrom: (partyId: number, sourcePartyId: number) =>
     request<Ok>(`/shopping/${partyId}/copy-from/${sourcePartyId}`, { method: 'POST' }),
 

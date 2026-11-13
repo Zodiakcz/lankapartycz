@@ -113,6 +113,13 @@ export interface FoodCalculation {
   amounts: FoodCalcAmount[]
 }
 
+export interface ExternalFood {
+  id: number
+  name: string
+  portions: number
+  user: { id: number; displayName: string }
+}
+
 export interface ShoppingItem {
   id: number
   name: string
