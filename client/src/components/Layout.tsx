@@ -4,6 +4,8 @@ import { useAuth } from '../lib/auth'
 import { useSubHeader } from '../lib/subheader'
 import { APP_VERSION } from '../version'
 import { api } from '../lib/api'
+import { Menu, MenuItem } from './Menu'
+import { Avatar } from './Avatar'
 
 const CalendarIcon = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75} className="w-5 h-5">
@@ -81,27 +83,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top header */}
-      <header className="bg-zinc-900/80 backdrop-blur-md border-b border-white/8 sticky top-0 z-40">
+      <header className="bg-chrome/95 backdrop-blur-md border-b border-black/40 shadow-lg shadow-black/20 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="text-lg font-bold text-white tracking-tight">
+          <div className="flex items-center gap-6 self-stretch">
+            <Link to="/" className="text-lg font-extrabold text-white uppercase tracking-[0.12em]">
               LAN <span className="text-indigo-400">Party</span>
             </Link>
             {/* Desktop nav */}
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="hidden sm:flex items-stretch gap-1 self-stretch">
               {allNavItems.map(item => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative flex items-center px-3 border-b-2 text-[13px] font-semibold uppercase tracking-wider transition-colors ${
                     isActive(item.path)
-                      ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                      ? 'border-indigo-400 text-indigo-400'
+                      : 'border-transparent text-zinc-300 hover:text-white'
                   }`}
                 >
                   {item.label}
                   {item.path === '/admin' && pendingCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    <span className="ml-1.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
                       {pendingCount}
                     </span>
                   )}
@@ -110,20 +112,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              to="/password"
-              className="text-sm text-zinc-400 hover:text-zinc-100 px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors"
-            >
-              {user?.displayName}
-            </Link>
-            <button
-              onClick={logout}
-              className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors"
-            >
-              Odhlásit
-            </button>
-          </div>
+          {user && (
+            <Menu label="Účet" buttonClassName="flex items-center gap-2 rounded-lg pl-1 pr-2 py-1 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+              trigger={<>
+                <Avatar id={user.id} name={user.displayName} className="w-7 h-7 text-[11px]" ring="ring-1 ring-black/40" />
+                <span className="hidden sm:inline">{user.displayName}</span>
+                <span className="text-[10px] text-zinc-500">▾</span>
+              </>}>
+              <MenuItem to="/password">Změnit heslo</MenuItem>
+              <MenuItem onClick={logout}>Odhlásit</MenuItem>
+            </Menu>
+          )}
         </div>
         {subHeader && (
           <div className="border-t border-white/5">
@@ -140,7 +139,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/95 backdrop-blur-md border-t border-white/8">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-chrome/95 backdrop-blur-md border-t border-black/40">
         <div className="flex items-center justify-around px-2 py-1 safe-area-pb">
           {allNavItems.map(item => {
             const active = isActive(item.path)
@@ -167,7 +166,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      <footer className="hidden sm:block bg-zinc-900/50 border-t border-white/8 py-3 text-center text-xs text-zinc-600">
+      <footer className="hidden sm:block bg-chrome border-t border-black/40 py-3 text-center text-xs text-zinc-600">
         Made by Zodiak • {APP_VERSION}
       </footer>
     </div>

@@ -16,7 +16,7 @@ function AppRoutes() {
   const { user, loading, isAdmin } = useAuth()
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500">Načítání...</div>
+    return <div className="min-h-screen flex items-center justify-center text-zinc-500">Načítání...</div>
   }
 
   if (!user) return <Login />

@@ -7,6 +7,10 @@ import type { Party, User, Attendance, Expense, ExpenseSplit, ScheduleItem } fro
 import { ShoppingTab } from '../components/ShoppingTab'
 import { TournamentsTab } from '../components/TournamentsTab'
 import { PresenceTimeline } from '../components/PresenceTimeline'
+import { HeroBackdrop, useGoldArt } from '../components/HeroBackdrop'
+import { Menu, MenuItem } from '../components/Menu'
+import { ScrollTabs } from '../components/ScrollTabs'
+import { Avatar } from '../components/Avatar'
 import { partyWindow, stays, tally, presentOnDay, presentAt, movesOnDay, scheduleTime, fmtTime, fmtDayTime, people, DAY, type Move } from '../lib/presence'
 import qrCode from '../img/qr_code.jpg'
 
@@ -17,6 +21,7 @@ export function PartyDetail() {
   const partyId = Number(id)
 
   const [party, setParty] = useState<Party | null>(null)
+  const goldArt = useGoldArt()
   const [split, setSplit] = useState<ExpenseSplit | null>(null)
   const [tab, setTab] = useState<'info' | 'schedule' | 'expenses' | 'shopping' | 'tournaments' | 'notes'>('info')
 
@@ -108,16 +113,12 @@ export function PartyDetail() {
 
   const { setSubHeader } = useSubHeader()
   useEffect(() => {
-    const tabLabels = { info: 'Účast & Hry', schedule: 'Program', expenses: 'Finance', shopping: 'Nákupy', tournaments: 'Turnaje', notes: 'Poznámky' } as const
+    const tabs = [
+      { key: 'info', label: 'Účast & Hry' }, { key: 'schedule', label: 'Program' }, { key: 'expenses', label: 'Finance' },
+      { key: 'shopping', label: 'Nákupy' }, { key: 'tournaments', label: 'Turnaje' }, { key: 'notes', label: 'Poznámky' },
+    ] as const
     setSubHeader(
-      <div className="tab-bar">
-        {(['info', 'schedule', 'expenses', 'shopping', 'tournaments', 'notes'] as const).map(t => (
-          <button key={t} onClick={() => { setTab(t); if (t === 'expenses') loadSplit() }}
-            className={`tab-item ${tab === t ? 'tab-active' : 'tab-inactive'}`}>
-            {tabLabels[t]}
-          </button>
-        ))}
-      </div>
+      <ScrollTabs tabs={tabs} active={tab} onSelect={t => { setTab(t); if (t === 'expenses') loadSplit() }} />
     )
     return () => setSubHeader(null)
   }, [tab, setSubHeader, loadSplit])
@@ -251,24 +252,73 @@ export function PartyDetail() {
   const dayTotals = Array.from({ length: partyDays }, (_, i) => presentOnDay(presence, pWindow, i).length)
   const peakDay = dayTotals.indexOf(Math.max(...dayTotals))
 
+  // Calendar nights between arrival and departure day
+  const nightsOf = (a: Attendance) => {
+    if (!a.arrival || !a.departure) return null
+    const arr = new Date(a.arrival); const dep = new Date(a.departure)
+    const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
+    const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
+    return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
+  }
+  const nightsWord = (n: number) => n === 1 ? 'noc' : n >= 2 && n <= 4 ? 'noci' : 'nocí'
+  const attendance = party.attendance ?? []
+  const sortedAttendance = [...attendance].sort((a, b) => a.user.displayName.localeCompare(b.user.displayName))
+  const confirmedCount = attendance.filter(a => a.status === 'confirmed').length
+  const maybeCount = attendance.filter(a => a.status === 'maybe').length
+  const confirmedNights = attendance.filter(a => a.status === 'confirmed').reduce((sum, a) => sum + (nightsOf(a) ?? 0), 0)
+  const shortDayTime = (d: string) => new Date(d).toLocaleString('cs-CZ', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  const stayLine = (a: Attendance) => {
+    if (!a.arrival || !a.departure) return 'bez termínu'
+    const n = nightsOf(a) ?? 0
+    return `${shortDayTime(a.arrival)} → ${shortDayTime(a.departure)} · ${n} ${nightsWord(n)}`
+  }
+  const placeBadge = party.placeStatus === 'confirmed' ? <span className="badge badge-green">Místo potvrzeno</span>
+    : party.placeStatus === 'booked' ? <span className="badge badge-blue">Místo rezervováno</span>
+    : <span className="badge badge-yellow">Místo čeká na rezervaci</span>
+  const isPast = new Date(party.endDate) < new Date()
+
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <button onClick={() => navigate('/')} className="btn-ghost text-xs mb-2 -ml-3">&larr; Zpět</button>
-          <h1 className="text-2xl font-bold text-white tracking-tight">{party.name}</h1>
-          <p className="text-zinc-400 mt-0.5">{party.location}</p>
-          <p className="text-sm text-zinc-500 mt-0.5">{formatDate(party.startDate)} – {formatDate(party.endDate)} ({partyDays} dní)</p>
-          {party.description && <p className="text-zinc-400 mt-2 text-sm">{party.description}</p>}
-          <button onClick={downloadICS} className="btn-ghost text-xs mt-2 -ml-3">&#128197; Přidat do kalendáře</button>
-        </div>
-        {isAdmin && (
-          <div className="flex gap-1 items-center">
-            <button onClick={startPartyEdit} className="btn-ghost text-sm">Upravit</button>
-            <button onClick={handleDelete} className="btn-danger text-sm">Smazat</button>
+      {/* Hero: blurred gold-game art behind the party name, Steam store-page style */}
+      <div className="relative z-10 -mx-4 -mt-6 mb-6 sm:mx-0 sm:mt-0 sm:rounded-xl sm:ring-1 sm:ring-white/5 shadow-lg shadow-black/30">
+        <HeroBackdrop images={goldArt} seed={party.id} />
+        <div className="relative px-4 sm:px-6 pt-3 pb-5 sm:pb-6">
+          <div className="flex items-center justify-between gap-2">
+            <button onClick={() => navigate('/')} className="btn-ghost text-xs -ml-3">&larr; Všechny párty</button>
+            <div className="flex items-center gap-1">
+              <button onClick={downloadICS} className="btn-ghost text-xs">Do kalendáře</button>
+              {isAdmin && (
+                <Menu label="Akce párty" buttonClassName="btn-ghost px-2.5 text-lg leading-none" trigger="⋯">
+                  <MenuItem onClick={startPartyEdit}>Upravit párty</MenuItem>
+                  <MenuItem onClick={handleDelete} danger>Smazat párty</MenuItem>
+                </Menu>
+              )}
+            </div>
           </div>
-        )}
+          <div className="mt-6 sm:mt-12">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {isPast ? <span className="badge badge-gray">Proběhlo</span> : placeBadge}
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg">{party.name}</h1>
+            <p className="mt-1 text-zinc-300">
+              {party.location && <>{party.location} · </>}{formatDate(party.startDate)} – {formatDate(party.endDate)}
+            </p>
+            {party.description && <p className="mt-2 text-sm text-zinc-400 max-w-2xl">{party.description}</p>}
+          </div>
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-px rounded-lg overflow-hidden bg-white/5 ring-1 ring-white/5">
+            {[
+              { value: confirmedCount, label: maybeCount > 0 ? `jede, +${maybeCount} možná` : 'jede' },
+              { value: confirmedNights, label: 'osobonocí' },
+              { value: partyDays, label: partyDays >= 2 && partyDays <= 4 ? 'dny' : 'dní' },
+              { value: party.advancePerNight > 0 ? `${party.advancePerNight} Kč` : '–', label: 'záloha za noc' },
+            ].map(s => (
+              <div key={s.label} className="bg-black/45 backdrop-blur-sm px-4 py-3">
+                <div className="text-xl font-bold text-white tabular-nums">{s.value}</div>
+                <div className="text-[11px] uppercase tracking-wider text-zinc-400">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Party Edit Modal */}
@@ -416,29 +466,43 @@ export function PartyDetail() {
           {/* Who's coming */}
           <section>
             <h2 className="section-heading">Kdo jede</h2>
-            {(() => {
-              const att = party.attendance ?? []
-              const confirmed = att.filter(a => a.status === 'confirmed').length
-              const maybe = att.filter(a => a.status === 'maybe').length
-              const declined = att.filter(a => a.status === 'declined').length
-              const confirmedNights = att
-                .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
-                .reduce((sum, a) => {
-                  const startDay = new Date(new Date(a.arrival!).toDateString())
-                  const endDay = new Date(new Date(a.departure!).toDateString())
-                  return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
-                }, 0)
-              return (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="badge badge-green">Potvrzeno: {confirmed}</span>
-                  <span className="badge badge-yellow">Možná: {maybe}</span>
-                  <span className="badge badge-red">Neúčast: {declined}</span>
-                  <span className="badge badge-blue">Potvrzených nocí: {confirmedNights}</span>
-                </div>
-              )
-            })()}
+            {/* Steam friends-list style: confirmed green like "in game", maybe blue like "online" */}
+            <div className="card p-4 mb-3 space-y-4">
+              {([
+                ['confirmed', 'Jede', 'text-[#a4d007]', 'ring-2 ring-[#a4d007]'],
+                ['maybe', 'Možná', 'text-indigo-400', 'ring-2 ring-indigo-400'],
+                ['declined', 'Nejede', 'text-zinc-500', 'ring-2 ring-zinc-600'],
+              ] as const).map(([status, label, tone, ring]) => {
+                const list = sortedAttendance.filter(a => a.status === status)
+                if (list.length === 0) return null
+                return (
+                  <div key={status}>
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                      {label} <span className="text-zinc-600">({list.length})</span>
+                    </h3>
+                    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-1">
+                      {list.map(a => (
+                        <div key={a.id} className={`flex items-center gap-3 rounded px-2 py-1.5 hover:bg-white/5 transition-colors ${status === 'declined' ? 'opacity-60' : ''}`}>
+                          <Avatar id={a.userId} name={a.user.displayName} className="w-9 h-9 text-xs" ring={ring} />
+                          <div className="min-w-0">
+                            <div className={`text-sm font-semibold truncate ${tone}`}>
+                              {a.user.displayName}
+                              {a.userId === user?.id && <span className="ml-1.5 text-[10px] font-normal text-zinc-500">ty</span>}
+                            </div>
+                            <div className="text-xs text-zinc-500 truncate">{status === 'declined' ? 'nejede' : stayLine(a)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+              {attendance.length === 0 && <p className="text-sm text-zinc-500">Nikdo se zatím nepřihlásil</p>}
+            </div>
             <PresenceTimeline party={party} currentUserId={user?.id} />
-            <div className="card overflow-x-auto">
+            <details className="mt-3" open={isAdmin}>
+            <summary className="cursor-pointer select-none w-fit text-sm text-indigo-400 hover:text-indigo-300">Podrobná tabulka: časy a zálohy</summary>
+            <div className="card overflow-x-auto mt-2">
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-zinc-800/60">
                   <tr className="text-zinc-400 text-left">
@@ -501,12 +565,7 @@ export function PartyDetail() {
                       </td>
                       <td className="px-4 py-2 text-zinc-400">{a.arrival ? formatDateTime(a.arrival) : '–'}</td>
                       <td className="px-4 py-2 text-zinc-400">{a.departure ? formatDateTime(a.departure) : '–'}</td>
-                      <td className="px-4 py-2 font-medium">{a.arrival && a.departure ? (() => {
-                        const arr = new Date(a.arrival); const dep = new Date(a.departure)
-                        const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
-                        const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
-                        return Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
-                      })() : '–'}</td>
+                      <td className="px-4 py-2 font-medium">{nightsOf(a) ?? '–'}</td>
                       <td className="px-4 py-2">
                         {a.advance ? (
                           <span className="inline-flex items-center gap-1.5">
@@ -587,18 +646,11 @@ export function PartyDetail() {
                 + Přidat účastníka
               </button>
             )}
+            </details>
           </section>
 
           {/* Stay cost */}
           {(party.stayPricePerNight > 0 || isAdmin) && (() => {
-            const confirmedNights = (party.attendance ?? [])
-              .filter(a => a.status === 'confirmed' && a.arrival && a.departure)
-              .reduce((sum, a) => {
-                const arr = new Date(a.arrival!); const dep = new Date(a.departure!)
-                const startDay = new Date(arr.getFullYear(), arr.getMonth(), arr.getDate())
-                const endDay = new Date(dep.getFullYear(), dep.getMonth(), dep.getDate())
-                return sum + Math.max(0, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)))
-              }, 0)
             const stayCost = Math.round(party.stayPricePerNight * confirmedNights * 100) / 100
             const payer = party.attendance?.find(a => a.userId === party.stayPaidByUserId)
             return (
@@ -623,7 +675,7 @@ export function PartyDetail() {
           {/* Place */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">Místo</h2>
+              <h2 className="section-heading mb-0">Místo</h2>
               {isAdmin && !placeEdit && (
                 <button onClick={() => setPlaceEdit(true)} className="text-indigo-400 hover:text-indigo-300 text-sm">Upravit</button>
               )}
@@ -694,7 +746,7 @@ export function PartyDetail() {
 
       {/* Schedule Tab */}
       {tab === 'schedule' && (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {Array.from({ length: partyDays }, (_, i) => movesOnDay(presence, pWindow, i)).some(m => m.length > 0) && (
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer w-fit">
               <input type="checkbox" checked={showMoves} onChange={e => toggleMoves(e.target.checked)} className="accent-indigo-500" />
@@ -728,15 +780,27 @@ export function PartyDetail() {
               ))
             }
 
+            const dayTitle = `Den ${day} – ${dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}`
+            const headcount = presence.length > 0 && (
+              <span className={`badge ${day - 1 === peakDay ? 'badge-blue' : 'badge-gray'}`}>
+                {dayTally.sure} {people(dayTally.sure)}{dayTally.maybe > 0 && ` +${dayTally.maybe} možná`}
+              </span>
+            )
+            if (dayItems.length === 0 && dayMoves.length === 0) {
+              return (
+                <div key={day} className="card px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h3 className="text-sm font-semibold text-zinc-300">{dayTitle}</h3>
+                  <span className="text-xs text-zinc-500">volno, nic naplánováno</span>
+                  <span className="ml-auto">{headcount}</span>
+                </div>
+              )
+            }
+
             return (
               <div key={day} className="card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-indigo-400">Den {day} – {dayDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
-                  {presence.length > 0 && (
-                    <span className={`badge ${day - 1 === peakDay ? 'badge-blue' : 'badge-gray'}`}>
-                      {dayTally.sure} {people(dayTally.sure)}{dayTally.maybe > 0 && ` +${dayTally.maybe} možná`}
-                    </span>
-                  )}
+                  <h3 className="font-semibold text-indigo-400">{dayTitle}</h3>
+                  {headcount}
                 </div>
                 {here.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">

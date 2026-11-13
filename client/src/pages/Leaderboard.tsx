@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { RankMedal } from '../components/TierChip'
+import { Avatar } from '../components/Avatar'
 import type { LeaderboardEntry, AchievementThresholds } from '../lib/types'
 
 const DEFAULT_THRESHOLDS: AchievementThresholds = {
@@ -101,19 +103,25 @@ function getAchievements(entry: LeaderboardEntry, ctx: AchievementContext) {
   return achievements.filter(a => a.check(entry, ctx))
 }
 
-function getMedal(rank: number) {
-  if (rank === 0) return '🥇'
-  if (rank === 1) return '🥈'
-  if (rank === 2) return '🥉'
-  return `${rank + 1}.`
-}
+type SortKey = 'events' | 'nights' | 'spent' | 'supplied'
+
+const STATS: { key: SortKey; label: string; value: (e: LeaderboardEntry) => string | number }[] = [
+  { key: 'events', label: 'Účasti', value: e => e.eventsAttended },
+  { key: 'nights', label: 'Noci', value: e => e.totalNights },
+  { key: 'spent', label: 'Utraceno', value: e => `${e.totalSpent.toLocaleString('cs-CZ')} Kč` },
+  { key: 'supplied', label: 'Nákupy', value: e => `${e.eventsSupplied}×` },
+]
+
+// Literal class names so Tailwind keeps them; gold sits in the middle on wide screens
+const PODIUM_PLACE = ['sm:order-2 ring-1 ring-[#d9a930]/40', 'sm:order-1 sm:mt-6', 'sm:order-3 sm:mt-10']
+const PODIUM_STRIP = ['tier-gold', 'tier-silver', 'tier-bronze']
 
 export function Leaderboard() {
   const { isAdmin } = useAuth()
   const [stats, setStats] = useState<LeaderboardEntry[]>([])
   const [totalParties, setTotalParties] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [sortBy, setSortBy] = useState<'events' | 'nights' | 'spent' | 'supplied'>('events')
+  const [sortBy, setSortBy] = useState<SortKey>('events')
   const [thresholds, setThresholds] = useState<AchievementThresholds>(DEFAULT_THRESHOLDS)
   const [editingThresholds, setEditingThresholds] = useState(false)
   const [thresholdForm, setThresholdForm] = useState<AchievementThresholds>(DEFAULT_THRESHOLDS)
@@ -201,55 +209,87 @@ export function Leaderboard() {
         ))}
       </div>
 
-      {/* Leaderboard cards */}
-      <div className="space-y-3">
-        {sorted.map((entry, i) => {
-          const earned = getAchievements(entry, ctx)
-          return (
-            <div key={entry.user.id} className="card p-4">
-              <div className="flex items-start gap-3">
-                <span className="text-xl font-bold text-zinc-500 w-8 text-center shrink-0 pt-0.5">
-                  {getMedal(i)}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-zinc-100">{entry.user.displayName}</span>
-                    {earned.map(a => (
-                      <span key={a.id} className={`badge ${a.color}`}>{a.label}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 mt-2 text-sm">
-                    <div>
-                      <span className="text-zinc-500">Účasti: </span>
-                      <span className={`font-medium ${sortBy === 'events' ? 'text-indigo-400' : 'text-zinc-300'}`}>
-                        {entry.eventsAttended}
-                      </span>
+      {/* Podium: top three, gold in the middle and raised */}
+      {sorted.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+          {sorted.slice(0, 3).map((entry, i) => {
+            const earned = getAchievements(entry, ctx)
+            const main = STATS.find(st => st.key === sortBy)!
+            return (
+              <div key={entry.user.id} className={`card relative overflow-hidden p-3 sm:px-4 sm:pt-5 sm:pb-4 flex sm:flex-col items-center gap-3 sm:gap-0 sm:text-center ${PODIUM_PLACE[i]}`}>
+                <div className={`absolute inset-x-0 top-0 h-1 ${PODIUM_STRIP[i]}`} />
+                <div className="relative shrink-0">
+                  <Avatar id={entry.user.id} name={entry.user.displayName} className="w-12 h-12 text-base sm:w-16 sm:h-16 sm:text-xl" ring="ring-2 ring-black/40" />
+                  <span className="absolute -bottom-2 -right-2 scale-75 sm:scale-100 origin-bottom-right"><RankMedal rank={i} /></span>
+                </div>
+                <div className="flex-1 min-w-0 sm:flex-none sm:mt-3">
+                  <div className="font-bold text-white truncate">{entry.user.displayName}</div>
+                  {earned.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap sm:justify-center gap-1">
+                      {earned.map(a => <span key={a.id} className={`badge ${a.color}`}>{a.label}</span>)}
                     </div>
-                    <div>
-                      <span className="text-zinc-500">Nocí: </span>
-                      <span className={`font-medium ${sortBy === 'nights' ? 'text-indigo-400' : 'text-zinc-300'}`}>
-                        {entry.totalNights}
-                      </span>
+                  )}
+                </div>
+                <div className="text-right sm:text-center sm:mt-3 shrink-0">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-indigo-400 tabular-nums leading-none">{main.value(entry)}</div>
+                  <div className="text-[11px] uppercase tracking-wider text-zinc-500 mt-1">{main.label}</div>
+                </div>
+                <div className="hidden sm:grid mt-3 pt-3 border-t border-white/5 w-full grid-cols-3 gap-1 text-xs">
+                  {STATS.filter(st => st.key !== sortBy).map(st => (
+                    <div key={st.key}>
+                      <div className="font-semibold text-zinc-200 tabular-nums">{st.value(entry)}</div>
+                      <div className="text-zinc-500">{st.label}</div>
                     </div>
-                    <div>
-                      <span className="text-zinc-500">Utraceno: </span>
-                      <span className={`font-medium ${sortBy === 'spent' ? 'text-indigo-400' : 'text-zinc-300'}`}>
-                        {entry.totalSpent.toLocaleString('cs-CZ')} Kč
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">Nákupy: </span>
-                      <span className={`font-medium ${sortBy === 'supplied' ? 'text-indigo-400' : 'text-zinc-300'}`}>
-                        {entry.eventsSupplied}× nakoupil
-                      </span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Everyone else: a table; on phones only the sorted column shows */}
+      {sorted.length > 3 && (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-black/20 text-[11px] uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th className="px-3 py-2 text-left w-10">#</th>
+                <th className="px-3 py-2 text-left">Hráč</th>
+                {STATS.map(st => (
+                  <th key={st.key} className={`px-3 py-2 text-right ${sortBy === st.key ? 'text-indigo-400' : 'hidden sm:table-cell'}`}>
+                    <button onClick={() => setSortBy(st.key)} className="uppercase tracking-wider hover:text-zinc-200">{st.label}</button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.slice(3).map((entry, j) => {
+                const earned = getAchievements(entry, ctx)
+                return (
+                  <tr key={entry.user.id} className="border-t border-white/5 hover:bg-white/[0.03]">
+                    <td className="px-3 py-2"><RankMedal rank={j + 3} /></td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar id={entry.user.id} name={entry.user.displayName} className="w-7 h-7 text-[11px]" ring="ring-1 ring-black/40" />
+                        <span className="font-medium text-zinc-100">{entry.user.displayName}</span>
+                        <span className="hidden md:flex flex-wrap gap-1">
+                          {earned.map(a => <span key={a.id} className={`badge ${a.color}`}>{a.label}</span>)}
+                        </span>
+                      </div>
+                    </td>
+                    {STATS.map(st => (
+                      <td key={st.key} className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${sortBy === st.key ? 'font-semibold text-white' : 'text-zinc-400 hidden sm:table-cell'}`}>
+                        {st.value(entry)}
+                      </td>
+                    ))}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Achievement legend */}
       <div className="card p-4">

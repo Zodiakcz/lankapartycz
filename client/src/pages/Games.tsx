@@ -1,22 +1,33 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { SOURCE_OPTIONS, SOURCE_LABELS, sourceBadgeClass, GAME_TIERS, priceLabel, priceBadgeClass } from '../lib/constants'
+import { SOURCE_OPTIONS, SOURCE_LABELS, sourceBadgeClass, GAME_TIERS, priceLabel } from '../lib/constants'
 import type { Game, GameTier } from '../lib/types'
+import { TierChip } from '../components/TierChip'
+import { AvatarStack } from '../components/Avatar'
 
-// Game picture, or the game's initials when there is none or it fails to load
-function GameThumb({ game, className }: { game: Game; className: string }) {
+// Game header art (or the initials when there is none or it fails to load); opens the
+// store page when the game has one, like a Steam capsule. Width and corners come from the caller.
+function GameThumb({ game, className = '' }: { game: Game; className?: string }) {
   const [failed, setFailed] = useState(false)
   useEffect(() => setFailed(false), [game.imageUrl])
-  const box = `${className} aspect-[460/215] rounded-lg bg-zinc-800`
-  if (game.imageUrl && !failed) {
-    return <img src={game.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className={`${box} object-cover`} onError={() => setFailed(true)} />
-  }
   const initials = game.name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const pic = game.imageUrl && !failed
+    ? <img src={game.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={() => setFailed(true)} />
+    : (
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-900 text-xl text-zinc-400 font-extrabold tracking-widest select-none" aria-hidden>
+        {initials}
+      </div>
+    )
+  const box = `${className} relative block aspect-[460/215] overflow-hidden bg-zinc-800`
+  if (!game.storeUrl) return <div className={box}>{pic}</div>
   return (
-    <div className={`${box} flex items-center justify-center text-zinc-500 font-bold tracking-wider select-none`} aria-hidden>
-      {initials}
-    </div>
+    <a href={game.storeUrl} target="_blank" rel="noopener noreferrer" title="Otevřít stránku hry" className={`${box} group/thumb`}>
+      {pic}
+      <span className="absolute top-1.5 right-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white/80 group-hover/thumb:text-white group-hover/thumb:bg-indigo-600 transition-colors">
+        ↗
+      </span>
+    </a>
   )
 }
 
@@ -184,7 +195,7 @@ export function Games() {
             <label className="form-label">Kategorie</label>
             <select value={form.tier} onChange={e => setForm({ ...form, tier: e.target.value as GameTier })}
               className="form-select">
-              {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+              {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
         )}
@@ -206,28 +217,25 @@ export function Games() {
     </form>
   )
 
-  const badges = (game: Game) => (
+  // Steam-style tags; the price sits apart in its own dark block
+  const tags = (game: Game) => (
     <>
-      {game.price !== null && <span className={priceBadgeClass(game.price)}>{priceLabel(game.price)}</span>}
       <span className={sourceBadgeClass(game.source)}>{SOURCE_LABELS[game.source] ?? game.source}</span>
-      <span className="badge badge-gray">
-        {playerCountLabel(game.minPlayers, game.maxPlayers)}
-      </span>
-      {game.storeUrl && (
-        <a href={game.storeUrl} target="_blank" rel="noopener noreferrer"
-          className="badge badge-blue hover:opacity-80 transition-opacity">
-          Odkaz ↗
-        </a>
-      )}
+      <span className="badge badge-gray">{playerCountLabel(game.minPlayers, game.maxPlayers)}</span>
+      {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
     </>
   )
 
+  const price = (game: Game) => game.price === null ? null : (
+    <span className={`price-block ${game.price > 0 ? '' : 'price-free'}`}>{priceLabel(game.price)}</span>
+  )
+
   const actions = (game: Game) => (
-    <div className="flex gap-1 flex-shrink-0 items-center">
+    <div className="flex flex-wrap gap-1 items-center min-w-0">
       {isAdmin && (
         <select value={game.tier} onChange={e => handleTierChange(game.id, e.target.value as GameTier)}
           className="form-select w-auto py-1 text-xs" aria-label="Kategorie">
-          {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+          {GAME_TIERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
       )}
       {canEdit(game) && (
@@ -243,70 +251,85 @@ export function Games() {
     const voted = game.votes.some(v => v.userId === user?.id)
     return (
       <button onClick={() => handleVote(game.id)} disabled={votingId === game.id}
-        className={`${voted ? 'btn-secondary' : idleClass} text-xs py-1.5 disabled:opacity-50`}>
+        className={`${voted ? 'btn-voted' : idleClass} text-xs py-1.5 disabled:opacity-50`}>
         {voted ? '✓ Hlasuješ (zrušit)' : label}
       </button>
     )
   }
 
+  const voters = (game: Game) => game.votes.map(v => v.user)
   const voterNames = (game: Game) => game.votes.map(v => v.user.displayName).join(', ')
+  const editForm = (game: Game, span = '') => <div key={game.id} className={span}>{formJsx}</div>
 
-  // Gold and silver: compact rows
-  const gameRow = (game: Game) => (
-    editingId === game.id ? (
-      <div key={game.id}>{formJsx}</div>
-    ) : (
-      <div key={game.id} className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-          <GameThumb game={game} className="w-20 sm:w-24 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center flex-wrap gap-2">
-              <span className="font-medium text-zinc-100">{game.name}</span>
-              {badges(game)}
-              {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
-            </div>
-            {game.tier === 'silver' && game.votes.length > 0 && (
-              <p className="text-xs text-zinc-500 mt-1">Mají / kupují: {voterNames(game)}</p>
-            )}
-          </div>
+  // Gold: big capsules in a grid, like the Steam library
+  const goldCapsule = (game: Game) => editingId === game.id ? editForm(game, 'col-span-full') : (
+    <div key={game.id} className="capsule flex flex-col">
+      <GameThumb game={game} className="w-full" />
+      <div className="flex-1 flex flex-col gap-2 p-3 bg-gradient-to-b from-zinc-800/50 to-zinc-900">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-white leading-snug">{game.name}</h3>
+          {price(game)}
         </div>
-        <div className="flex gap-1 flex-shrink-0 items-center flex-wrap">
-          {game.tier === 'silver' && voteButton(game, 'Mám / koupím', 'btn-ghost')}
+        <div className="flex flex-wrap items-center gap-1.5">{tags(game)}</div>
+        {(isAdmin || canEdit(game)) && <div className="mt-auto pt-2 border-t border-white/5">{actions(game)}</div>}
+      </div>
+    </div>
+  )
+
+  // Silver: Steam store list rows, price and "own it" on the right
+  const silverRow = (game: Game) => editingId === game.id ? editForm(game) : (
+    <div key={game.id} className="card overflow-hidden flex hover:bg-zinc-800/60 transition-colors">
+      <GameThumb game={game} className="w-28 m-3 mr-0 rounded self-start sm:w-[184px] sm:m-0 sm:rounded-none sm:self-stretch sm:aspect-auto sm:min-h-[86px] shrink-0" />
+      <div className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3">
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <h3 className="font-semibold text-white truncate">{game.name}</h3>
+          <div className="flex flex-wrap items-center gap-1.5">{tags(game)}</div>
+          {game.votes.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-zinc-400 min-w-0">
+              <AvatarStack users={voters(game)} />
+              <span className="truncate">Mají / kupují: {voterNames(game)}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
+          {price(game)}
+          {voteButton(game, 'Mám / koupím', 'btn-secondary')}
           {actions(game)}
         </div>
       </div>
-    )
+    </div>
   )
 
-  // Bronze: bigger cards that sell the game and show vote progress
+  // Bronze: wishlist cards that sell the game and show how far it is from silver
   const proposalCard = (game: Game) => {
-    if (editingId === game.id) return <div key={game.id}>{formJsx}</div>
-    const progress = Math.min(100, (game.votes.length / votesToPromote) * 100)
+    if (editingId === game.id) return editForm(game)
+    const votes = game.votes.length
+    const progress = Math.min(100, (votes / votesToPromote) * 100)
     return (
-      <div key={game.id} className="card p-4 flex flex-col sm:flex-row gap-4">
-        <GameThumb game={game} className="w-full sm:w-48 flex-shrink-0 self-start" />
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="font-semibold text-zinc-100">{game.name}</div>
-              {game.submittedBy && <div className="text-xs text-zinc-500">navrhl/a {game.submittedBy.displayName}</div>}
+      <div key={game.id} className="card p-3 flex flex-col sm:flex-row gap-4">
+        <GameThumb game={game} className="w-full sm:w-[292px] rounded shadow-md shadow-black/40 self-start shrink-0" />
+        <div className="flex-1 min-w-0 sm:py-1 sm:pr-1 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-white leading-tight">{game.name}</h3>
+              {game.submittedBy && <p className="text-xs text-zinc-500 mt-0.5">navrhl/a {game.submittedBy.displayName}</p>}
             </div>
+            {price(game)}
           </div>
-          <div className="flex items-center flex-wrap gap-2">
-            {badges(game)}
-            {game.sourceNote && <span className="text-xs text-zinc-500">{game.sourceNote}</span>}
-          </div>
+          <div className="flex flex-wrap items-center gap-1.5">{tags(game)}</div>
           <div>
-            <div className="flex justify-between text-xs text-zinc-400 mb-1">
-              <span>{voterNames(game) || 'Zatím nikdo'}</span>
-              <span className="whitespace-nowrap">{game.votes.length} / {votesToPromote}</span>
+            <div className="flex items-center justify-between gap-2 mb-1.5 min-h-[24px]">
+              {votes > 0 ? <AvatarStack users={voters(game)} /> : <span className="text-xs text-zinc-500">Zatím nikdo</span>}
+              <span className="text-xs text-zinc-400 whitespace-nowrap">
+                <span className="font-semibold text-white">{votes}</span> / {votesToPromote} hlasů do stříbra
+              </span>
             </div>
-            <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-              <div className="h-full bg-amber-500 transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
-            {voteButton(game, '👍 Chci hrát, koupím', 'btn-primary')}
+          <div className="flex items-center justify-between gap-2 flex-wrap mt-auto">
+            {voteButton(game, 'Chci hrát, koupím', 'btn-primary')}
             {actions(game)}
           </div>
         </div>
@@ -322,22 +345,27 @@ export function Games() {
     setShowForm(showForm === at ? false : at)
   }
 
-  const section = (tier: GameTier, list: Game[], render: (g: Game) => React.ReactNode) => {
+  const section = (tier: GameTier, list: Game[], render: (g: Game) => React.ReactNode, layout: string) => {
     const meta = GAME_TIERS.find(t => t.value === tier)!
     return (
-      <section key={tier} className="mb-8">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h2 className="section-heading mb-0">{meta.icon} {meta.label} hry <span className="text-zinc-500 font-normal">({list.length})</span></h2>
+      <section key={tier} className="mb-10">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
+            <h2 className="section-heading mb-0 flex items-center gap-2">
+              <TierChip tier={tier} className="min-w-[1.5rem]">{list.length}</TierChip>
+              {meta.label} hry
+            </h2>
+            <span className="text-xs text-zinc-500">{meta.hint}</span>
+          </div>
           {tier === 'bronze' && !editingId && (
-            <button onClick={() => openForm('bronze')} className="btn-secondary text-xs py-1.5">+ Navrhnout</button>
+            <button onClick={() => openForm('bronze')} className="btn-secondary text-xs py-1.5 shrink-0">+ Navrhnout</button>
           )}
         </div>
-        <p className="text-xs text-zinc-500 mb-3">{meta.hint}</p>
+        <div className="h-px bg-gradient-to-r from-indigo-400/50 via-indigo-400/10 to-transparent mt-2 mb-4" />
         {tier === 'bronze' && showForm === 'bronze' && !editingId && formJsx}
-        <div className="space-y-2">
-          {list.map(render)}
-          {list.length === 0 && <p className="text-zinc-600 text-sm">Zatím žádné</p>}
-        </div>
+        {list.length === 0
+          ? <p className="text-zinc-600 text-sm">Zatím žádné</p>
+          : <div className={layout}>{list.map(render)}</div>}
       </section>
     )
   }
@@ -355,9 +383,9 @@ export function Games() {
 
       {showForm === 'top' && !editingId && formJsx}
 
-      {section('gold', byTier('gold'), gameRow)}
-      {section('silver', byTier('silver'), gameRow)}
-      {section('bronze', bronze, proposalCard)}
+      {section('gold', byTier('gold'), goldCapsule, 'grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-4')}
+      {section('silver', byTier('silver'), silverRow, 'space-y-2')}
+      {section('bronze', bronze, proposalCard, 'space-y-3')}
     </div>
   )
 }

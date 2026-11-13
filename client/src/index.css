@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-100 min-h-screen;
+    @apply bg-zinc-950 text-zinc-200 min-h-screen;
+    /* Steam's blue glow behind the top of the page */
+    background-image: radial-gradient(ellipse 90% 520px at 50% 0, rgba(42, 71, 94, 0.55), transparent);
+    background-repeat: no-repeat;
   }
 
   ::-webkit-scrollbar {
@@ -21,27 +24,39 @@
   input[type='datetime-local'] {
     color-scheme: dark;
   }
+
+  input[type='checkbox'] {
+    @apply accent-indigo-400;
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-zinc-900 border border-white/10 rounded-xl;
+    @apply bg-zinc-900 border border-white/5 rounded-xl shadow-md shadow-black/25;
   }
 
   .card-inner {
-    @apply bg-zinc-800/60 border border-white/5 rounded-lg;
+    @apply bg-black/20 border border-white/5 rounded-lg;
   }
 
+  /* Steam's green "buy / play" button: the one main action of a screen */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950;
+    @apply inline-flex items-center justify-center gap-1.5 bg-gradient-to-b from-[#6aa621] to-[#467a14] hover:from-[#80c22b] hover:to-[#548f19] active:to-[#3b6810] text-white rounded-lg px-4 py-2 text-sm font-semibold shadow shadow-black/30 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
   }
 
+  /* Steam's blue fade button */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none;
+    @apply inline-flex items-center justify-center gap-1.5 bg-indigo-400/15 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400;
+  }
+
+  /* Already voted / owned: Steam's "in library" green, turns red on hover to show it cancels */
+  .btn-voted {
+    @apply inline-flex items-center justify-center gap-1.5 bg-[#a4d007]/10 text-[#b5dd2a] border border-[#a4d007]/30 hover:bg-red-900/30 hover:text-red-300 hover:border-red-800/50 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-1.5 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors;
   }
 
   .btn-danger {
@@ -49,31 +64,32 @@
   }
 
   .btn-success {
-    @apply inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg px-3 py-1.5 text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-1.5 bg-gradient-to-b from-[#6aa621] to-[#467a14] hover:from-[#80c22b] hover:to-[#548f19] text-white rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors;
   }
 
   .form-input {
-    @apply bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors w-full text-sm;
+    @apply bg-black/25 border border-black/40 shadow-inner shadow-black/30 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent transition-colors w-full text-sm;
   }
 
   .form-select {
-    @apply bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors w-full text-sm;
+    @apply bg-zinc-800 border border-black/40 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent transition-colors w-full text-sm;
   }
 
   .form-label {
     @apply block text-xs font-medium text-zinc-400 mb-1.5;
   }
 
+  /* Steam section titles */
   .section-heading {
-    @apply text-base font-semibold text-zinc-100 mb-3;
+    @apply text-sm font-semibold uppercase tracking-wider text-zinc-100 mb-3;
   }
 
   .page-heading {
-    @apply text-2xl font-bold tracking-tight;
+    @apply text-2xl font-bold tracking-tight text-white;
   }
 
   .badge {
-    @apply inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium;
+    @apply inline-flex items-center text-xs px-2 py-0.5 rounded font-medium;
   }
 
   .badge-green {
@@ -81,7 +97,7 @@
   }
 
   .badge-blue {
-    @apply bg-indigo-900/50 text-indigo-400 border border-indigo-800/50;
+    @apply bg-indigo-400/15 text-indigo-300 border border-indigo-400/20;
   }
 
   .badge-yellow {
@@ -97,15 +113,51 @@
   }
 
   .badge-gray {
-    @apply bg-zinc-800 text-zinc-400 border border-zinc-700;
+    @apply bg-black/25 text-zinc-300 border border-white/5;
   }
 
   .badge-orange {
     @apply bg-orange-900/50 text-orange-400 border border-orange-800/50;
   }
 
+  /* Gold / silver / bronze: metallic chips for game tiers and podium places */
+  .tier-chip {
+    @apply inline-flex items-center justify-center rounded font-bold uppercase tracking-wider text-[10px] leading-none px-1.5 py-1 shadow shadow-black/40;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .tier-gold {
+    @apply bg-gradient-to-b from-[#f7e08a] via-[#d9a930] to-[#a8741a] text-[#3d2a05];
+  }
+
+  .tier-silver {
+    @apply bg-gradient-to-b from-[#f1f4f7] via-[#b9c3cc] to-[#7d8893] text-[#1f2830];
+  }
+
+  .tier-bronze {
+    @apply bg-gradient-to-b from-[#f0b98a] via-[#c27a42] to-[#8a4d22] text-[#2e1606];
+  }
+
+  /* Game header art that lifts and glows on hover, like Steam capsules */
+  .capsule {
+    @apply relative overflow-hidden rounded-lg bg-zinc-900 shadow-md shadow-black/40 transition duration-200 ring-1 ring-white/5;
+  }
+
+  .capsule:hover {
+    @apply -translate-y-0.5 shadow-lg shadow-black/60 ring-indigo-400/60;
+  }
+
+  /* Steam's dark price box */
+  .price-block {
+    @apply inline-flex items-center bg-black/30 rounded px-2.5 py-1 text-sm font-medium text-zinc-200 whitespace-nowrap;
+  }
+
+  .price-free {
+    @apply text-[#a4d007];
+  }
+
   .tab-bar {
-    @apply flex border-b border-white/10 overflow-x-auto;
+    @apply relative flex border-b border-white/10 overflow-x-auto;
     scrollbar-width: none;
   }
 
@@ -118,11 +170,11 @@
   }
 
   .tab-active {
-    @apply text-indigo-400 border-b-2 border-indigo-500;
+    @apply text-white border-b-2 border-indigo-400;
   }
 
   .tab-inactive {
-    @apply text-zinc-400 hover:text-zinc-200 border-b-2 border-transparent;
+    @apply text-zinc-400 hover:text-zinc-100 border-b-2 border-transparent;
   }
 
   .nav-bottom-item {

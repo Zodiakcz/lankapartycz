@@ -20,18 +20,15 @@ export function sourceBadgeClass(source: string): string {
 }
 
 export const GAME_TIERS = [
-  { value: 'gold', label: 'Zlaté', icon: '🥇', hint: 'Hrajeme vždycky' },
-  { value: 'silver', label: 'Stříbrné', icon: '🥈', hint: 'Odhlasované, zkoušíme' },
-  { value: 'bronze', label: 'Bronzové', icon: '🥉', hint: 'Návrhy. Hlas = chci to hrát a koupím si to (klidně na poslední chvíli)' },
+  { value: 'gold', label: 'Zlaté', hint: 'Hrajeme vždycky' },
+  { value: 'silver', label: 'Stříbrné', hint: 'Odhlasované, zkoušíme' },
+  { value: 'bronze', label: 'Bronzové', hint: 'Návrhy. Hlas = chci to hrát a koupím si to (klidně na poslední chvíli)' },
 ] as const
 
 export function priceLabel(price: number): string {
   return price > 0 ? `${price} Kč` : 'Zdarma'
 }
 
-export function priceBadgeClass(price: number): string {
-  return price > 0 ? 'badge badge-yellow' : 'badge badge-green'
-}
 
 export const PACKING_CATEGORIES: Record<string, string> = {
   hardware: 'Hardware',
