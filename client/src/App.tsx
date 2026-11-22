@@ -11,6 +11,7 @@ import { Admin } from './pages/Admin'
 import { ChangePassword } from './pages/ChangePassword'
 import { Faq } from './pages/Faq'
 import { Leaderboard } from './pages/Leaderboard'
+import { Stats } from './pages/Stats'
 
 function AppRoutes() {
   const { user, loading, isAdmin } = useAuth()
@@ -31,6 +32,7 @@ function AppRoutes() {
         <Route path="/packing" element={<Packing />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/stats" element={<Stats />} />
         <Route path="/password" element={<ChangePassword />} />
         {isAdmin && <Route path="/admin" element={<Admin />} />}
         <Route path="*" element={<Navigate to="/" />} />

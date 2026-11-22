@@ -3,6 +3,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { RankMedal } from '../components/TierChip'
 import { Avatar } from '../components/Avatar'
+import { StatsTabs } from '../components/StatsTabs'
 import type { LeaderboardEntry, AchievementThresholds } from '../lib/types'
 
 const DEFAULT_THRESHOLDS: AchievementThresholds = {
@@ -171,6 +172,7 @@ export function Leaderboard() {
 
   return (
     <div className="space-y-6">
+      <StatsTabs />
       <div>
         <h1 className="page-heading">Žebříček</h1>
       </div>

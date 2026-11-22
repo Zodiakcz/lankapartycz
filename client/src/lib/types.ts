@@ -208,3 +208,17 @@ export interface AchievementThresholds {
   threshold_velky_sponzor: number
   threshold_nakupovac: number
 }
+
+export interface PartyStats {
+  id: number
+  name: string
+  startDate: string
+  endDate: string
+  upcoming: boolean
+  attendees: number
+  totalNights: number
+  expensesTotal: number
+  stayCost: number
+  totalCost: number
+  costPerNight: number | null
+}

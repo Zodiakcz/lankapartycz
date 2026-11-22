@@ -1,7 +1,7 @@
 import type {
   User, Party, Game, Attendance, Expense, ExpenseSplit,
   PackingItem, FoodCategory, FoodEstimate, FoodCalculation, ShoppingItem, ExternalFood, FaqItem, LeaderboardData, AchievementThresholds,
-  Tournament,
+  Tournament, PartyStats,
 } from './types'
 
 const BASE = '/api'
@@ -127,6 +127,7 @@ export const api = {
 
   // Leaderboard
   leaderboard: () => request<LeaderboardData>('/leaderboard'),
+  stats: () => request<{ parties: PartyStats[] }>('/stats'),
 
   // Settings
   getSettings: () => request<AchievementThresholds>('/settings'),

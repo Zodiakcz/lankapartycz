@@ -18,6 +18,7 @@ import faqRoutes from './routes/faq'
 import leaderboardRoutes from './routes/leaderboard'
 import settingsRoutes from './routes/settings'
 import tournamentRoutes from './routes/tournaments'
+import statsRoutes from './routes/stats'
 import { startScheduler } from './services/scheduler'
 import { backfillGameImages } from './services/gameImage'
 
@@ -85,6 +86,7 @@ app.use('/api/faq', faqRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/tournaments', tournamentRoutes)
+app.use('/api/stats', statsRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

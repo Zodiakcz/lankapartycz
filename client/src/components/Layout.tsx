@@ -46,11 +46,19 @@ const TrophyIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
-const navItems = [
+const ChartIcon = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75} className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 16v-4M12 16V8M17 16v-7" />
+  </svg>
+)
+
+// mobile: false = desktop header only (Statistiky shares the Žebříček slot on mobile via StatsTabs)
+const navItems: { path: string; label: string; Icon: (p: { active: boolean }) => React.ReactElement; mobile?: boolean }[] = [
   { path: '/', label: 'Párty', Icon: CalendarIcon },
   { path: '/games', label: 'Hry', Icon: GamepadIcon },
   { path: '/packing', label: 'Balení', Icon: BagIcon },
   { path: '/leaderboard', label: 'Žebříček', Icon: TrophyIcon },
+  { path: '/stats', label: 'Statistiky', Icon: ChartIcon, mobile: false },
   { path: '/faq', label: 'FAQ', Icon: FaqIcon },
 ]
 
@@ -75,10 +83,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('pending-users-changed', handler)
   }, [refreshPendingCount])
 
-  const allNavItems = isAdmin ? [...navItems, { path: '/admin', label: 'Admin', Icon: AdminIcon }] : navItems
+  const allNavItems: typeof navItems = isAdmin ? [...navItems, { path: '/admin', label: 'Admin', Icon: AdminIcon }] : navItems
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' || location.pathname.startsWith('/party/') : location.pathname.startsWith(path)
+  const isActiveMobile = (path: string) =>
+    isActive(path) || (path === '/leaderboard' && location.pathname.startsWith('/stats'))
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -141,8 +151,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-chrome/95 backdrop-blur-md border-t border-black/40">
         <div className="flex items-center justify-around px-2 py-1 safe-area-pb">
-          {allNavItems.map(item => {
-            const active = isActive(item.path)
+          {allNavItems.filter(item => item.mobile !== false).map(item => {
+            const active = isActiveMobile(item.path)
             return (
               <Link
                 key={item.path}
