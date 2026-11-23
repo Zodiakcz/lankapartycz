@@ -3,8 +3,14 @@ import { requireAuth, requireAdmin } from '../middleware/auth'
 import { countNights } from '../utils'
 import { prisma } from '../lib/prisma'
 import { blockIfLocked } from '../lib/financeLock'
+import { defaultStayPayerId } from '../lib/stayPayer'
 
 const router = Router()
+
+async function suggestedPayer() {
+  const id = await defaultStayPayerId()
+  return id ? prisma.user.findUnique({ where: { id }, select: { id: true, displayName: true } }) : null
+}
 
 // Get expenses for a party
 router.get('/:partyId', requireAuth, async (req, res) => {
@@ -78,6 +84,20 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     personData[att.userId] = { user: att.user, nights, advance: att.advance, settled: att.settled }
   }
 
+  // The stay payer gets their credit even when they are not a confirmed attendee
+  // (otherwise the money they paid would vanish from the split).
+  if (party.stayPaidByUserId && !personData[party.stayPaidByUserId]) {
+    const payer = await prisma.user.findUnique({
+      where: { id: party.stayPaidByUserId },
+      select: { id: true, displayName: true },
+    })
+    const att = await prisma.attendance.findUnique({
+      where: { userId_partyId: { userId: party.stayPaidByUserId, partyId } },
+      select: { settled: true },
+    })
+    if (payer) personData[payer.id] = { user: payer, nights: 0, advance: 0, settled: att?.settled ?? false }
+  }
+
   const totalNights = Object.values(personData).reduce((sum, p) => sum + p.nights, 0)
   const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0)
   const stayCost = party.stayPricePerNight * totalNights
@@ -91,6 +111,8 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     advance: number
     owes: number
     paid: number
+    expensesPaid: number
+    stayPaid: number
     balance: number
     settled: boolean
   }> = {}
@@ -111,6 +133,8 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
       advance: Math.round(data.advance * 100) / 100,
       owes: Math.round(share * 100) / 100,
       paid: Math.round(totalPaid * 100) / 100,
+      expensesPaid: Math.round(expensesPaid * 100) / 100,
+      stayPaid: Math.round(stayPaid * 100) / 100,
       balance: Math.round(balance * 100) / 100,
       settled: data.settled,
     }
@@ -122,6 +146,8 @@ router.get('/:partyId/split', requireAuth, async (req, res) => {
     stayCost: Math.round(stayCost * 100) / 100,
     stayPricePerNight: party.stayPricePerNight,
     stayPaidByUserId: party.stayPaidByUserId,
+    // Shown preselected in the payer picker while nobody is set yet
+    suggestedStayPayer: party.stayPaidByUserId || party.financesLocked ? null : await suggestedPayer(),
     totalAdvances: Math.round(totalAdvances * 100) / 100,
     totalNights,
     perPerson: Object.values(perPerson),

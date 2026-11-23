@@ -945,6 +945,60 @@ export function PartyDetail() {
             )}
           </div>
 
+          {/* Accommodation payer */}
+          {split && (isAdmin || split.stayCost > 0) && (() => {
+            const payerId = split.stayPaidByUserId ?? split.suggestedStayPayer?.id ?? null
+            const options = (party.attendance ?? [])
+              .filter(a => a.status !== 'declined' || a.userId === payerId)
+              .map(a => a.user)
+            if (split.suggestedStayPayer && !options.some(u => u.id === split.suggestedStayPayer!.id)) {
+              options.push(split.suggestedStayPayer)
+            }
+            const payerName = options.find(u => u.id === split.stayPaidByUserId)?.displayName
+              ?? split.perPerson.find(p => p.user.id === split.stayPaidByUserId)?.user.displayName
+            const savePayer = async (id: number | null) => {
+              await api.updateParty(partyId, { stayPaidByUserId: id })
+              await load()
+              loadSplit()
+            }
+            return (
+              <section className="card p-4">
+                <h3 className="font-semibold mb-3">Ubytování</h3>
+                <div className="flex flex-wrap items-end gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <label className="form-label">Kdo zaplatil ubytování</label>
+                    {isAdmin && !locked ? (
+                      <div className="flex gap-2 items-center">
+                        <select value={payerId ?? ''} className="form-select"
+                          onChange={e => savePayer(e.target.value ? Number(e.target.value) : null)}>
+                          <option value="">Nikdo</option>
+                          {options.map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+                        </select>
+                        {split.stayPaidByUserId === null && split.suggestedStayPayer && (
+                          <button type="button" className="btn-primary" onClick={() => savePayer(split.suggestedStayPayer!.id)}>
+                            Potvrdit
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-white font-medium">{payerName ?? <span className="text-zinc-500 italic">nezadáno</span>}</div>
+                    )}
+                  </div>
+                  <span className="text-zinc-400">Cena za osobonoc: <strong className="text-white">{split.stayPricePerNight} Kč</strong></span>
+                  <span className="text-zinc-400">Celkem: <strong className="text-indigo-400">{split.stayCost} Kč</strong></span>
+                </div>
+                {isAdmin && !locked && split.stayPaidByUserId === null && split.suggestedStayPayer && (
+                  <p className="text-xs text-amber-400 mt-2">
+                    Předvybráno {split.suggestedStayPayer.displayName}, do rozúčtování se započte až po potvrzení.
+                  </p>
+                )}
+                {split.stayPricePerNight === 0 && isAdmin && (
+                  <p className="text-xs text-zinc-500 mt-2">Cenu za osobonoc nastav v „Upravit událost“.</p>
+                )}
+              </section>
+            )
+          })()}
+
           {/* Add expense */}
           {!locked && (
             <form onSubmit={handleExpense} className="card p-4">
@@ -1020,6 +1074,7 @@ export function PartyDetail() {
                         <th className="px-4 py-2">Podíl</th>
                         <th className="px-4 py-2">Záloha</th>
                         <th className="px-4 py-2">Nakoupil</th>
+                        {split.stayCost > 0 && <th className="px-4 py-2">Ubytování</th>}
                         <th className="px-4 py-2">Bilance</th>
                         <th className="px-4 py-2">Vyrovnáno</th>
                       </tr>
@@ -1031,7 +1086,10 @@ export function PartyDetail() {
                           <td className="px-4 py-2 text-zinc-400">{p.nights}</td>
                           <td className="px-4 py-2 text-zinc-400">{p.owes} Kč</td>
                           <td className="px-4 py-2 text-zinc-400">{p.advance} Kč</td>
-                          <td className="px-4 py-2 text-zinc-400">{p.paid} Kč</td>
+                          <td className="px-4 py-2 text-zinc-400">{p.expensesPaid} Kč</td>
+                          {split.stayCost > 0 && (
+                            <td className={`px-4 py-2 ${p.stayPaid > 0 ? 'text-white' : 'text-zinc-600'}`}>{p.stayPaid > 0 ? `${p.stayPaid} Kč` : '–'}</td>
+                          )}
                           <td className={`px-4 py-2 font-semibold ${p.balance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {p.balance >= 0 ? `+${p.balance}` : p.balance} Kč
                           </td>
@@ -1052,7 +1110,7 @@ export function PartyDetail() {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-zinc-500 mt-3">Bilance = záloha + nákupy − podíl. Kladná = přeplatek, záporná = doplatit.</p>
+                <p className="text-xs text-zinc-500 mt-3">Bilance = záloha + nákupy + zaplacené ubytování − podíl. Kladná = přeplatek, záporná = doplatit.</p>
               </div>
             </section>
           )}

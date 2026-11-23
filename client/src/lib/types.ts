@@ -132,6 +132,8 @@ export interface ExpenseSplitPerson {
   owes: number
   advance: number
   paid: number
+  expensesPaid: number
+  stayPaid: number
   balance: number
   settled: boolean
 }
@@ -142,6 +144,7 @@ export interface ExpenseSplit {
   stayCost: number
   stayPricePerNight: number
   stayPaidByUserId: number | null
+  suggestedStayPayer: User | null
   totalAdvances: number
   totalNights: number
   perPerson: ExpenseSplitPerson[]

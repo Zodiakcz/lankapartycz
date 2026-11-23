@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { prisma } from '../lib/prisma'
+import { defaultStayPayerId } from '../lib/stayPayer'
 
 const router = Router()
 
@@ -41,7 +42,7 @@ router.post('/', requireAdmin, async (req, res) => {
       description: description || '',
       advancePerNight: advancePerNight ? Number(advancePerNight) : 0,
       stayPricePerNight: stayPricePerNight ? Number(stayPricePerNight) : 0,
-      stayPaidByUserId: stayPaidByUserId ? Number(stayPaidByUserId) : null,
+      stayPaidByUserId: stayPaidByUserId ? Number(stayPaidByUserId) : await defaultStayPayerId(),
     },
   })
   res.json(party)
